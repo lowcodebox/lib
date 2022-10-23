@@ -80,7 +80,7 @@ func (v *vfs) Connect() (err error) {
 	// подсключаемся к хранилищу
 	v.location, err = stow.Dial(v.kind, config)
 	if err != nil {
-		return fmt.Errorf("error connect to location from config: %+v, err: ", err)
+		return fmt.Errorf("error create container from config. err: %s", err)
 	}
 
 	// ищем переданных бакет, если нет, то создаем его
@@ -95,21 +95,21 @@ func (v *vfs) Connect() (err error) {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("error list to containers from config: %+v, err: ", err)
+		return fmt.Errorf("error list to containers from config. err: %s", err)
 	}
 
 	// создаем если нет
 	if !flagBucketExist {
 		v.container, err = v.location.CreateContainer(v.bucket)
 		if err != nil {
-			return fmt.Errorf("error create container from config: %+v, err: ", err)
+			return fmt.Errorf("error create container from config. err: %s", err)
 		}
 	}
 
 	// инициируем переданный контейнер
 	v.container, err = v.location.Container(v.bucket)
 	if err != nil {
-		return fmt.Errorf("error connect to container from config: %+v, err: ", err)
+		return fmt.Errorf("error create container from config. err: %s", err)
 	}
 
 	return err

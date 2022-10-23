@@ -16,16 +16,16 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/api-client v0.0.0-20221009163801-eb23b80f62fe
+# git.lowcodeplatform.net/fabric/api-client v0.0.0-20221023075858-7cedb6816ef5
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/api-client
-# git.lowcodeplatform.net/fabric/iam v0.0.0-20221014180953-70c03229727e
+# git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam/pkg/i18n
-# git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221014181334-4d81b04491bc
+# git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221023080507-84fb9ed9a65d
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam-client
-# git.lowcodeplatform.net/fabric/lib v1.4.24
+# git.lowcodeplatform.net/fabric/lib v0.0.0-20221023073958-5f6c90acd183
 ## explicit; go 1.17
 git.lowcodeplatform.net/fabric/lib
 # git.lowcodeplatform.net/fabric/models v0.0.0-20221009154545-811eec886237
@@ -381,9 +381,6 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.1.0
-## explicit
-golang.org/x/time/rate
 # golang.org/x/tools v0.1.12
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/astutil

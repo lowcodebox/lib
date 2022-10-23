@@ -3,9 +3,7 @@ module git.lowcodeplatform.net/fabric/app
 go 1.18
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.0.0-20221009163801-eb23b80f62fe
-	git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221014181334-4d81b04491bc
-	git.lowcodeplatform.net/fabric/lib v1.4.24
+	git.lowcodeplatform.net/fabric/lib v0.0.0-20221023073958-5f6c90acd183
 	git.lowcodeplatform.net/fabric/models v0.0.0-20221009154545-811eec886237
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
@@ -19,7 +17,6 @@ require (
 	github.com/swaggo/http-swagger v1.3.3
 	github.com/swaggo/swag v1.8.7
 	go.uber.org/zap v1.23.0
-	golang.org/x/time v0.1.0
 )
 
 require (
@@ -27,7 +24,9 @@ require (
 	cloud.google.com/go/compute v1.10.0 // indirect
 	cloud.google.com/go/iam v0.5.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
-	git.lowcodeplatform.net/fabric/iam v0.0.0-20221014180953-70c03229727e // indirect
+	git.lowcodeplatform.net/fabric/api-client v0.0.0-20221023075858-7cedb6816ef5 // indirect
+	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
+	git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221023080507-84fb9ed9a65d // indirect
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.28 // indirect

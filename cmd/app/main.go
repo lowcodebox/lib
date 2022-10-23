@@ -25,39 +25,38 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"git.lowcodeplatform.net/fabric/lib"
-	"golang.org/x/time/rate"
 )
 
 const sep = string(os.PathSeparator)
 
 func main() {
-	limit := 1
-	burst := 1
-	limiter := rate.NewLimiter(rate.Limit(limit), burst)
-	ctx := context.Background()
-	i := 0
+	//limit := 1
+	//burst := 1
+	//limiter := rate.NewLimiter(rate.Limit(limit), burst)
+	//ctx := context.Background()
+	//i := 0
+	//
+	//for {
+	//
+	//	fmt.Println("request", time.Now())
+	//
+	//	go func(lim *rate.Limiter, i int) {
+	//		fmt.Println(i, "------- - ", time.Now())
+	//		lim.Wait(ctx)
+	//		fmt.Println(i, " - ", time.Now())
+	//	}(limiter, i)
+	//
+	//	i++
+	//
+	//	time.Sleep(100 * time.Millisecond)
+	//	if i > 20 {
+	//		break
+	//	}
+	//}
 
-	for {
+	//time.Sleep(100 * time.Second)
 
-		fmt.Println("request", time.Now())
-
-		go func(lim *rate.Limiter, i int) {
-			fmt.Println(i, "------- - ", time.Now())
-			lim.Wait(ctx)
-			fmt.Println(i, " - ", time.Now())
-		}(limiter, i)
-
-		i++
-
-		time.Sleep(100 * time.Millisecond)
-		if i > 20 {
-			break
-		}
-	}
-
-	time.Sleep(100 * time.Second)
-
-	//lib.RunServiceFuncCLI(Start)
+	lib.RunServiceFuncCLI(Start)
 }
 
 // Start стартуем сервис приложения
