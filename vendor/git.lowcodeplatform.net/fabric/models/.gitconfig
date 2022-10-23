@@ -1,0 +1,2 @@
+[url "ssh://git@git.lowcodeplatform.net/"]
+	insteadOf = https://git.lowcodeplatform.net/
