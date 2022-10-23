@@ -1,0 +1,40 @@
+image: golang:1.15.14-alpine3.14
+
+stages:
+  - test
+  - build
+
+#before_script:
+#  - export GO_PROJECT_PATH="$GOPATH/src/git.lowcodeplatform.net/$CI_PROJECT_NAMESPACE"
+#  - mkdir -p $GO_PROJECT_PATH
+#  - ln -s $(pwd) $GO_PROJECT_PATH
+#  - export GO_PROJECT_PATH="$GO_PROJECT_PATH/$CI_PROJECT_NAME"
+#  - cd $GO_PROJECT_PATH
+
+test:
+  tags:
+    - docker
+  stage: test
+#  services:
+#    - docker:dind
+  script:
+    - echo $CI_PROJECT_DIR/
+    - go version
+#    - go test -cover $(go list ./... | grep -v "vendor")
+#      -mod=vendor -v
+build:
+  tags:
+    - docker
+  stage: build
+  script:
+    - mkdir -p release
+    - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
+      -ldflags "-extldflags '-static'"
+      -o ./release/
+      cmd/app/main.go
+    - ls -lsa
+  artifacts:
+    when: on_success
+    expire_in: 1 hrs
+    paths:
+      - "./release"

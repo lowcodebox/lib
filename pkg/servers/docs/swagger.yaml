@@ -1,0 +1,682 @@
+definitions:
+  models.AttemptsOutput:
+    properties:
+      bad_attempts:
+        example: 1
+        type: integer
+      period_minutes:
+        example: 10
+        type: integer
+    type: object
+  models.ChangePassInput:
+    properties:
+      current_password:
+        example: Qwerty123
+        type: string
+      new_password:
+        example: Qwerty112233
+        type: string
+    type: object
+  models.ChangePassUnsafeInput:
+    properties:
+      new_password:
+        example: Qwerty112233
+        type: string
+    type: object
+  models.CheckSumInput:
+    properties:
+      checksum:
+        example: mWzulhSEIsdRfw8rYaPDiAS9dTFx96VuMd7pAKzo4MM=
+        type: string
+      login:
+        example: Tolkacheva.Elena@wildberries.ru
+        type: string
+    type: object
+  models.CheckedOutput:
+    properties:
+      checked:
+        example: true
+        type: boolean
+    type: object
+  models.LoginPassInput:
+    properties:
+      login:
+        description: login OR email
+        example: Tolkacheva.Elena@wildberries.ru
+        type: string
+      password:
+        example: qwerty
+        type: string
+      period_minutes:
+        default: 10
+        description: bad attempts count during this period in minutes
+        example: 15
+        type: integer
+    type: object
+  models.PassForgotInput:
+    properties:
+      email:
+        type: string
+      template_id:
+        type: string
+      url:
+        type: string
+    type: object
+  models.PassResetInput:
+    properties:
+      password:
+        type: string
+      template_id:
+        type: string
+      token:
+        type: string
+    type: object
+  models.ShortUser:
+    properties:
+      checksum:
+        example: 2L7xhnV9qw/witp9iPdXmKEG14Ea5qbjvgsXruGGO5I=
+        type: string
+      created:
+        example: "2019-05-21T12:41:04+03:00"
+        type: string
+      email:
+        example: Tolkacheva.Elena@wildberries.ru
+        type: string
+      full_name:
+        type: string
+      lang:
+        type: string
+      login:
+        example: supp374836
+        type: string
+      supplier_id:
+        example: 8759
+        type: integer
+      user_id:
+        example: 374836
+        type: integer
+    type: object
+  models.UserForCreate:
+    properties:
+      email:
+        example: Tolkacheva.Elena@wildberries.ru
+        type: string
+      full_name:
+        example: Иванов Иван Иванович
+        type: string
+      lang:
+        example: en
+        type: string
+      login:
+        example: mylogin
+        type: string
+      password:
+        example: Qwerty112233
+        type: string
+      supplier_id:
+        example: 8759
+        type: integer
+    type: object
+  models.Users:
+    items:
+      properties:
+        checksum:
+          example: 2L7xhnV9qw/witp9iPdXmKEG14Ea5qbjvgsXruGGO5I=
+          type: string
+        created:
+          example: "2019-05-21T12:41:04+03:00"
+          type: string
+        email:
+          example: Tolkacheva.Elena@wildberries.ru
+          type: string
+        full_name:
+          type: string
+        lang:
+          type: string
+        login:
+          example: supp374836
+          type: string
+        supplier_id:
+          example: 8759
+          type: integer
+        user_id:
+          example: 374836
+          type: integer
+      type: object
+    type: array
+  responses.Param:
+    properties:
+      name:
+        example: login
+        type: string
+      reason:
+        example: login reqired
+        type: string
+    type: object
+  responses.Params:
+    items:
+      properties:
+        name:
+          example: login
+          type: string
+        reason:
+          example: login reqired
+          type: string
+      type: object
+    type: array
+  responses.Response:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        type: object
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+  responses.Response[models.AttemptsOutput]:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        properties:
+          bad_attempts:
+            example: 1
+            type: integer
+          period_minutes:
+            example: 10
+            type: integer
+        type: object
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+  responses.Response[models.CheckedOutput]:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        properties:
+          checked:
+            example: true
+            type: boolean
+        type: object
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+  responses.Response[models.ShortUser]:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        properties:
+          checksum:
+            example: 2L7xhnV9qw/witp9iPdXmKEG14Ea5qbjvgsXruGGO5I=
+            type: string
+          created:
+            example: "2019-05-21T12:41:04+03:00"
+            type: string
+          email:
+            example: Tolkacheva.Elena@wildberries.ru
+            type: string
+          login:
+            example: supp374836
+            type: string
+          supplier_id:
+            example: 8759
+            type: integer
+          user_id:
+            example: 374836
+            type: integer
+        type: object
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+  responses.Response[models.Users]:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/models.ShortUser'
+        type: array
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+  responses.Response[responses.Params]:
+    properties:
+      detail:
+        example: validation error
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/responses.Param'
+        type: array
+      title:
+        example: Ошибка запроса
+        type: string
+      type:
+        example: business/error
+        type: string
+      version:
+        example: "1.0"
+        type: string
+    type: object
+info:
+  contact: {}
+  license: {}
+  title: PORTAL User Identity API
+  version: 0.0.1
+paths:
+  /alive:
+    get:
+      description: check application health
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: alive
+  /api/v1/pass/forgot:
+    post:
+      parameters:
+      - description: pass forgot data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PassForgotInput'
+          type: object
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: issue reset iam
+  /api/v1/pass/reset:
+    post:
+      parameters:
+      - description: pass reset data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.PassResetInput'
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: issue reset iam
+  /api/v1/user:
+    post:
+      parameters:
+      - description: new user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserForCreate'
+          type: object
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.ShortUser]'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: create new user
+  /api/v1/user/{id}:
+    delete:
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: delete user by id
+    get:
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.ShortUser]'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: get user data by id
+    patch:
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: new users data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ShortUser'
+          type: object
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.ShortUser]'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: update user data by id, except password
+  /api/v1/user/{id}/changepass:
+    post:
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: change pass data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangePassInput'
+          type: object
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: change password of user
+  /api/v1/user/{id}/changepassunsafe:
+    post:
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: change pass data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangePassUnsafeInput'
+          type: object
+      - description: initiator of operation
+        in: header
+        name: X-Initiator-Id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: change password of user
+  /api/v1/user/check:
+    post:
+      parameters:
+      - description: login data
+        in: body
+        name: login_input
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginPassInput'
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.ShortUser]'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.Response[models.AttemptsOutput]'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: get user by login+pass pair
+  /api/v1/user/checksum/approve:
+    post:
+      parameters:
+      - description: password checksum data
+        in: body
+        name: checksum_input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CheckSumInput'
+          type: object
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.CheckedOutput]'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.Response[responses.Params]'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: approve password checksum
+  /api/v1/user/email/{email}:
+    get:
+      parameters:
+      - description: user email
+        in: path
+        name: email
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.Users]'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: get users by email
+  /api/v1/user/login/{login}:
+    get:
+      parameters:
+      - description: user login
+        in: path
+        name: login
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.ShortUser]'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: get users by email
+  /api/v1/user/supplier/{id}:
+    get:
+      parameters:
+      - description: supplier id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response[models.Users]'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.Response'
+      summary: get users by supplier id
+schemes:
+- https
+security:
+- ApiKeyAuth: []
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-App-Key
+    type: apiKey
+swagger: "2.0"
