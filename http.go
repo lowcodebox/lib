@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/gommon/color"
 )
 
-
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
 func Curl(method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
@@ -109,6 +108,10 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 
 	// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
 	//json.Unmarshal([]byte(responseString), &result)
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("request is not success. status: %s", resp.Status)
+	}
 
 	return responseString, err
 }

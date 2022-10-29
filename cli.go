@@ -33,6 +33,29 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			},
 		},
 		{
+			Name: "update", ShortName: "",
+			Usage: "Update service",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "service, s",
+					Usage: "Обновить сервис",
+					Value: "lowcodebox",
+				},
+				cli.StringFlag{
+					Name:  "version, v",
+					Usage: "Версия, до которой обновляем",
+					Value: "latest",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				service := c.String("service")
+				version := c.String("version")
+
+				funcCLI("", "", "", "", service, "", "", "", "", "update", version)
+				return nil
+			},
+		},
+		{
 			Name: "stop", ShortName: "",
 			Usage: "Stop service",
 			Flags: []cli.Flag{
