@@ -79,12 +79,12 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 				cli.StringFlag{
 					Name:  "config, c",
 					Usage: "Название файла конфигурации, с которым будет запущен сервис",
-					Value: "default",
+					Value: "lowcodebox",
 				},
 				cli.StringFlag{
 					Name:  "dir, d",
 					Usage: "Путь к шаблонам",
-					Value: "default",
+					Value: "",
 				},
 				cli.StringFlag{
 					Name:  "port, p",
