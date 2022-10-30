@@ -91,7 +91,7 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON)
+		fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
 		return "", err
 	} else {
 		defer resp.Body.Close()
