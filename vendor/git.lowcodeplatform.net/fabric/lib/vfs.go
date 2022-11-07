@@ -156,6 +156,9 @@ func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string,
 	urlPath.Path = file
 
 	item, err := v.location.ItemByURL(&urlPath)
+	if err != nil {
+		return 
+	}
 	if item != nil {
 		r, err := item.Open()
 		if err != nil {

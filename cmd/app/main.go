@@ -28,6 +28,7 @@ import (
 )
 
 const sep = string(os.PathSeparator)
+const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь, относительно bucket-а проекта
 
 func main() {
 	//limit := 1
@@ -182,10 +183,12 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	// запускаем очиститель сессий
 	go ses.Cleaner(ctx)
 
-	port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortAutoInterval)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if port == "" {
+		port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortAutoInterval)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 	cfg.PortApp = port
 

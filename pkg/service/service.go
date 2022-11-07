@@ -53,7 +53,7 @@ func New(
 ) Service {
 	var tplfunc = function.NewTplFunc(cfg, logger, api)
 	var function = function.New(cfg, logger, api)
-	var blocks = block.New(cfg, logger, function, tplfunc, api)
+	var blocks = block.New(cfg, logger, function, tplfunc, api, vfs)
 
 	return &service{
 		logger,

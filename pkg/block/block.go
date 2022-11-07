@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
+
 	"git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/app/pkg/function"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	uuid2 "github.com/google/uuid"
-	"html/template"
-	"net/http"
-	"net/url"
-	"path"
-	"path/filepath"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const sep = string(filepath.Separator)
+const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь, относительно bucket-а проекта
 
 type block struct {
 	cfg      model.Config
@@ -28,18 +29,19 @@ type block struct {
 	function function.Function
 	tplfunc  function.TplFunc
 	api      api.Api
+	vfs      lib.Vfs
 }
 
 type Block interface {
 	Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error)
 	ErrorModuleBuild(stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error)
-	QueryWorker(queryUID, dataname string, source[]map[string]string, token, queryRaw, metod string, postForm url.Values) interface{}
+	QueryWorker(queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{}
 	ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request)
 	ModuleError(err interface{}) template.HTML
 	GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) models.Response
 }
 
-func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) 	{
+func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
 	var c bytes.Buffer
 
 	result.Id = block.Id
@@ -80,16 +82,16 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 
 	bl.Value = map[string]interface{}{}
 
-	dataSet		:= make(map[string]interface{})
-	dataname 	:= "default" // значение по-умолчанию (будет заменено в потоках)
+	dataSet := make(map[string]interface{})
+	dataname := "default" // значение по-умолчанию (будет заменено в потоках)
 
-	tplName, _ 	:= block.Attr("module", "src")
-	tquery, _ 	:= block.Attr("tquery", "src")
+	tplName, _ := block.Attr("module", "src")
+	tquery, _ := block.Attr("tquery", "src")
 
 	// //////////////////////////////////////////////////////////////////////////////
 	// в блоке есть настройки поля расширенного фильтра, который можно добавить в самом блоке
 	// дополняем параметры request-a, доп. параметрами, которые переданы через блок
-	extfilter, _ 	:= block.Attr("extfilter", "value") // дополнительный фильтр для блока
+	extfilter, _ := block.Attr("extfilter", "value") // дополнительный фильтр для блока
 	dv := []models.Data{block}
 	extfilter, err = b.function.Exec(extfilter, dv, bl.Value, in, block.Id+"_extfilter")
 	if err != nil {
@@ -117,7 +119,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	}
 	// //////////////////////////////////////////////////////////////////////////////
 
-	tconfiguration , _ := block.Attr("configuration", "value")
+	tconfiguration, _ := block.Attr("configuration", "value")
 	tconfiguration = strings.Replace(tconfiguration, "  ", "", -1)
 
 	uuid := uuid2.New()
@@ -130,9 +132,9 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		}
 	}
 
-	bl.Value["Rand"] =  uuid[1:6]  // переопределяем отдельно для каждого модуля
+	bl.Value["Rand"] = uuid[1:6] // переопределяем отдельно для каждого модуля
 	bl.Value["URL"] = in.Url
-	bl.Value["Prefix"] = "/" + b.cfg.Domain + "/" +b.cfg.PathTemplates
+	bl.Value["Prefix"] = "/" + b.cfg.Domain + "/" + b.cfg.PathTemplates
 	bl.Value["Domain"] = b.cfg.Domain
 	bl.Value["CDN"] = b.cfg.UrlFs
 	bl.Value["Path"] = b.cfg.ClientPath
@@ -144,14 +146,13 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	bl.Value["Cookie"] = in.RequestRaw.Cookies()
 	bl.Value["Request"] = in.RequestRaw
 
-
 	//fmt.Println("tconfiguration: block", block.Id, tconfiguration, "\n")
 
 	// обработк @-функции в конфигурации
 	dv = []models.Data{block}
 	dogParseConfiguration, err := b.function.Exec(tconfiguration, dv, bl.Value, in, block.Id)
 	if err != nil {
-		mes := "[Generate] Error DogParse configuration: ("+fmt.Sprint(err)+") " + tconfiguration
+		mes := "[Generate] Error DogParse configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
 		result.Result = b.ModuleError(mes)
 		result.Err = err
 		b.logger.Error(err, mes)
@@ -166,8 +167,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		err = json.Unmarshal([]byte(tconfiguration), &confRaw)
 	}
 	if err != nil {
-		mes := "[Generate] Error Unmarshal configuration: ("+fmt.Sprint(err)+") " + tconfiguration
-		result.Result = b.ModuleError("[Generate] Error Unmarshal configuration: ("+fmt.Sprint(err)+") " + tconfiguration)
+		mes := "[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
+		result.Result = b.ModuleError("[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration)
 		result.Err = err
 		b.logger.Error(err, mes)
 		return
@@ -179,8 +180,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		err = json.Unmarshal([]byte(dogParseConfiguration), &conf)
 	}
 	if err != nil {
-		mes := "[Generate] Error json-format configurations: ("+fmt.Sprint(err)+") " + dogParseConfiguration
-		result.Result = b.ModuleError("[Generate] Error json-format configurations: ("+fmt.Sprint(err)+") " + dogParseConfiguration)
+		mes := "[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration
+		result.Result = b.ModuleError("[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration)
 		result.Err = err
 		b.logger.Error(err, mes)
 		return
@@ -205,10 +206,9 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		}
 	}
 
-
 	// ПЕРЕДЕЛАТЬ НА ПАРАЛЛЕЛЬНЫЕ ПОТОКИ
 	if tquery != "" {
-		slquery := strings.Split(tquery,",")
+		slquery := strings.Split(tquery, ",")
 
 		var name, uid string
 		for _, queryUID := range slquery {
@@ -251,12 +251,12 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 
 		c, err = b.GenerateBlockFromFile(tplName, bl)
 		if err != nil {
-			err = fmt.Errorf("%s file:'%s' (%s)","Error: Generate Module from file is failed!",tplName, err)
+			err = fmt.Errorf("%s file:'%s' (%s)", "Error: Generate Module from file is failed!", tplName, err)
 			result.Result = template.HTML(fmt.Sprint(err))
 			return result, nil
 		}
 	} else {
-		uidModule, _ 	:= block.Attr("module", "src")
+		uidModule, _ := block.Attr("module", "src")
 		var objModule models.ResponseData
 
 		// запрос на объект HTML
@@ -264,12 +264,12 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		//_, err = b.tree.Curl("GET", "_objs/"+uidModule, "", &objModule, map[string]string{})
 
 		if err != nil {
-			err = fmt.Errorf("%s (%s)","Error: Get object Module is failed!", err)
+			err = fmt.Errorf("%s (%s)", "Error: Get object Module is failed!", err)
 			result.Result = template.HTML(fmt.Sprint(err))
 			return result, err
 		}
 		if len(objModule.Data) == 0 {
-			err = fmt.Errorf("%s","Error: Object Module is null!")
+			err = fmt.Errorf("%s", "Error: Object Module is null!")
 			result.Result = template.HTML(fmt.Sprint(err))
 			return result, err
 		}
@@ -277,7 +277,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		// если выбрано несколько блоков, их все объединяем в один (очередность случайная)
 		htmlCode := ""
 		for _, v := range objModule.Data {
-			codetpl, _ 	:= v.Attr("codetpl", "value")
+			codetpl, _ := v.Attr("codetpl", "value")
 			if codetpl == "" {
 				codetpl, _ = v.Attr("_filecontent_module", "value")
 				if codetpl == "" {
@@ -311,37 +311,31 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	return result, err
 }
 
-// генерируем блок из файла (для совместимости со старыми модулями)
+// GenerateBlockFromFile генерируем блок из файла (для совместимости со старыми модулями)
 func (b *block) GenerateBlockFromFile(tplName string, bl model.Block) (c bytes.Buffer, err error) {
 	var tmpl *template.Template
 
-	sliceMake := strings.Split(tplName, "/")
-	if len(sliceMake) < 3 {
-		errT := fmt.Errorf("%s", "Error: The path to the module file is incorrect or an error occurred while selecting the module in the block object!")
-		//b.ErrorModuleBuild(stat, buildChan, time.Since(t1), errT)
-		b.logger.Error(errT)
+	dataFile, _, err := b.vfs.Read(b.clearPath(tplName))
+	if err != nil {
+		err = fmt.Errorf("%s", "error read file from vfs. path: %s", b.clearPath(tplName))
 		return
 	}
-	tplName = strings.Join(sliceMake[3:], "/")
-	tplName = b.cfg.Workingdir + "/" + tplName
 
-	if len(tplName) > 0 {
-		name := path.Base(tplName)
-		if name == "" {
-			err = fmt.Errorf("%s","Error: Getting path.Base failed!")
-			tmpl = nil
-		} else {
-			tmpl, _ = template.New(name).Funcs(b.tplfunc.GetFuncMap()).ParseFiles(tplName)
-		}
+	tmpl = template.New(tplName).Funcs(b.tplfunc.GetFuncMap())
+	_, err = tmpl.Parse(string(dataFile))
+	if err != nil {
+		err = fmt.Errorf("%s", "Error: Getting path.Base failed! tplName: %s", tplName)
+		return
 	}
+
 	if &bl != nil && &c != nil {
 		if tmpl == nil {
-			err = fmt.Errorf("%s","Error: Parsing template file is fail!")
+			err = fmt.Errorf("%s", "Error: Parsing template file is fail!")
 		} else {
 			err = tmpl.Execute(&c, bl)
 		}
 	} else {
-		err = fmt.Errorf("%s","Error: Generate data block is fail!")
+		err = fmt.Errorf("%s", "Error: Generate data block is fail!")
 	}
 
 	return c, err
@@ -360,7 +354,7 @@ func (b *block) GenerateBlockFromField(value string, bl model.Block) (c bytes.Bu
 }
 
 // вываливаем ошибку при генерации модуля
-func (b *block) ErrorModuleBuild(stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error){
+func (b *block) ErrorModuleBuild(stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error) {
 	var result model.ModuleResult
 
 	stat["cache"] = "false"
@@ -375,10 +369,10 @@ func (b *block) ErrorModuleBuild(stat map[string]interface{}, buildChan chan mod
 }
 
 // queryUID - ид-запроса
-func (b *block) QueryWorker(queryUID, dataname string, source[]map[string]string, token, queryRaw, metod string, postForm url.Values) interface{}  {
+func (b *block) QueryWorker(queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{} {
 	//var resp Response
 
-	resp :=  b.GUIQuery(queryUID, token, queryRaw, metod, postForm)
+	resp := b.GUIQuery(queryUID, token, queryRaw, metod, postForm)
 
 	//switch x := resp1.(type) {
 	//case Response:
@@ -387,7 +381,6 @@ func (b *block) QueryWorker(queryUID, dataname string, source[]map[string]string
 	//default:
 	//	resp.Data = resp1ч
 	//}
-
 
 	///////////////////////////////////////////
 	// Расчет пагенации
@@ -406,16 +399,16 @@ func (b *block) QueryWorker(queryUID, dataname string, source[]map[string]string
 	if size != 0 && resultLimit != 0 {
 		j := 0
 		for i := 0; i <= size; i = i + resultLimit {
-			j ++
+			j++
 			list = append(list, j)
-			if i >= resultOffset && i < resultOffset + resultLimit {
+			if i >= resultOffset && i < resultOffset+resultLimit {
 				current = j
 			}
 		}
 		last = j
 	}
 
-	from = current * resultLimit - resultLimit
+	from = current*resultLimit - resultLimit
 	to = from + resultLimit
 
 	// подрезаем список страниц
@@ -455,7 +448,7 @@ func (b *block) QueryWorker(queryUID, dataname string, source[]map[string]string
 func (b *block) ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request) {
 	p := model.ErrorForm{
 		Err: err,
-		R:	 *r,
+		R:   *r,
 	}
 	b.logger.Error(nil, err)
 
@@ -464,14 +457,14 @@ func (b *block) ErrorPage(err interface{}, w http.ResponseWriter, r *http.Reques
 }
 
 // вывод ошибки выполнения блока
-func (l *block) ModuleError(err interface{}) template.HTML  {
+func (l *block) ModuleError(err interface{}) template.HTML {
 	var c bytes.Buffer
 
 	p := model.ErrorForm{
 		Err: err,
 	}
 
-	l.logger.Error(nil,err)
+	l.logger.Error(nil, err)
 	//fmt.Println("ModuleError: ", err)
 
 	wd := l.cfg.Workingdir
@@ -485,7 +478,7 @@ func (l *block) ModuleError(err interface{}) template.HTML  {
 
 // отправка запроса на получения данных из интерфейса GUI
 // параметры переданные в строке (r.URL) отправляем в теле запроса
-func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response)  {
+func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response) {
 	var err error
 	bodyJSON, _ := json.Marshal(postForm)
 
@@ -534,20 +527,44 @@ func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Va
 	return returnResp
 }
 
+// clearPath чистим от части пути, от корня домена
+func (l *block) clearPath(file string) string {
+	// для приложения домен (проект) отличается от пути
+	// поэтому удаляем первые две части пути - это точно принадлежит домену
+	fileSlice := strings.Split(file, sep)
+	if len(fileSlice) > 3 {
+		file = strings.Join(fileSlice[3:], sep)
+	}
+
+	// TODO костыли, удалить после переноса всех проектов на новые пути
+	// для совместимости со старым форматом хранения
+	// если есть upload - значит будет /upload/buildbox - это тоже удаляем
+	if strings.Contains(file, "upload") {
+		fileSlice = strings.Split(file, sep)
+		if len(fileSlice) > 2 {
+			file = strings.Join(fileSlice[2:], sep)
+		}
+	}
+
+	file = strings.Replace(file, sep+sep, sep, -1)
+
+	return file
+}
 
 func New(
 	cfg model.Config,
 	logger lib.Log,
 	function function.Function,
 	tplfunc function.TplFunc,
-	api	api.Api,
+	api api.Api,
+	vfs lib.Vfs,
 ) Block {
-	return &block {
-		cfg: cfg,
-		logger: logger,
+	return &block{
+		cfg:      cfg,
+		logger:   logger,
 		function: function,
-		tplfunc: tplfunc,
-		api: api,
-	}	
+		tplfunc:  tplfunc,
+		api:      api,
+		vfs:      vfs,
+	}
 }
-

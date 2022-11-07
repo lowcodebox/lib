@@ -3,50 +3,61 @@ type: docker
 name: app
 
 steps:
-  - name: linux amd64
+  #  - name: linux amd64
+  #    failure: ignore
+  #    image: tetafro/golang-gcc:1.17-alpine
+  #    commands:
+  #      - cd /drone/src
+  #      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_amd64 cmd/app/main.go
+  #      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_amd64_${DRONE_TAG}
+  #    volumes:
+  #      - name: releases
+  #        path: /opt/releases
+  #    when:
+  #      event:
+  #        - tag
+
+  - name: linux 386
     failure: ignore
     image: tetafro/golang-gcc:1.17-alpine
     commands:
       - cd /drone/src
-      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_amd64_${DRONE_TAG} cmd/app/main.go
-      - tar -cf /opt/releases/app_linux_amd64_${DRONE_TAG}.tar /opt/releases/app_linux_amd64_${DRONE_TAG}
-      - rm /opt/releases/app_linux_amd64_${DRONE_TAG}
+      - GOOS=linux GOARCH=386 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_386 cmd/app/main.go
+      - cp /opt/releases/app_linux_386 /opt/releases/app_linux_386_${DRONE_TAG}
     volumes:
       - name: releases
         path: /opt/releases
     when:
       event:
         - tag
+  
+  #  - name: darwin amd64
+  #    failure: ignore
+  #    image: tetafro/golang-gcc:1.17-alpine
+  #    commands:
+  #      - cd /drone/src
+  #      - GOOS=darwin GOARCH=amd64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_amd64 cmd/app/main.go
+  #      - cp /opt/releases/app_darwin_amd64 /opt/releases/app_darwin_amd64_${DRONE_TAG}
+  #    volumes:
+  #      - name: releases
+  #        path: /opt/releases
+  #    when:
+  #      event:
+  #        - tag
 
-#  - name: linux 386
-#    failure: ignore
-#    image: tetafro/golang-gcc:1.15-alpine
-#    commands:
-#      - cd /drone/src
-#      - GOOS=linux GOARCH=386 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_386_${DRONE_TAG} cmd/app/main.go
-#      - tar -cf /opt/releases/app_linux_386_${DRONE_TAG}.tar /opt/releases/app_linux_386_${DRONE_TAG}
-#      - rm /opt/releases/app_linux_386_${DRONE_TAG}
-#    volumes:
-#      - name: releases
-#        path: /opt/releases
-#    when:
-#      event:
-#        - tag
-
-#  - name: darwin amd64
-#    failure: ignore
-#    image: tetafro/golang-gcc:1.15-alpine
-#    commands:
-#      - cd /drone/src
-#      - GOOS=darwin GOARCH=amd64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_amd64_${DRONE_TAG} cmd/app/main.go
-#      - tar -cf /opt/releases/app_darwin_amd64_${DRONE_TAG}.tar /opt/releases/app_darwin_amd64_${DRONE_TAG}
-#      - rm /opt/releases/app_darwin_amd64_${DRONE_TAG}
-#    volumes:
-#      - name: releases
-#        path: /opt/releases
-#    when:
-#      event:
-#        - tag
+  - name: darwin arm64
+    failure: ignore
+    image: tetafro/golang-gcc:1.17-alpine
+    commands:
+      - cd /drone/src
+      - GOOS=darwin GOARCH=arm64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_arm64 cmd/app/main.go
+      - cp /opt/releases/app_darwin_arm64 /opt/releases/app_darwin_arm64_${DRONE_TAG}
+    volumes:
+      - name: releases
+        path: /opt/releases
+    when:
+      event:
+        - tag
 
 volumes:
   - name: releases
