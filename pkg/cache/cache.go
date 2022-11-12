@@ -1,6 +1,6 @@
 package cache
 
-import "C"
+//import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -42,32 +42,32 @@ func (c *cache) Active() bool {
 
 // формируем ключ кеша
 // addСonditionPath, addСonditionURL - признаки добавления хеша пути и/или запроса в ключе (указываются в кеше блока)
-func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСonditionURL bool) (key, cacheParams string)  {
+func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСonditionURL bool) (key, cacheParams string) {
 	key2 := ""
 	key3 := ""
 
 	// формируем сложный ключ-хеш
 	key1, _ := json.Marshal(uid)
-	key2 = path // переводим в текст параметры пути запроса (/nedra/user)
+	key2 = path                     // переводим в текст параметры пути запроса (/nedra/user)
 	key3 = fmt.Sprintf("%v", query) // переводим в текст параметры строки запроса (?sdf=df&df=df)
 	keyParams := ""
 
 	// учитываем путь и параметры
 	if addСonditionPath && addСonditionURL {
 		key = lib.Hash(string(key1)) + "_" + lib.Hash(key2) + "_" + lib.Hash(key3)
-		keyParams = "url:"+key2+"; params:"+key3
+		keyParams = "url:" + key2 + "; params:" + key3
 	}
 
 	// учитываем только путь
 	if !addСonditionPath && addСonditionURL {
 		key = lib.Hash(string(key1)) + "_" + lib.Hash(key2) + "_"
-		keyParams = "url:"+key2+"; params:"
+		keyParams = "url:" + key2 + "; params:"
 	}
 
 	// учитываем только параметры
 	if addСonditionPath && !addСonditionURL {
 		key = lib.Hash(string(key1)) + "_" + "_" + lib.Hash(key3)
-		keyParams = "url: ; params:"+key3
+		keyParams = "url: ; params:" + key3
 
 	}
 
@@ -88,7 +88,7 @@ func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСondition
 // то сам инициирует обновление кеша (меняя время на свое)
 func (c *cache) SetStatus(key, status string) (err error) {
 	var rows *reindexer.Iterator
-	var deadTime = time.Now().UTC().Add(c.cfg.TimeoutCacheGenerate.Value)	// время, когда статус updated перестанет быть валидным
+	var deadTime = time.Now().UTC().Add(c.cfg.TimeoutCacheGenerate.Value) // время, когда статус updated перестанет быть валидным
 
 	rows = c.DB.Query(c.cfg.Namespace).
 		Where("Uid", reindexer.EQ, key).
@@ -115,7 +115,7 @@ func (c *cache) SetStatus(key, status string) (err error) {
 // получаем:
 // result, status - результат и статус (текст)
 // fresh - признак того, что данные актуальны (свежие)
-func (c *cache) Read(key string) (result, status string, flagExpired bool, err error)  {
+func (c *cache) Read(key string) (result, status string, flagExpired bool, err error) {
 	var rows *reindexer.Iterator
 
 	rows = c.DB.Query(c.cfg.Namespace).
@@ -181,7 +181,7 @@ func (c *cache) Write(key, cacheParams string, cacheInterval int, blockUid, page
 }
 
 // очищаем кеш приложения по заданному критерия (наличия значения в массиве линков)
-func (c *cache) Clear(links string) (count int, err error)  {
+func (c *cache) Clear(links string) (count int, err error) {
 	if links == "all" {
 		// паременты не переданы - удаляем все объекты в заданном неймспейсе
 		c.DB.Query(c.cfg.Namespace).Not().WhereString("Uid", reindexer.EQ, "").Delete()
@@ -204,8 +204,8 @@ func New(cfg model.Config, logger lib.Log, function function.Function) Cache {
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
 	var cach = cache{
-		cfg: cfg,
-		logger: logger,
+		cfg:      cfg,
+		logger:   logger,
 		function: function,
 	}
 
