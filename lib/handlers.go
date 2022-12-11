@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // таймаут срабатывания завершения обработки модулей (через отмену контектста и таймаут внешних запросов)
@@ -195,7 +196,7 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	// Uid-приложения
 	appUid, found := objPage.Data[0].Attr("app", "src")
 	if !found {
-		return template.HTML("Error: Not selected application from this page.")
+		return template.HTML("Error: Not selected application from this page:" + page)
 	}
 
 	// запрос объекта приложения
@@ -248,7 +249,7 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 
 // Собираем страницу
 func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, values map[string]interface{}) string {
-
+	var err error
 	var objMaket, objBlocks ResponseData
 	moduleResult := ModuleResult{}
 	statModule := map[string]interface{}{}
@@ -291,6 +292,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 
 	// 4 из объекта макета берем путь к шаблону + css и js
 	maketFile, _ := objMaket.Data[0].Attr("file", "value")
+	maketFileInside, _ := objMaket.Data[0].Attr("_filecontent_file", "value")
 	maketCSS, _ := objMaket.Data[0].Attr("css", "value")
 	maketJS, _ := objMaket.Data[0].Attr("js", "value")
 	maketJSH, _ := objMaket.Data[0].Attr("jsh", "value")
@@ -412,27 +414,31 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 	// вычитаем не текущий client_path а просто две первых секции из адреса к файлу
 	// позволяем получить доступ к ранее загруженным путям шаблонов другим пользоватем с другим префиксом
 	// ПО-УМОЛЧАНИЮ (для реиспользования модулей и схем)
-	sliceMake := strings.Split(maketFile, "/")
-	maketFile = strings.Join(sliceMake[3:], "/")
 
-	dataFile, _, err := l.vfs.Read(maketFile)
-	if err != nil {
-		return fmt.Sprintf("error vfs.Read, maketFile: %s, err: %s", maketFile, err)
+	// приоритетнее сохраненные в объекте данные
+	var dataFile string
+	if maketFileInside != "" {
+		dataFile = maketFileInside
+	} else {
+		sliceMake := strings.Split(maketFile, "/")
+		maketFile = strings.Join(sliceMake[3:], "/")
+
+		byteFile, _, err := l.vfs.Read(maketFile)
+		if err != nil {
+			return fmt.Sprintf("error vfs.Read, maketFile: %s, err: %s", maketFile, err)
+		}
+		dataFile = string(byteFile)
 	}
-	//maketFile = l.ConfigGet("workdir") + "/"+ maketFile
 
 	// в режиме отладки пересборка шаблонов происходит при каждом запросе
 	if debugMode {
 		//t = template.Must(template.New(maketFile).Funcs(funcMap).ParseFiles(maketFile))
 		//t = template.Must(template.ParseFiles(maketFile))
 		tmp := template.New(maketFile)
-		t, err = tmp.Parse(string(dataFile))
-		//fmt.Printf("%s \n %+v\n", string(dataFile), p)
-
+		t, err = tmp.Parse(dataFile)
 		if err != nil {
 			return fmt.Sprintf("error tmp.Parse, maketFile: %s, data: %s, err: %s", maketFile, string(dataFile), err)
 		}
-
 		t.Execute(&c, p)
 	} else {
 		t.ExecuteTemplate(&c, maketFile, p)
