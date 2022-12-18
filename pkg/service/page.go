@@ -129,6 +129,8 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 
 	// 4 из объекта макета берем путь к шаблону + css и js
 	maketFile, _ := objMaket.Data[0].Attr("file", "value")
+	maketFileInside, _ := objMaket.Data[0].Attr("_filecontent_file", "value")
+
 	maketCSS, _ := objMaket.Data[0].Attr("css", "value")
 	maketJS, _ := objMaket.Data[0].Attr("js", "value")
 	maketJSH, _ := objMaket.Data[0].Attr("jsh", "value")
@@ -267,13 +269,18 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 	// позволяем получить доступ к ранее загруженным путям шаблонов другим пользоватем с другим префиксом
 	// ПО-УМОЛЧАНИЮ (для реиспользования модулей и схем)
 
-	sliceMake := strings.Split(maketFile, "/")
-	maketFile = strings.Join(sliceMake[5:], "/")
+	var dataFile string
+	if maketFileInside != "" {
+		dataFile = maketFileInside
+	} else {
+		sliceMake := strings.Split(maketFile, "/")
+		maketFile = strings.Join(sliceMake[3:], "/")
 
-	dataFile, _, err := s.vfs.Read(maketFile)
-	if err != nil {
-		s.logger.Error(err, "error vfs.Read, maketFile", maketFile)
-		return
+		byteFile, _, err := s.vfs.Read(maketFile)
+		if err != nil {
+			s.logger.Error(err, "error vfs.Read, maketFile", maketFile)
+		}
+		dataFile = string(byteFile)
 	}
 
 	tmp := template.New(maketFile)
