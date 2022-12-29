@@ -3,18 +3,18 @@ package function
 import (
 	"encoding/json"
 	"fmt"
-	api "git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-)
 
+	api "git.lowcodeplatform.net/fabric/api-client"
+	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/fabric/models"
+	uuid "github.com/satori/go.uuid"
+)
 
 type function struct {
 	cfg     model.Config
@@ -32,11 +32,11 @@ type Function interface {
 ////////////////////////////////////////////////////////////
 
 type formula struct {
-	value    string `json:"value"`
+	value    string        `json:"value"`
 	document []models.Data `json:"document"`
 	request  model.ServiceIn
 	inserts  []*insert
-	values   map[string]interface{}	//  параметры переданные в шаблон при генерации страницы (доступны в шаблоне как $.Value)
+	values   map[string]interface{} //  параметры переданные в шаблон при генерации страницы (доступны в шаблоне как $.Value)
 	cfg      model.Config
 	dogfunc  DogFunc
 }
@@ -56,10 +56,10 @@ type Formula interface {
 // Вставка - это одна функция, которая может иметь вложения
 // Text - строка вставки, по которому мы будем заменять в общем тексте
 type insert struct {
-	text 		string 		`json:"text"`
-	arguments 	[]string 	`json:"arguments"`
-	result		interface{} `json:"result"`
-	dogfuncs	dogfunc
+	text      string      `json:"text"`
+	arguments []string    `json:"arguments"`
+	result    interface{} `json:"result"`
+	dogfuncs  dogfunc
 }
 
 // Исчисляемая фукнция с аргументами и параметрами
@@ -117,10 +117,12 @@ func (p *formula) Replace() (result string, err error) {
 	return p.value, err
 }
 
-func (p *formula) Parse() (err error)  {
+func (p *formula) Parse() (err error) {
 
+	// пропускаем если пришло пустое значение. ошибки нет, просто параметр не передали
 	if p.value == "" {
-		return fmt.Errorf("%s", "[Parse] Error. Value is empty.")
+		return nil
+		//return fmt.Errorf("%s", "[Parse] Error. Value is empty.")
 	}
 
 	value := p.value
@@ -141,7 +143,7 @@ func (p *formula) Parse() (err error)  {
 		strFunc1 = strings.Replace(strFunc1, ")", "", -1)
 		f1 := strings.Split(strFunc1, "(")
 
-		if len(f1) == 1 {	// если не нашли ( значит неверно задана @-фукнций
+		if len(f1) == 1 { // если не нашли ( значит неверно задана @-фукнций
 			return fmt.Errorf("%s", "[Parse] Error. Len strFunc1 value is 1.")
 		}
 
@@ -157,7 +159,7 @@ func (p *formula) Parse() (err error)  {
 
 			// очищаем каждый параметр от ' если есть
 			argsClear := []string{}
-			for _, v := range args{
+			for _, v := range args {
 				v = strings.Trim(v, " ")
 				v = strings.Trim(v, "'")
 				argsClear = append(argsClear, v)
@@ -262,34 +264,32 @@ func (p *formula) Calculate() (err error) {
 	return err
 }
 
-func (f *formula) SetValue(value string)  {
+func (f *formula) SetValue(value string) {
 	f.value = value
 }
 
-func (f *formula) SetValues(value map[string]interface{})  {
+func (f *formula) SetValues(value map[string]interface{}) {
 	f.values = value
 }
 
-func (f *formula) SetDocument(value []models.Data)  {
+func (f *formula) SetDocument(value []models.Data) {
 	f.document = value
 }
 
-func (f *formula) SetRequest(value model.ServiceIn)  {
+func (f *formula) SetRequest(value model.ServiceIn) {
 	f.request = value
 }
 
-func (f *formula) SetInserts(value []*insert)  {
+func (f *formula) SetInserts(value []*insert) {
 	f.inserts = value
 }
 
-
 func NewFormula(cfg model.Config, dogfunc DogFunc) Formula {
 	return &formula{
-		cfg: cfg,
+		cfg:     cfg,
 		dogfunc: dogfunc,
 	}
 }
-
 
 ///////////////////////////////////////////////////
 // Фукнции @ обработки
@@ -306,7 +306,7 @@ func (d *dogfunc) Query(r *http.Request, arg []string) (result interface{}, err 
 	var objs models.Response
 	var mode = "id"
 	if len(arg) == 0 {
-		return nil,fmt.Errorf("%s", "Ошибка в переданных параметрах.")
+		return nil, fmt.Errorf("%s", "Ошибка в переданных параметрах.")
 	}
 	if len(arg) == 2 {
 		mode = arg[1]
@@ -442,7 +442,7 @@ func (d *dogfunc) Time(arg []string) (result string, err error) {
 		param := strings.ToUpper(arg[0])
 
 		switch param {
-		case "NOW","THIS":
+		case "NOW", "THIS":
 			result = time.Now().Format("2006-01-02 15:04:05")
 		default:
 			result = time.Now().String()
@@ -458,9 +458,9 @@ func (d *dogfunc) TimeFormat(arg []string) (result string, err error) {
 
 	if len(arg) > 0 {
 
-		thisdate := strings.ToUpper(arg[0])	// переданное время (строка) можно вручную или Now (текущее)
-		mask := strings.ToUpper(arg[1])		// маска для перевода переданного времени в Time
-		format := strings.ToUpper(arg[2])	// формат преобразования времени (как вывести)
+		thisdate := strings.ToUpper(arg[0]) // переданное время (строка) можно вручную или Now (текущее)
+		mask := strings.ToUpper(arg[1])     // маска для перевода переданного времени в Time
+		format := strings.ToUpper(arg[2])   // формат преобразования времени (как вывести)
 		if len(arg) == 4 {
 			valueDefault = strings.ToUpper(arg[2])
 		}
@@ -540,20 +540,20 @@ func (d *dogfunc) Path(dm []models.Data, arg []string) (result string, err error
 			valueDefault = strings.ToUpper(arg[1])
 		}
 
-			switch param {
-			case "API":
-				result = d.cfg.UrlApi
-			case "GUI":
-				result = d.cfg.UrlGui
-			case "PROXY":
-				result = d.cfg.UrlProxy
-			case "CLIENT":
-				result = d.cfg.ClientPath
-			case "DOMAIN":
-				result = d.cfg.Domain
-			default:
-				result = d.cfg.ClientPath
-			}
+		switch param {
+		case "API":
+			result = d.cfg.UrlApi
+		case "GUI":
+			result = d.cfg.UrlGui
+		case "PROXY":
+			result = d.cfg.UrlProxy
+		case "CLIENT":
+			result = d.cfg.ClientPath
+		case "DOMAIN":
+			result = d.cfg.Domain
+		default:
+			result = d.cfg.ClientPath
+		}
 	}
 
 	if result == "" {
@@ -601,7 +601,7 @@ func (d *dogfunc) UserObj(r model.ServiceIn, arg []string) (result string, err e
 
 		if &uu != nil {
 			switch param {
-			case "UID","ID":
+			case "UID", "ID":
 				result = uu.Uid
 			case "PHOTO":
 				result = uu.Photo
@@ -636,7 +636,7 @@ func (d *dogfunc) UserProfile(r model.ServiceIn, arg []string) (result string, e
 		role := uu.CurrentRole
 
 		switch param {
-		case "UID","ID":
+		case "UID", "ID":
 			result = role.Uid
 		case "TITLE":
 			result = role.Title
@@ -645,7 +645,6 @@ func (d *dogfunc) UserProfile(r model.ServiceIn, arg []string) (result string, e
 		default:
 			result = uu.Uid
 		}
-
 
 	}
 	return
@@ -662,7 +661,7 @@ func (d *dogfunc) UserRole(r model.ServiceIn, arg []string) (result string, err 
 		role := uu.CurrentRole
 
 		switch param {
-		case "UID","ID":
+		case "UID", "ID":
 			result = role.Uid
 		case "TITLE":
 			result = role.Title
@@ -689,12 +688,12 @@ func (d *dogfunc) Obj(data []models.Data, arg []string) (result string, err erro
 	var valueDefault, r string
 	var res = []string{}
 	if len(arg) == 0 {
-		err = fmt.Errorf("%s",  "Ошибка в переданных параметрах")
+		err = fmt.Errorf("%s", "Ошибка в переданных параметрах")
 		return
 	}
 
 	param := strings.ToUpper(arg[0])
-	separator := ","	// значение разделителя по-умолчанию
+	separator := "," // значение разделителя по-умолчанию
 
 	if len(arg) == 0 {
 		err = fmt.Errorf("%s", "Ошибка в переданных параметрах.")
@@ -709,7 +708,7 @@ func (d *dogfunc) Obj(data []models.Data, arg []string) (result string, err erro
 
 	for _, d := range data {
 		switch param {
-		case "UID":	// получаем все uid-ы из переданного массива объектов
+		case "UID": // получаем все uid-ы из переданного массива объектов
 			r = d.Uid
 		case "ID":
 			r = d.Id
@@ -739,10 +738,10 @@ func (d *dogfunc) FieldValue(data []models.Data, arg []string) (result string, e
 	var valueDefault, separator string
 	var resSlice = []string{}
 
-	separator = ","	// значение разделителя по-умолчанию
+	separator = "," // значение разделителя по-умолчанию
 
 	if len(arg) == 0 {
-		err = fmt.Errorf("%s",  "Ошибка в переданных параметрах.")
+		err = fmt.Errorf("%s", "Ошибка в переданных параметрах.")
 		return
 	}
 
@@ -776,7 +775,7 @@ func (d *dogfunc) FieldSrc(data []models.Data, arg []string) (result string, err
 	var resSlice = []string{}
 
 	if len(arg) == 0 {
-		err = fmt.Errorf("%s",  "Ошибка в переданных параметрах.")
+		err = fmt.Errorf("%s", "Ошибка в переданных параметрах.")
 		return
 	}
 
@@ -812,12 +811,12 @@ func (d *dogfunc) FieldSplit(data []models.Data, arg []string) (result string, e
 	var r string
 
 	if len(arg) == 0 {
-		err = fmt.Errorf("%s",  "Ошибка в переданных параметрах.")
+		err = fmt.Errorf("%s", "Ошибка в переданных параметрах.")
 		return
 	}
 
 	if len(arg) < 4 {
-		err = fmt.Errorf("%s",  "Error! Count params must have 4 (field, element, separator, number)")
+		err = fmt.Errorf("%s", "Error! Count params must have 4 (field, element, separator, number)")
 		return
 	}
 	field := arg[0]
@@ -840,7 +839,7 @@ func (d *dogfunc) FieldSplit(data []models.Data, arg []string) (result string, e
 		val, found := d.Attr(field, element)
 
 		if !found {
-			err = fmt.Errorf("%s",   "Error! This field is not found.")
+			err = fmt.Errorf("%s", "Error! This field is not found.")
 			return
 		}
 		in := strings.Trim(val, " ")
@@ -851,7 +850,7 @@ func (d *dogfunc) FieldSplit(data []models.Data, arg []string) (result string, e
 		// 3. разделили и получили нужный элемент
 		split_v := strings.Split(in, sep)
 		if len(split_v) < num {
-			err = fmt.Errorf("%s",   "Error! Array size is less than the passed number")
+			err = fmt.Errorf("%s", "Error! Array size is less than the passed number")
 			return
 		}
 
@@ -871,7 +870,7 @@ func (d *dogfunc) FieldSplit(data []models.Data, arg []string) (result string, e
 func (d *dogfunc) DateModify(arg []string) (result string, err error) {
 
 	if len(arg) < 2 {
-		err = fmt.Errorf("%s",   "Error! Count params must have min 2 (date, modificator; option: format)")
+		err = fmt.Errorf("%s", "Error! Count params must have min 2 (date, modificator; option: format)")
 		return
 	}
 	dateArg := arg[0]
@@ -901,7 +900,7 @@ func (d *dogfunc) DateModify(arg []string) (result string, err error) {
 // Отправляем почтового сообщения
 func (d *dogfunc) DogSendmail(arg []string) (result string, err error) {
 	if len(arg) < 9 {
-		err = fmt.Errorf("%s",    "Error! Count params must have min 9 (server, port, user, pass, from, to, subject, message, turbo: string)")
+		err = fmt.Errorf("%s", "Error! Count params must have min 9 (server, port, user, pass, from, to, subject, message, turbo: string)")
 		return
 	}
 	result = d.tplfunc.Sendmail(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8])
@@ -911,12 +910,11 @@ func (d *dogfunc) DogSendmail(arg []string) (result string, err error) {
 
 func NewDogFunc(cfg model.Config, tplfunc TplFunc, api api.Api) DogFunc {
 	return &dogfunc{
-		cfg: cfg,
+		cfg:     cfg,
 		tplfunc: tplfunc,
-		api: api,
+		api:     api,
 	}
 }
-
 
 ///////////////////////////////////////////////////////////////
 // Собачья-обработка (поиск в строке @функций и их обработка)
@@ -960,10 +958,10 @@ func New(cfg model.Config, logger lib.Log, api api.Api) Function {
 	formula := NewFormula(cfg, dogfunc)
 
 	return &function{
-		cfg: cfg,
+		cfg:     cfg,
 		formula: formula,
 		dogfunc: dogfunc,
 		tplfunc: tplfunc,
-		api: api,
+		api:     api,
 	}
 }
