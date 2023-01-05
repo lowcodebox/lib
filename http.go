@@ -130,7 +130,10 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		var portDataAPI models.Response
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
-		Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		_, err := Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		if err != nil {
+			return "", err
+		}
 		port = fmt.Sprint(portDataAPI.Data)
 	}
 
