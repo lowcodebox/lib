@@ -193,8 +193,6 @@ func (v *vfs) Write(file string, data []byte) (err error) {
 
 // List список файлов выбранного
 func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
-	fmt.Printf("init list vfs. connect:%+v, prefix: %s\n", v, prefix)
-
 	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
 		if err != nil {
 			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
