@@ -35,11 +35,15 @@ type Config struct {
 	MoneyGate        string `envconfig:"MONEY_GATE" default:"https://payment.yandex.net/api/v3/payments"`
 
 	ClientPath string `envconfig:"CLIENT_PATH" default:""`
-	UrlProxy   string `envconfig:"URL_PROXY" default:""`
 	UrlGui     string `envconfig:"URL_GUI" default:""`
+	UrlProxy   string `envconfig:"URL_PROXY" default:""`
 	UrlApi     string `envconfig:"URL_API" default:""`
 	UrlIam     string `envconfig:"URL_IAM" default:""`
 	UidService string `envconfig:"UID_SERVICE" default:""`
+
+	PortInterval    string `envconfig:"PORT_INTERVAL" default:""`
+	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`
+	ProxyPointvalue string `envconfig:"PROXY_POINTVALUE" default:""`
 
 	// Logger
 	LogsDir               string   `envconfig:"LOGS_DIR" default:"logs"`
@@ -80,8 +84,6 @@ type Config struct {
 	AccessReadPointvalue   string `envconfig:"ACCESS_READ_POINTVALUE" default:""`
 	AccessWritePointsrc    string `envconfig:"ACCESS_WRITE_POINTSRC" default:""`
 	AccessWritePointvalue  string `envconfig:"ACCESS_WRITE_POINTVALUE" default:""`
-	AddressProxyPointsrc   string `envconfig:"ADDRESS_PROXY_POINTSRC" default:""`
-	AddressProxyPointvalue string `envconfig:"ADDRESS_PROXY_POINTVALUE" default:""`
 	AppLevelLogsPointsrc   string `envconfig:"APP_LEVEL_LOGS_POINTSRC" default:""`
 	AppLevelLogsPointvalue string `envconfig:"APP_LEVEL_LOGS_POINTVALUE" default:""`
 	AppVersionPointsrc     string `envconfig:"APP_VERSION_POINTSRC" default:""`
@@ -108,10 +110,9 @@ type Config struct {
 	Metric    string `envconfig:"METRIC" default:""`
 	Namespace string `envconfig:"NAMESPACE" default:""`
 
-	PathTemplates    string `envconfig:"PATH_TEMPLATES" default:""`
-	PortApp          string `envconfig:"PORT_APP" default:""`
-	PortAutoInterval string `envconfig:"PORT_AUTO_INTERVAL" default:""`
-	Projectuid       string `envconfig:"PROJECTUID" default:""`
+	PathTemplates string `envconfig:"PATH_TEMPLATES" default:""`
+	Projectuid    string `envconfig:"PROJECTUID" default:""`
+	PortApp       string `envconfig:"PORT_APP" default:""`
 
 	ReplicasApp Int    `envconfig:"REPLICAS_APP" default:""`
 	Robot       string `envconfig:"ROBOT" default:""`

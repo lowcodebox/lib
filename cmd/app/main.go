@@ -111,7 +111,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	}
 	// инициализируем кеширование
 	cfg.Namespace = strings.ReplaceAll(cfg.Domain, "/", "_")
-	cfg.UrlProxy = cfg.AddressProxyPointsrc
+	cfg.UrlProxy = cfg.ProxyPointsrc
 
 	// инициализировать лог и его ротацию
 	var logger = lib.NewLogger(
@@ -184,7 +184,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	go ses.Cleaner(ctx)
 
 	if port == "" {
-		port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortAutoInterval)
+		port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortInterval)
 		if err != nil {
 			fmt.Println(err)
 			return
