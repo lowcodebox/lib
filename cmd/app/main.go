@@ -84,7 +84,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	if cfg.VfsBucket == "" {
 		cfg.VfsBucket = strings.Replace(cfg.Domain, "/", "_", -1)
 	}
-	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyID, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
 	err = vfs.Connect()
 	if err != nil {
 		fmt.Printf("%s Error connect to filestorage: %s\n", fail, err)

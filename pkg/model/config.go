@@ -10,7 +10,7 @@ type Config struct {
 	VfsBucket      string `envconfig:"VFS_BUCKET" default:"buildbox"`
 	VfsKind        string `envconfig:"VFS_KIND" default:"s3"`
 	VfsEndpoint    string `envconfig:"VFS_ENDPOINT" default:"http://127.0.0.1:9000"`
-	VfsAccessKeyID string `envconfig:"VFS_ACCESS_KEY_ID" default:"minioadmin"`
+	VfsAccessKeyId string `envconfig:"VFS_ACCESS_KEY_ID" default:"minioadmin"`
 	VfsSecretKey   string `envconfig:"VFS_SECRET_KEY" default:"minioadmin"`
 	VfsRegion      string `envconfig:"VFS_REGION" default:""`
 	VfsComma       string `envconfig:"VFS_COMMA" default:""`
