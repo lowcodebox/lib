@@ -1,12 +1,13 @@
 package httpserver
 
 import (
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
-	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 	"net/http/pprof"
 	"strings"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
+	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Result struct {

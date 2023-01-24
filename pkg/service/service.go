@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"time"
 
 	api "git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/app/pkg/block"
@@ -15,6 +18,21 @@ import (
 	"git.lowcodeplatform.net/fabric/models"
 )
 
+const queryPublicPages = "sys_public_pages"
+
+// список роутеров, для который пропускается авторизация клиента
+var constPublicLink = map[string]bool{
+	"/ping":      true,
+	"/templates": true,
+	"/upload":    true,
+}
+
+// динамические параметры, которые могут меняться через асинхронные шедулеры (повышение производительности)
+type dynamicParams struct {
+	PublicPages  map[string]bool
+	PublicRoutes map[string]bool
+}
+
 type service struct {
 	logger   lib.Log
 	cfg      model.Config
@@ -27,6 +45,7 @@ type service struct {
 	api      api.Api
 	iam      iam.IAM
 	vfs      lib.Vfs
+	dps      dynamicParams
 }
 
 // Service interface
@@ -38,9 +57,12 @@ type Service interface {
 	Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error)
 	Cache(ctx context.Context, in model.ServiceCacheIn) (out model.RestStatus, err error)
 	AuthChangeRole(ctx context.Context, in model.ServiceAuthIn) (out model.ServiceAuthOut, err error)
+
+	GetDynamicParams() *dynamicParams
 }
 
 func New(
+	ctx context.Context,
 	logger lib.Log,
 	cfg model.Config,
 	metrics lib.ServiceMetric,
@@ -51,9 +73,17 @@ func New(
 	iam iam.IAM,
 	vfs lib.Vfs,
 ) Service {
+	var dps = dynamicParams{
+		PublicPages:  map[string]bool{},
+		PublicRoutes: constPublicLink,
+	}
+
 	var tplfunc = function.NewTplFunc(cfg, logger, api)
 	var function = function.New(cfg, logger, api)
 	var blocks = block.New(cfg, logger, function, tplfunc, api, vfs)
+
+	// асинхронно обновляем список публичный страниц/блоков
+	go dps.reloadPublicPages(ctx, api, 10*time.Second)
 
 	return &service{
 		logger,
@@ -67,5 +97,46 @@ func New(
 		api,
 		iam,
 		vfs,
+		dps,
 	}
+}
+
+// ReloadFromPG обновляем meta если обновилось время в кипере (изменили данные и нажали - обновить в сервисе)
+func (d *dynamicParams) reloadPublicPages(ctx context.Context, api api.Api, intervalReload time.Duration) {
+	var objs = models.ResponseData{}
+	ticker := time.NewTicker(intervalReload)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			res, err := api.Query(queryPublicPages, http.MethodGet, "")
+			if err != nil {
+				ticker = time.NewTicker(intervalReload)
+				continue
+			}
+			err = json.Unmarshal([]byte(res), &objs)
+			if err != nil {
+				ticker = time.NewTicker(intervalReload)
+				continue
+			}
+
+			resD := map[string]bool{}
+			for _, v := range objs.Data {
+				resD[v.Uid] = true
+				if v.Id != "" {
+					resD[v.Id] = true
+				}
+			}
+			d.PublicPages = resD
+
+			ticker = time.NewTicker(intervalReload)
+		}
+	}
+}
+
+func (s *service) GetDynamicParams() *dynamicParams {
+	return &s.dps
 }

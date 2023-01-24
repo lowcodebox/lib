@@ -63,6 +63,7 @@ func main() {
 // Start стартуем сервис приложения
 func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourcedb, action, version string) {
 	var cfg model.Config
+
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
 
@@ -200,6 +201,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 
 	// собираем сервис
 	src := service.New(
+		ctx,
 		logger,
 		cfg,
 		metrics,

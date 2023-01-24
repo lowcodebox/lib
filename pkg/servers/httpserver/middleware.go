@@ -3,11 +3,12 @@ package httpserver
 import (
 	"context"
 	"fmt"
-	"git.lowcodeplatform.net/fabric/lib"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"git.lowcodeplatform.net/fabric/lib"
 )
 
 func (h *httpserver) MiddleLogger(next http.Handler, name string, logger lib.Log, serviceMetrics lib.ServiceMetric) http.Handler {
@@ -16,7 +17,7 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string, logger lib.Log
 
 		next.ServeHTTP(w, r)
 		timeInterval := time.Since(start)
-		if name != "ProxyPing"  { //&& false == true
+		if name != "ProxyPing" { //&& false == true
 			mes := fmt.Sprintf("Query: %s %s %s %s",
 				r.Method,
 				r.RequestURI,
@@ -34,9 +35,38 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var authKey string
 		var err error
+		var flagPublicPages bool
+		var flagPublicRoutes bool
+		dps := h.src.GetDynamicParams()
 
-		// пропускаем пинги	и другие сервисные запросы
-		if r.URL.Path == "/ping" || strings.Contains(r.URL.Path, "/templates") || strings.Contains(r.URL.Path, "/upload") {
+		r.ParseForm()
+		for k, _ := range r.Form {
+			if h.src.GetDynamicParams().PublicPages[k] {
+				flagPublicPages = true
+				break
+			}
+		}
+		// возможно передача параметров была через /
+		if !flagPublicPages {
+			for _, k := range strings.Split(r.RequestURI, "/") {
+				if dps.PublicPages[k] {
+					flagPublicPages = true
+					break
+				}
+			}
+		}
+		// обращение к публичному урлу
+		if !flagPublicPages {
+			for k, _ := range dps.PublicPages {
+				if strings.Contains(r.URL.Path, k) {
+					flagPublicRoutes = true
+					break
+				}
+			}
+		}
+
+		// пропускаем разрешенные страницы/пути
+		if flagPublicPages || flagPublicRoutes {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -79,7 +109,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			if err == nil && authKey != "<nil>" && authKey != "" {
 				// заменяем куку у пользователя в браузере
 				cookie := &http.Cookie{
-					Path: "/",
+					Path:   "/",
 					Name:   "X-Auth-Key",
 					Value:  authKey,
 					MaxAge: 30000,
@@ -103,7 +133,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		// добавляем значение токена в локальный реестр сесссий (ПЕРЕДЕЛАТЬ)
 		if token != nil {
-			var flagUpdateRevision bool	// флаг того, что надо обновить сессию в хранилище через запрос к IAM
+			var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
 
 			prof, _ := h.session.GetProfile(token.Session)
 			if prof == nil {
@@ -170,4 +200,3 @@ func (h *httpserver) HttpsOnly(next http.Handler) http.Handler {
 		http.Redirect(w, req, target, http.StatusTemporaryRedirect)
 	})
 }
-

@@ -3,6 +3,8 @@ package httpserver
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
 	"git.lowcodeplatform.net/fabric/app/pkg/session"
@@ -10,7 +12,6 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	bbmetric "git.lowcodeplatform.net/fabric/lib"
 	"github.com/labstack/gommon/color"
-	"net/http"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -36,6 +37,7 @@ type Server interface {
 // Run server
 func (h *httpserver) Run() error {
 	done := color.Green("[OK]")
+	fail := color.Red("[NO]")
 
 	// закрываем логи при завешрении работы сервера
 	defer func() {
@@ -49,7 +51,7 @@ func (h *httpserver) Run() error {
 	//}
 	srv := &http.Server{
 		Addr:         ":" + h.cfg.PortApp,
-		Handler:      h.NewRouter(false),	// переадресация будет работать, если сам севрис будет стартовать https-сервер (для этого надо получать сертфикаты)
+		Handler:      h.NewRouter(false), // переадресация будет работать, если сам севрис будет стартовать https-сервер (для этого надо получать сертфикаты)
 		ReadTimeout:  h.cfg.ReadTimeout.Value,
 		WriteTimeout: h.cfg.WriteTimeout.Value,
 	}
@@ -59,19 +61,19 @@ func (h *httpserver) Run() error {
 
 	e := srv.ListenAndServe()
 	if e != nil {
+		fmt.Printf("%s Error run (port:%s) err: %s\n", fail, h.cfg.PortApp, e)
 		return errors.Wrap(e, "SERVER run")
 	}
 	return nil
 }
 
-
 func New(
-	ctx 	context.Context,
-	cfg 	model.Config,
-	src 	service.Service,
-	metric 	bbmetric.ServiceMetric,
-	logger 	lib.Log,
-	iam 	iam.IAM,
+	ctx context.Context,
+	cfg model.Config,
+	src service.Service,
+	metric bbmetric.ServiceMetric,
+	logger lib.Log,
+	iam iam.IAM,
 	session session.Session,
 ) Server {
 	return &httpserver{
