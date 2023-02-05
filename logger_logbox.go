@@ -32,6 +32,7 @@ func NewLogboxLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err err
 
 	l := &log{
 		Output:  output,
+		Config:  cfg.Config,
 		Levels:  cfg.Level,
 		UID:     cfg.Uid,
 		Name:    cfg.Name,
