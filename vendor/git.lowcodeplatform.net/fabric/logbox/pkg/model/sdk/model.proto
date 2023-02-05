@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package logbox_client;
+
+option go_package = ".";
+
+message Event {
+	string config = 1;
+	string level = 2;
+	string msg = 3;
+	string name = 4;
+	string srv = 5;
+	string time = 6;
+	string uid = 7;
+}
+
+message UpsertRequest {
+	repeated Event Events = 1;
+}
+
+message UpsertResponse {
+	bool status = 1;
+	string error = 2;
+}
+
+service Logbox {
+	rpc Upsert(UpsertRequest) returns (UpsertResponse);
+}

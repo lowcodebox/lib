@@ -4,12 +4,9 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
-	"runtime/debug"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -84,6 +81,11 @@ type log struct {
 	// период хранения файлов лет-месяцев-дней (например: 0-1-0 - хранить 1 месяц)
 	PeriodSaveFiles string `json:"period_save_files"`
 
+	// путь к сервису отправки логов в хранилище (Logbox)
+	LogboxURL string
+	// интервал отправки (в промежутках сохраняем в буфер)
+	LogboxSendInterval time.Duration
+
 	File *os.File
 
 	mux *sync.Mutex
@@ -97,9 +99,7 @@ type Log interface {
 	Error(err error, args ...interface{})
 	Panic(err error, args ...interface{})
 	Exit(err error, args ...interface{})
-	RotateInit(ctx context.Context)
-	GetOutput() io.Writer
-	GetFile() *os.File
+
 	Close()
 }
 
@@ -215,172 +215,6 @@ func (l *log) Exit(err error, args ...interface{}) {
 	}
 }
 
-// RotateInit Переинициализация файла логирования
-func (l *log) RotateInit(ctx context.Context) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	l.IntervalReload = 5 * time.Second
-
-	defer func() {
-		rec := recover()
-		if rec != nil {
-			b := string(debug.Stack())
-			fmt.Printf("panic in loggier (RotateInit). stack: %+v", b)
-			//cancel()
-			//os.Exit(1)
-		}
-	}()
-
-	// попытка обновить файл (раз в 10 минут)
-	go func() {
-		ticker := time.NewTicker(l.IntervalReload)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				l.File.Close() // закрыл старый файл
-				b := NewLogger(l.Dir, l.Levels, l.UID, l.Name, l.Service, l.Config, l.IntervalReload, l.IntervalClearFiles, l.PeriodSaveFiles)
-
-				l.Output = b.GetOutput()
-				l.File = b.GetFile() // передал указатель на новый файл в структуру лога
-				ticker = time.NewTicker(l.IntervalReload)
-			}
-		}
-	}()
-
-	// попытка очистки старых файлов (каждые пол часа)
-	go func() {
-		ticker := time.NewTicker(l.IntervalClearFiles)
-		defer ticker.Stop()
-
-		// получаем период, через который мы будем удалять файлы
-		period := l.PeriodSaveFiles
-		if period == "" {
-			l.Error(fmt.Errorf("%s", "Fail perion save log files. (expected format: year-month-day; eg: 0-1-0)"))
-			return
-		}
-		slPeriod := strings.Split(period, "-")
-		if len(slPeriod) < 3 {
-			l.Error(fmt.Errorf("%s", "Fail perion save log files. (expected format: year-month-day; eg: 0-1-0)"))
-			return
-		}
-
-		// получаем числовые значения года месяца и дня для расчета даты удаления файлов
-		year, err := strconv.Atoi(slPeriod[0])
-		if err != nil {
-			l.Error(err, "Fail converted Year from period saved log files. (expected format: year-month-day; eg: 0-1-0)")
-		}
-		month, err := strconv.Atoi(slPeriod[1])
-		if err != nil {
-			l.Error(err, "Fail converted Month from period saved log files. (expected format: year-month-day; eg: 0-1-0)")
-		}
-		day, err := strconv.Atoi(slPeriod[2])
-		if err != nil {
-			l.Error(err, "Fail converted Day from period saved log files. (expected format: year-month-day; eg: 0-1-0)")
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				oneMonthAgo := time.Now().AddDate(-year, -month, -day) // minus 1 месяц
-				fileMonthAgoDate := oneMonthAgo.Format("2006.01.02")
-
-				// пробегаем директорию и читаем все файлы, если имя меньше текущее время - месяц = удаляем
-				directory, _ := os.Open(l.Dir)
-				objects, err := directory.Readdir(-1)
-				if err != nil {
-					l.Error(err, "Error read directory: ", directory)
-					return
-				}
-
-				for _, obj := range objects {
-					filename := obj.Name()
-					filenameMonthAgoDate := fileMonthAgoDate + "_" + l.Service
-
-					if filenameMonthAgoDate > filename {
-						pathFile := l.Dir + sep + filename
-						err = os.Remove(pathFile)
-						if err != nil {
-							l.Error(err, "Error deleted file: ", pathFile)
-							return
-						}
-					}
-				}
-				ticker = time.NewTicker(l.IntervalClearFiles)
-			}
-		}
-	}()
-}
-
-func (l *log) GetOutput() io.Writer {
-	l.mux.Lock()
-	defer l.mux.Unlock()
-
-	return l.Output
-}
-
-func (l *log) GetFile() *os.File {
-
-	return l.File
-}
-
 func (l *log) Close() {
 	l.File.Close()
-}
-
-func NewLogger(logsDir, level, uid, name, srv, config string, intervalReload, intervalClearFiles time.Duration, periodSaveFiles string) Log {
-	var output io.Writer
-	var file *os.File
-	var err error
-	var mode os.FileMode
-	m := sync.Mutex{}
-
-	datefile := time.Now().Format("2006.01.02")
-	logName := datefile + "_" + srv + "_" + uid + ".log"
-
-	// создаем/открываем файл логирования и назначаем его логеру
-	mode = 0711
-	CreateDir(logsDir, mode)
-	if err != nil {
-		logrus.Error(err, "Error creating directory")
-		return nil
-	}
-
-	pathFile := logsDir + "/" + logName
-
-	if !IsExist(pathFile) {
-		err := CreateFile(pathFile)
-		if err != nil {
-			logrus.Error(err, "Error creating file")
-			return nil
-		}
-	}
-
-	file, err = os.OpenFile(pathFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	output = file
-	if err != nil {
-		logrus.Panic(err, "error opening file")
-		return nil
-	}
-
-	return &log{
-		Output:             output,
-		Levels:             level,
-		UID:                uid,
-		Name:               name,
-		Service:            srv,
-		Dir:                logsDir,
-		Config:             config,
-		IntervalReload:     intervalReload,
-		IntervalClearFiles: intervalClearFiles,
-		PeriodSaveFiles:    periodSaveFiles,
-		mux:                &m,
-		File:               file,
-	}
 }
