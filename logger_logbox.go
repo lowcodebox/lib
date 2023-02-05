@@ -53,12 +53,12 @@ func (v *logboxSender) Write(p []byte) (n int, err error) {
 	defer cancel()
 
 	newReq := v.logboxClient.NewUpsertReq()
-	recordsBytes := bytes.Split(p, []byte("\n"))
+	recordsBytes := bytes.Split(p, []byte("\n\n"))
 	for _, value := range recordsBytes {
 		l := LogLine{}
 		err = json.Unmarshal(value, &l)
 		if err != nil {
-			return 0, fmt.Errorf("error unmarshal to logline. err: %s", err)
+			return 0, fmt.Errorf("error unmarshal to logline. err: %s, value: %s", err, string(value))
 		}
 		newReq.AddEvent(*v.logboxClient.NewEvent(l.Config, l.Level, l.Msg.(string), l.Name, l.Srv, l.Time, l.Uid))
 	}
