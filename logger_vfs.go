@@ -27,9 +27,7 @@ func NewVfsLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err error)
 		return nil, err
 	}
 
-	datefile := time.Now().Format("2006.01.02")
-	logName := "/" + cfg.Vfs.Dir + "/" + datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
-	sender := newVfsSender(vfs, logName)
+	sender := newVfsSender(ctx, vfs, cfg.Vfs.Dir, cfg.Srv, cfg.Uid, cfg.Vfs.IntervalReload)
 	output = sender
 
 	l := &log{
@@ -65,9 +63,34 @@ func (v *vfsSender) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func newVfsSender(vfsStorage Vfs, file string) io.Writer {
-	return &vfsSender{
+func newVfsSender(ctx context.Context, vfsStorage Vfs, dir, srv, uid string, intervalReload time.Duration) io.Writer {
+
+	sender := &vfsSender{
 		vfsStorage,
-		file,
+		"",
 	}
+
+	//datefile := time.Now().Format("2006.01.02")
+	datefile := time.Now().Format("2006.01.02")
+	sender.file = "/" + dir + "/" + datefile + "_" + srv + "_" + uid + ".log"
+
+	// попытка обновить файл (раз в 10 минут)
+	go func() {
+		ticker := time.NewTicker(intervalReload)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				datefile = time.Now().Format("2006.01.02")
+
+				sender.file = "/" + dir + "/" + datefile + "_" + srv + "_" + uid + ".log"
+				ticker = time.NewTicker(intervalReload)
+			}
+		}
+	}()
+
+	return sender
 }
