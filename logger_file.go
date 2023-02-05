@@ -15,7 +15,7 @@ import (
 )
 
 type ConfigFileLogger struct {
-	Dir, Level, Uid, Name, Srv, Config string
+	Dir                                string
 	IntervalReload, IntervalClearFiles time.Duration
 	PeriodSaveFiles                    string
 }
@@ -90,7 +90,7 @@ func (l *log) fileLoggerClearing(ctx context.Context) {
 }
 
 // NewFileLogger инициируем логер, которых хранит логи в файлах по указанному пути
-func NewFileLogger(ctx context.Context, cfg ConfigFileLogger) (Log, error) {
+func NewFileLogger(ctx context.Context, cfg ConfigLogger) (Log, error) {
 	var output io.Writer
 	var file *os.File
 	var err error
@@ -103,11 +103,11 @@ func NewFileLogger(ctx context.Context, cfg ConfigFileLogger) (Log, error) {
 		UID:                cfg.Uid,
 		Name:               cfg.Name,
 		Service:            cfg.Srv,
-		Dir:                cfg.Dir,
 		Config:             cfg.Config,
-		IntervalReload:     cfg.IntervalReload,
-		IntervalClearFiles: cfg.IntervalClearFiles,
-		PeriodSaveFiles:    cfg.PeriodSaveFiles,
+		Dir:                cfg.File.Dir,
+		IntervalReload:     cfg.File.IntervalReload,
+		IntervalClearFiles: cfg.File.IntervalClearFiles,
+		PeriodSaveFiles:    cfg.File.PeriodSaveFiles,
 		mux:                &m,
 		File:               file,
 	}
@@ -119,13 +119,13 @@ func NewFileLogger(ctx context.Context, cfg ConfigFileLogger) (Log, error) {
 
 	// создаем/открываем файл логирования и назначаем его логеру
 	mode = 0711
-	err = CreateDir(cfg.Dir, mode)
+	err = CreateDir(cfg.File.Dir, mode)
 	if err != nil {
 		logrus.Error(err, "Error creating directory")
 		return nil, err
 	}
 
-	pathFile := cfg.Dir + "/" + logName
+	pathFile := cfg.File.Dir + "/" + logName
 	if !IsExist(pathFile) {
 		err = CreateFile(pathFile)
 		if err != nil {
@@ -165,7 +165,7 @@ func NewFileLogger(ctx context.Context, cfg ConfigFileLogger) (Log, error) {
 				l.File.Close() // закрыл старый файл
 				datefile = time.Now().Format("2006.01.02")
 				logName = datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
-				pathFile = cfg.Dir + "/" + logName
+				pathFile = cfg.File.Dir + "/" + logName
 				if !IsExist(pathFile) {
 					err := CreateFile(pathFile)
 					if err != nil {

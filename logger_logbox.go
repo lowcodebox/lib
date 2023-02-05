@@ -14,21 +14,20 @@ import (
 
 type ConfigLogboxLogger struct {
 	Endpoint, AccessKeyID, SecretKey string
-	Level, Uid, Name, Srv, Config    string
 	RequestTimeout                   time.Duration
 }
 
 // NewLogboxLogger инициализация логер, которых отправляет логи на сервер сбора (logbox)
-func NewLogboxLogger(ctx context.Context, cfg ConfigLogboxLogger) (logger Log, err error) {
+func NewLogboxLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err error) {
 	var output io.Writer
 	m := sync.Mutex{}
 
-	client, err := logboxclient.New(ctx, cfg.Endpoint, 10*time.Second)
+	client, err := logboxclient.New(ctx, cfg.Logbox.Endpoint, 10*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("error create connection whith logbox-server. err: %s", err)
 	}
 
-	sender := newLogboxSender(client, cfg.RequestTimeout)
+	sender := newLogboxSender(client, cfg.Logbox.RequestTimeout)
 	output = sender
 
 	l := &log{

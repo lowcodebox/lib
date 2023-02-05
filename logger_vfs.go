@@ -10,25 +10,25 @@ import (
 
 type ConfigVfsLogger struct {
 	Kind, Endpoint, AccessKeyID, SecretKey, Region, Bucket, Comma string
-	Dir, Level, Uid, Name, Srv, Config                            string
+	Dir                                                           string
 	IntervalReload                                                time.Duration
 }
 
 // NewVfsLogger инициализация отправки логов на сервер сбора
 // ВНИМАНИЕ! крайне неэффективно
 // при добавлении лога выкачивется весь файл лога, добавляется строка и перезаписывается
-func NewVfsLogger(ctx context.Context, cfg ConfigVfsLogger) (logger Log, err error) {
+func NewVfsLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err error) {
 	var output io.Writer
 	m := sync.Mutex{}
 
-	vfs := NewVfs(cfg.Kind, cfg.Endpoint, cfg.AccessKeyID, cfg.SecretKey, cfg.Region, cfg.Bucket, cfg.Comma)
+	vfs := NewVfs(cfg.Vfs.Kind, cfg.Vfs.Endpoint, cfg.Vfs.AccessKeyID, cfg.Vfs.SecretKey, cfg.Vfs.Region, cfg.Vfs.Bucket, cfg.Vfs.Comma)
 	err = vfs.Connect()
 	if err != nil {
 		return nil, err
 	}
 
 	datefile := time.Now().Format("2006.01.02")
-	logName := cfg.Dir + "/" + datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
+	logName := cfg.Vfs.Dir + "/" + datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
 
 	sender := newVfsSender(vfs, logName)
 	output = sender
@@ -39,7 +39,7 @@ func NewVfsLogger(ctx context.Context, cfg ConfigVfsLogger) (logger Log, err err
 		UID:            cfg.Uid,
 		Name:           cfg.Name,
 		Service:        cfg.Srv,
-		IntervalReload: cfg.IntervalReload,
+		IntervalReload: cfg.Vfs.IntervalReload,
 		mux:            &m,
 	}
 

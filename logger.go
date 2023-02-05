@@ -4,6 +4,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -89,6 +90,16 @@ type log struct {
 	File *os.File
 
 	mux *sync.Mutex
+}
+
+// ConfigLogger общий конфигуратор логирования
+type ConfigLogger struct {
+	Level, Uid, Name, Srv, Config string
+
+	File     ConfigFileLogger
+	Vfs      ConfigVfsLogger
+	Logbox   ConfigLogboxLogger
+	Priority []string
 }
 
 type Log interface {
@@ -217,4 +228,48 @@ func (l *log) Exit(err error, args ...interface{}) {
 
 func (l *log) Close() {
 	l.File.Close()
+}
+
+func NewLogger(ctx context.Context, cfg ConfigLogger) (logger Log, initType string, err error) {
+	var errI error
+	err = fmt.Errorf("logger init")
+
+	for _, v := range cfg.Priority {
+
+		if v == "file" && err != nil {
+			// инициализировать лог и его ротацию
+			logger, errI = NewFileLogger(ctx, cfg)
+			if errI != nil {
+				err = fmt.Errorf("%s %s failed init files-logger, (err: %s)", err, "&#8594;", errI)
+			} else {
+				initType = v
+				err = nil
+			}
+		}
+
+		if v == "vfs" && err != nil {
+			// инициализировать лог и его ротацию
+			logger, errI = NewVfsLogger(ctx, cfg)
+			if errI != nil {
+				err = fmt.Errorf("%s %s failed init files-vfs, (err: %s)", err, "&#8594;", errI)
+			} else {
+				initType = v
+				err = nil
+			}
+		}
+
+		if v == "logbox" && err != nil {
+			// инициализировать лог и его ротацию
+			logger, errI = NewLogboxLogger(ctx, cfg)
+			if errI != nil {
+				err = fmt.Errorf("%s %s failed init files-logbox, (err: %s)", err, "&#8594;", errI)
+			} else {
+				initType = v
+				err = nil
+			}
+		}
+
+	}
+
+	return logger, initType, err
 }
