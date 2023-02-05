@@ -237,10 +237,17 @@ func NewLogger(ctx context.Context, cfg ConfigLogger) (logger Log, initType stri
 	for _, v := range cfg.Priority {
 
 		if v == "file" && err != nil {
+			// если путь указан относительно / значит задан абсолютный путь, иначе в директории
+			if cfg.File.Dir[:1] != sep {
+				rootDir, _ := RootDir()
+				cfg.File.Dir = rootDir + sep + "logs" + sep + cfg.File.Dir
+			}
+
 			// инициализировать лог и его ротацию
 			logger, errI = NewFileLogger(ctx, cfg)
 			if errI != nil {
 				err = fmt.Errorf("%s %s failed init files-logger, (err: %s)", err, "&#8594;", errI)
+				fmt.Println(err, cfg)
 			} else {
 				initType = v
 				err = nil
@@ -249,9 +256,18 @@ func NewLogger(ctx context.Context, cfg ConfigLogger) (logger Log, initType stri
 
 		if v == "vfs" && err != nil {
 			// инициализировать лог и его ротацию
+			vs := strings.Split(cfg.Vfs.Dir, sep) // берем только последнее значение в пути для vfs-логера
+			vs = vs[len(vs)-1:]
+			if len(vs) != 0 {
+				cfg.Vfs.Dir = "logs"
+			}
+
+			// инициализировать лог и его ротацию
 			logger, errI = NewVfsLogger(ctx, cfg)
+			fmt.Println(logger, errI)
 			if errI != nil {
 				err = fmt.Errorf("%s %s failed init files-vfs, (err: %s)", err, "&#8594;", errI)
+				fmt.Println(err, cfg)
 			} else {
 				initType = v
 				err = nil

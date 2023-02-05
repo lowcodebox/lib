@@ -28,8 +28,7 @@ func NewVfsLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err error)
 	}
 
 	datefile := time.Now().Format("2006.01.02")
-	logName := cfg.Vfs.Dir + "/" + datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
-
+	logName := "/" + cfg.Vfs.Dir + "/" + datefile + "_" + cfg.Srv + "_" + cfg.Uid + ".log"
 	sender := newVfsSender(vfs, logName)
 	output = sender
 
