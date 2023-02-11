@@ -1,3 +1,3 @@
 # models
 
-Модели общих сущностей проекта Buildbox Fabric
+Модели общих сущностей проекта Lowcodeplatform Fabric

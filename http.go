@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -143,4 +145,42 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 	}
 
 	return port, err
+}
+
+func Ping(version, project, domain, port, grpc, metric, uid, state string, replicas int) (result []models.Pong, err error) {
+	name := "unknown"
+
+	if project != "" {
+		name = project // название проекта
+	}
+
+	// TODO deplicated - удалить когда все сервисы переедут на адресацию по короткому имени проекта
+	if version == "" || name == "" {
+		pp := strings.Split(domain, "/")
+		if len(pp) == 1 {
+			if pp[0] != "" {
+				name = pp[0]
+			}
+		}
+		if len(pp) == 2 {
+			if pp[0] != "" {
+				name = pp[0]
+			}
+			if pp[1] != "" {
+				version = pp[1]
+			}
+		}
+	}
+
+	pg, _ := strconv.Atoi(port)
+	gp, _ := strconv.Atoi(grpc)
+	mp, _ := strconv.Atoi(metric)
+	pid := strconv.Itoa(os.Getpid()) + ":" + uid
+	//state, _ := json.Marshal(s.metrics.Get())
+
+	var r = []models.Pong{
+		{uid, name, version, "run", pg, pid, state, replicas, false, 0, "", gp, mp},
+	}
+
+	return r, err
 }
