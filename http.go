@@ -148,7 +148,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 }
 
 func Ping(version, project, domain, port, grpc, metric, uid, state string, replicas int) (result []models.Pong, err error) {
-	name := "unknown"
+	name := ""
 
 	if project != "" {
 		name = project // название проекта
