@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/labstack/gommon/log"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +18,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"git.lowcodeplatform.net/fabric/lib"
+	"github.com/labstack/gommon/log"
 )
 
 const sep = string(os.PathSeparator)
@@ -128,7 +130,7 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 	actionType := ""
 
 	//// c.Logger.Warning("urlc " , urlc)
-	//fmt.Println("urlc1 " , urlc)
+	//fmt.Printf("urlc: %s\n" , urlc)
 
 	// если в гете мы передали еще и json (его добавляем в строку запроса)
 	// только если в запросе не указаны передаваемые параметры
@@ -360,8 +362,6 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	dv = []Data{block}
 	dogParseConfiguration := l.DogParse(tconfiguration, r, &dv, b.Value)
 
-	//fmt.Println(r, "\n")
-
 	// конфигурация без обработки @-функции
 	var confRaw map[string]Element
 	if tconfiguration != "" {
@@ -419,12 +419,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 				}
 			}
 
-			//fmt.Println(r, "\n\n")
-
 			ress := l.QueryWorker(queryUID, dataname, source, r)
-
-			//fmt.Println("ress: ", ress)
-
 			dataSet[dataname] = ress
 		}
 
@@ -1084,23 +1079,23 @@ func (c *app) GUIQuery(tquery string, r *http.Request) Response {
 	// ЛЮТЫЙ ФИКС
 	// не получилось передать в app состояние, поэтому добавляю ранее путь к GUI и если он указан, то отправляю по полному пути
 	// дополняем путем до API если не передан вызов внешнего запроса через http://
-	if tquery[:4] != "http" {
-		resultInterface, err = c.Curl(r.Method, "/query/"+tquery+filters, string(bodyJSON), &dataResp, r.Cookies())
-		if err != nil {
-			//fmt.Println("Error. Request failed: " + "/query/" + tquery + filters)
-			return returnResp
-		}
-	} else {
-		resultInterface, err = c.Curl(r.Method, tquery+filters, string(bodyJSON), &dataResp, r.Cookies())
-		if err != nil {
-			//fmt.Println("Error. Request failed: " + tquery + filters)
-			return returnResp
-		}
+	//if tquery[:4] != "http" {
+	resultInterface, err = lib.Curl(r.Method, c.urlGUI+"/query/"+tquery+filters, string(bodyJSON), &dataResp, map[string]string{}, r.Cookies())
+	if err != nil {
+		//fmt.Println("Error. Request failed: " + "/query/" + tquery + filters)
+		return returnResp
 	}
+	//} else {
+	//	resultInterface, err = c.Curl(r.Method, tquery+filters, string(bodyJSON), &dataResp, r.Cookies())
+	//	if err != nil {
+	//		//fmt.Println("Error. Request failed: " + tquery + filters)
+	//		return returnResp
+	//	}
+	//}
 
 	//fmt.Println(dataResp)
-	//if tquery == "qgoups" {
-	//fmt.Println("tquery: ", "/query/"+tquery+filters, "; resultInterface: ", resultInterface)
+	//if tquery == "tpl_this" {
+	//	fmt.Println("tquery: ", "/query/"+tquery+filters, "; resultInterface: ", resultInterface)
 	//}
 
 	// нам тут нужен Response, но бывают внешние запросы,
