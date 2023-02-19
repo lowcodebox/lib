@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/fabric/lib
 go 1.17
 
 require (
-	git.lowcodeplatform.net/fabric/models v1.0.2
+	git.lowcodeplatform.net/fabric/models v0.1.6
 	github.com/BurntSushi/toml v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/graymeta/stow v0.2.8
