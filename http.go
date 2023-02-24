@@ -148,9 +148,14 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 }
 
 func Ping(version, project, domain, port, grpc, metric, uid, state string, replicas int) (result []models.Pong, err error) {
-	name := ""
+	name := "unknown"
 
 	if project != "" {
+		if len(strings.Split(project, "-")) > 3 { // признак того, что получили UID (для совместимости)
+			if domain != "" {
+				project = strings.Split(domain, "/")[0]
+			}
+		}
 		name = project // название проекта
 	}
 
