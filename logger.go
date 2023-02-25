@@ -183,12 +183,14 @@ func (l *log) Error(err error, args ...interface{}) {
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.ErrorLevel)
 
+		if err != nil {
+			args = append(args, "; error: ", err)
+		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
-			"error":  fmt.Sprint(err),
 		}).Error(args...)
 	}
 }
@@ -199,12 +201,14 @@ func (l *log) Panic(err error, args ...interface{}) {
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.PanicLevel)
 
+		if err != nil {
+			args = append(args, "; error: ", err)
+		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
-			"error":  fmt.Sprint(err),
 		}).Panic(args...)
 	}
 }
@@ -216,12 +220,14 @@ func (l *log) Exit(err error, args ...interface{}) {
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.FatalLevel)
 
+		if err != nil {
+			args = append(args, "; error: ", err)
+		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
-			"error":  fmt.Sprint(err),
 		}).Fatal(args...)
 	}
 }
