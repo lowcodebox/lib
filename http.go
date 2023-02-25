@@ -159,6 +159,10 @@ func Ping(version, project, domain, port, grpc, metric, uid, state string, repli
 		name = project // название проекта
 	}
 
+	if name == "unknown" && domain != "" {
+		name = strings.Split(domain, "/")[0]
+	}
+
 	// TODO deplicated - удалить когда все сервисы переедут на адресацию по короткому имени проекта
 	if version == "" || name == "" {
 		pp := strings.Split(domain, "/")
