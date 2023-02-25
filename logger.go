@@ -191,7 +191,11 @@ func (l *log) Warning(args ...interface{}) {
 
 func (l *log) Error(err error, args ...interface{}) {
 	if err != nil {
-		args = append(args, "; error: ", err)
+		if args != nil {
+			args = append(args, "; error: ", err)
+		} else {
+			args = append(args, "error: ", err)
+		}
 	}
 	if strings.Contains(l.Levels, "Error") {
 		logrusB.SetOutput(l.Output)
@@ -212,7 +216,11 @@ func (l *log) Error(err error, args ...interface{}) {
 
 func (l *log) Panic(err error, args ...interface{}) {
 	if err != nil {
-		args = append(args, "; error: ", err)
+		if args != nil {
+			args = append(args, "; error: ", err)
+		} else {
+			args = append(args, "error: ", err)
+		}
 	}
 	if strings.Contains(l.Levels, "Panic") {
 		if strings.Contains(l.Levels, "Stdout") {
@@ -234,7 +242,11 @@ func (l *log) Panic(err error, args ...interface{}) {
 // Exit внутренняя ф-ция логирования и прекращения работы программы
 func (l *log) Exit(err error, args ...interface{}) {
 	if err != nil {
-		args = append(args, "; error: ", err)
+		if args != nil {
+			args = append(args, "; error: ", err)
+		} else {
+			args = append(args, "error: ", err)
+		}
 	}
 	if strings.Contains(l.Levels, "Fatal") {
 		if strings.Contains(l.Levels, "Stdout") {
