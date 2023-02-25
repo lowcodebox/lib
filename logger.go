@@ -126,6 +126,9 @@ func (l *log) Trace(args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Trace(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
@@ -143,6 +146,9 @@ func (l *log) Debug(args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Debug(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
@@ -159,6 +165,9 @@ func (l *log) Info(args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Info(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
@@ -174,61 +183,71 @@ func (l *log) Warning(args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Warn(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
 func (l *log) Error(err error, args ...interface{}) {
+	if err != nil {
+		args = append(args, "; error: ", err)
+	}
 	if strings.Contains(l.Levels, "Error") {
 		logrusB.SetOutput(l.Output)
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.ErrorLevel)
 
-		if err != nil {
-			args = append(args, "; error: ", err)
-		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Error(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
 func (l *log) Panic(err error, args ...interface{}) {
+	if err != nil {
+		args = append(args, "; error: ", err)
+	}
 	if strings.Contains(l.Levels, "Panic") {
 		logrusB.SetOutput(l.Output)
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.PanicLevel)
-
-		if err != nil {
-			args = append(args, "; error: ", err)
-		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Panic(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
 // Exit внутренняя ф-ция логирования и прекращения работы программы
 func (l *log) Exit(err error, args ...interface{}) {
+	if err != nil {
+		args = append(args, "; error: ", err)
+	}
 	if strings.Contains(l.Levels, "Fatal") {
 		logrusB.SetOutput(l.Output)
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.FatalLevel)
-
-		if err != nil {
-			args = append(args, "; error: ", err)
-		}
 		logrusB.WithFields(logrus.Fields{
 			"name":   l.Name,
 			"uid":    l.UID,
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Fatal(args...)
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Println(args)
+		}
 	}
 }
 
