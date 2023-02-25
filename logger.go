@@ -192,9 +192,9 @@ func (l *log) Warning(args ...interface{}) {
 func (l *log) Error(err error, args ...interface{}) {
 	if err != nil {
 		if args != nil {
-			args = append(args, "; error: ", err)
+			args = append(args, "; error:", err)
 		} else {
-			args = append(args, "error: ", err)
+			args = append(args, "error:", err)
 		}
 	}
 	if strings.Contains(l.Levels, "Error") {
@@ -217,9 +217,9 @@ func (l *log) Error(err error, args ...interface{}) {
 func (l *log) Panic(err error, args ...interface{}) {
 	if err != nil {
 		if args != nil {
-			args = append(args, "; error: ", err)
+			args = append(args, "; error:", err)
 		} else {
-			args = append(args, "error: ", err)
+			args = append(args, "error:", err)
 		}
 	}
 	if strings.Contains(l.Levels, "Panic") {
@@ -243,9 +243,9 @@ func (l *log) Panic(err error, args ...interface{}) {
 func (l *log) Exit(err error, args ...interface{}) {
 	if err != nil {
 		if args != nil {
-			args = append(args, "; error: ", err)
+			args = append(args, "; error:", err)
 		} else {
-			args = append(args, "error: ", err)
+			args = append(args, "error:", err)
 		}
 	}
 	if strings.Contains(l.Levels, "Fatal") {
