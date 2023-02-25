@@ -127,7 +127,7 @@ func (l *log) Trace(args ...interface{}) {
 			"config": l.Config,
 		}).Trace(args...)
 		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
+			fmt.Printf("Trace: %+v\n", args)
 		}
 	}
 }
@@ -147,7 +147,7 @@ func (l *log) Debug(args ...interface{}) {
 			"config": l.Config,
 		}).Debug(args...)
 		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
+			fmt.Printf("Debug: %+v\n", args)
 		}
 	}
 }
@@ -166,7 +166,7 @@ func (l *log) Info(args ...interface{}) {
 			"config": l.Config,
 		}).Info(args...)
 		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
+			fmt.Printf("Info: %+v\n", args)
 		}
 	}
 }
@@ -184,7 +184,7 @@ func (l *log) Warning(args ...interface{}) {
 			"config": l.Config,
 		}).Warn(args...)
 		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
+			fmt.Printf("Warn: %+v\n", args)
 		}
 	}
 }
@@ -205,7 +205,7 @@ func (l *log) Error(err error, args ...interface{}) {
 			"config": l.Config,
 		}).Error(args...)
 		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
+			fmt.Printf("Error: %+v\n", args)
 		}
 	}
 }
@@ -215,6 +215,10 @@ func (l *log) Panic(err error, args ...interface{}) {
 		args = append(args, "; error: ", err)
 	}
 	if strings.Contains(l.Levels, "Panic") {
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Printf("Panic: %+v\n", args)
+		}
+
 		logrusB.SetOutput(l.Output)
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.PanicLevel)
@@ -224,9 +228,6 @@ func (l *log) Panic(err error, args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Panic(args...)
-		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
-		}
 	}
 }
 
@@ -236,6 +237,10 @@ func (l *log) Exit(err error, args ...interface{}) {
 		args = append(args, "; error: ", err)
 	}
 	if strings.Contains(l.Levels, "Fatal") {
+		if strings.Contains(l.Levels, "Stdout") {
+			fmt.Printf("Exit: %+v\n", args)
+		}
+
 		logrusB.SetOutput(l.Output)
 		logrusB.SetFormatter(&logrus.JSONFormatter{})
 		logrusB.SetLevel(logrus.FatalLevel)
@@ -245,9 +250,6 @@ func (l *log) Exit(err error, args ...interface{}) {
 			"srv":    l.Service,
 			"config": l.Config,
 		}).Fatal(args...)
-		if strings.Contains(l.Levels, "Stdout") {
-			fmt.Println(args)
-		}
 	}
 }
 
