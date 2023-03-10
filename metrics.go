@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"strings"
+
 	"github.com/go-kit/kit/metrics"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
@@ -70,4 +72,42 @@ func SendServiceParamsToMetric(uid, name, version, status, port, pid, replicas, 
 	service_follower.With("value", follower).Set(count)
 	service_grpc.With("value", grpc).Set(count)
 	service_metric.With("value", metric).Set(count)
+}
+
+// ValidateNameVersion - формирует правильные имя проекта и версию сервиса исходя из того, что пришло из настроек
+func ValidateNameVersion(project, version, domain string) (resName, resVersion string) {
+	name := "unknown"
+
+	if project != "" {
+		if len(strings.Split(project, "-")) > 3 { // признак того, что получили UID (для совместимости)
+			if domain != "" {
+				project = strings.Split(domain, "/")[0]
+			}
+		}
+		name = project // название проекта
+	}
+
+	if name == "unknown" && domain != "" {
+		name = strings.Split(domain, "/")[0]
+	}
+
+	// TODO deplicated - удалить когда все сервисы переедут на адресацию по короткому имени проекта
+	if version == "" || name == "" {
+		pp := strings.Split(domain, "/")
+		if len(pp) == 1 {
+			if pp[0] != "" {
+				name = pp[0]
+			}
+		}
+		if len(pp) == 2 {
+			if pp[0] != "" {
+				name = pp[0]
+			}
+			if pp[1] != "" {
+				version = pp[1]
+			}
+		}
+	}
+
+	return name, version
 }

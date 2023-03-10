@@ -149,39 +149,8 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 
 func Ping(version, project, domain, port, grpc, metric, uid, state string, replicas int) (result []models.Pong, err error) {
 	var r = []models.Pong{}
-	name := "unknown"
 
-	if project != "" {
-		if len(strings.Split(project, "-")) > 3 { // признак того, что получили UID (для совместимости)
-			if domain != "" {
-				project = strings.Split(domain, "/")[0]
-			}
-		}
-		name = project // название проекта
-	}
-
-	if name == "unknown" && domain != "" {
-		name = strings.Split(domain, "/")[0]
-	}
-
-	// TODO deplicated - удалить когда все сервисы переедут на адресацию по короткому имени проекта
-	if version == "" || name == "" {
-		pp := strings.Split(domain, "/")
-		if len(pp) == 1 {
-			if pp[0] != "" {
-				name = pp[0]
-			}
-		}
-		if len(pp) == 2 {
-			if pp[0] != "" {
-				name = pp[0]
-			}
-			if pp[1] != "" {
-				version = pp[1]
-			}
-		}
-	}
-
+	name, version := ValidateNameVersion(project, version, domain)
 	pg, _ := strconv.Atoi(port)
 	gp, _ := strconv.Atoi(grpc)
 	mp, _ := strconv.Atoi(metric)
