@@ -59,7 +59,8 @@ var (
 	}, []string{"value"})
 )
 
-func SendServiceParamsToMetric(uid, name, version, status, port, pid, replicas, https, dead_time, follower, grpc, metric string, count float64) {
+func SendServiceParamsToMetric(uid, name, version, status, port, pid, replicas, https, dead_time, follower, grpc, metric string) {
+	var count float64
 	service_uid.With("value", uid).Set(count)
 	service_name.With("value", name).Set(count)
 	service_version.With("value", version).Set(count)
