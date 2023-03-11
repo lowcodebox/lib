@@ -26,8 +26,8 @@ var (
 		Name: "service_status",
 	}, []string{"value"})
 
-	service_port metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
-		Name: "service_port",
+	service_port_http metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
+		Name: "service_port_hhtp",
 	}, []string{"value"})
 
 	service_pid metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
@@ -38,8 +38,8 @@ var (
 		Name: "service_replicas",
 	}, []string{"value"})
 
-	service_https metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
-		Name: "service_https",
+	service_port_https metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
+		Name: "service_port_https",
 	}, []string{"value"})
 
 	service_dead_time metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
@@ -50,29 +50,29 @@ var (
 		Name: "service_follower",
 	}, []string{"value"})
 
-	service_grpc metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
-		Name: "service_grpc",
+	service_port_grpc metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
+		Name: "service_port_grpc",
 	}, []string{"value"})
 
-	service_metric metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
-		Name: "service_metric",
+	service_port_metrics metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
+		Name: "service_port_metrics",
 	}, []string{"value"})
 )
 
-func SendServiceParamsToMetric(uid, name, version, status, port, pid, replicas, https, dead_time, follower, grpc, metric string) {
+func SendServiceParamsToMetric(uid, name, version, status, pid, replicas, portHTTP, portGRPC, portMetrics, portHTTPS, dead_time, follower string) {
 	var count float64
 	service_uid.With("value", uid).Set(count)
 	service_name.With("value", name).Set(count)
 	service_version.With("value", version).Set(count)
 	service_status.With("value", status).Set(count)
-	service_port.With("value", port).Set(count)
+	service_port_http.With("value", portHTTP).Set(count)
 	service_pid.With("value", pid).Set(count)
 	service_replicas.With("value", replicas).Set(count)
-	service_https.With("value", https).Set(count)
+	service_port_https.With("value", portHTTPS).Set(count)
 	service_dead_time.With("value", dead_time).Set(count)
 	service_follower.With("value", follower).Set(count)
-	service_grpc.With("value", grpc).Set(count)
-	service_metric.With("value", metric).Set(count)
+	service_port_grpc.With("value", portGRPC).Set(count)
+	service_port_metrics.With("value", portMetrics).Set(count)
 }
 
 // ValidateNameVersion - формирует правильные имя проекта и версию сервиса исходя из того, что пришло из настроек
