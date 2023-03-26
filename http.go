@@ -147,7 +147,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 	return port, err
 }
 
-func Ping(version, project, domain, port, grpc, metric, uid, state string, replicas int) (result []models.Pong, err error) {
+func Ping(version, project, domain, port, grpc, metric, config, state string, replicas int) (result []models.Pong, err error) {
 	var r = []models.Pong{}
 
 	name, version := ValidateNameVersion(project, version, domain)
@@ -158,7 +158,7 @@ func Ping(version, project, domain, port, grpc, metric, uid, state string, repli
 	//state, _ := json.Marshal(s.metrics.Get())
 
 	pong := models.Pong{}
-	pong.Uid = uid
+	pong.Config = config
 	pong.Name = name
 	pong.Version = version
 	pong.Status = "run"

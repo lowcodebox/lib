@@ -52,6 +52,8 @@ git.lowcodeplatform.net/fabric/models v0.1.6 h1:hz/USuBF0bnQHrypID7tml1WNPVFdock
 git.lowcodeplatform.net/fabric/models v0.1.6/go.mod h1:kTVmb3xTTlMOV0PJ+IFHC3kS6pkOszNigaRsZeZp0M0=
 git.lowcodeplatform.net/fabric/models v0.1.8 h1:Pb0mOAAO8jnI+IhC9NAb/VjXCquavnN+DLfVCK7dm+w=
 git.lowcodeplatform.net/fabric/models v0.1.8/go.mod h1:kTVmb3xTTlMOV0PJ+IFHC3kS6pkOszNigaRsZeZp0M0=
+git.lowcodeplatform.net/fabric/models v0.1.10 h1:jYTHWkoNaA2hADUE3UMefgzh2sr++6s4IuciX9PODWY=
+git.lowcodeplatform.net/fabric/models v0.1.10/go.mod h1:kTVmb3xTTlMOV0PJ+IFHC3kS6pkOszNigaRsZeZp0M0=
 git.lowcodeplatform.net/fabric/models v1.0.2 h1:1e75V8h1o8ea0i3tydYMK8rIIdJF6bEuN1CQnV9PT+s=
 git.lowcodeplatform.net/fabric/models v1.0.2/go.mod h1:kTVmb3xTTlMOV0PJ+IFHC3kS6pkOszNigaRsZeZp0M0=
 git.lowcodeplatform.net/fabric/packages v0.0.0-20230129123752-a3dc6393a856 h1:jZP6kGB6bKcXUEtW/FAtPVTPWPdBvPwYvbo0u25wWVU=
