@@ -27,7 +27,7 @@ var (
 	}, []string{"value"})
 
 	service_port_http metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
-		Name: "service_port_hhtp",
+		Name: "service_port_http",
 	}, []string{"value"})
 
 	service_pid metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
