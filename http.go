@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -145,32 +143,4 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 	}
 
 	return port, err
-}
-
-func Ping(version, project, domain, port, grpc, metric, config, state string, replicas int) (result []models.Pong, err error) {
-	var r = []models.Pong{}
-
-	name, version := ValidateNameVersion(project, version, domain)
-	pg, _ := strconv.Atoi(port)
-	gp, _ := strconv.Atoi(grpc)
-	mp, _ := strconv.Atoi(metric)
-	pid := strconv.Itoa(os.Getpid())
-	//state, _ := json.Marshal(s.metrics.Get())
-
-	pong := models.Pong{}
-	pong.Config = config
-	pong.Name = name
-	pong.Version = version
-	pong.Status = "run"
-	pong.Port = pg
-	pong.Pid = pid
-	pong.State = state
-	pong.Replicas = replicas
-	pong.Https = false
-	pong.Grpc = gp
-	pong.Metric = mp
-
-	r = append(r, pong)
-
-	return r, err
 }
