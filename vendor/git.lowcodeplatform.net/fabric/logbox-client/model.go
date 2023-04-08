@@ -10,6 +10,11 @@ type event struct {
 	uid    string `json:"uid"`
 }
 
+type Column struct {
+	Name        string
+	SearchValue string
+}
+
 type upsertReq struct {
 	Events []event
 }
@@ -17,6 +22,23 @@ type upsertReq struct {
 type upsertRes struct {
 	Status bool
 	Error  string
+}
+
+type searchReq struct {
+	Draw            int     `json:"draw"`
+	RecordsTotal    int     `json:"recordsTotal"`
+	RecordsFiltered int     `json:"recordsFiltered"`
+	Data            []event `json:"data"`
+}
+
+type searchRes struct {
+	Columns []Column
+	Search  string `json:"search"`
+	Draw    int    `json:"draw"`
+	Limit   int    `json:"limit"`
+	Skip    int    `json:"skip"` //nolint
+	OrderBy int    `json:"order_by"`
+	Dir     string `json:"dir"`
 }
 
 func (u *upsertReq) AddEvent(event event) {

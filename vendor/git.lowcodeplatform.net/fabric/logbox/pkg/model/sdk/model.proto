@@ -14,6 +14,12 @@ message Event {
 	string uid = 7;
 }
 
+//TODO: Если делать поиск с возможностью учитывать регист создать структуру Search (используется в корне и колонках)
+message Column {
+	string Name = 1;
+	string SearchValue = 2;
+}
+
 message UpsertRequest {
 	repeated Event Events = 1;
 }
@@ -23,6 +29,26 @@ message UpsertResponse {
 	string error = 2;
 }
 
+message SearchRequest {
+	repeated Column Columns = 1;
+	string Search = 2;
+	uint64 Draw = 3;
+	uint64 Limit = 4;
+	uint64 Skip = 5;
+	uint64 OrderBy = 6;
+	string Dir = 7;
+}
+
+message SearchResponse {
+	uint64 Draw = 1;
+	uint64 RecordsTotal = 2;
+	uint64 RecordsFiltered = 3;
+	repeated Event Data = 4;
+	string error = 5;
+	bool 	 status = 6;
+}
+
 service Logbox {
 	rpc Upsert(UpsertRequest) returns (UpsertResponse);
+	rpc Search(SearchRequest) returns (SearchResponse);
 }

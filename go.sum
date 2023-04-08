@@ -46,8 +46,14 @@ cloud.google.com/go/storage v1.28.0/go.mod h1:qlgZML35PXA3zoEnIkiPLY4/TOkUleufRl
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.lowcodeplatform.net/fabric/logbox v0.0.0-20221207204326-a4e8049979c9 h1:+yK1PqhZeTobJ1OElTvhSygGRjc8WIV97MgjLjTuLyI=
 git.lowcodeplatform.net/fabric/logbox v0.0.0-20221207204326-a4e8049979c9/go.mod h1:PjRfGgKMmH7Ra0bXgh7IKZ/g/AAlviZK/eiPkD1XoIE=
+git.lowcodeplatform.net/fabric/logbox v0.1.1 h1:pmzzXM2lXQFugBa6mliGErB7qPYAJ9fAj+E37o/A0xY=
+git.lowcodeplatform.net/fabric/logbox v0.1.1/go.mod h1:nrzOFnMhVIBrtokITlnEPYjLbDfyu7oDkkJAFA/K4S8=
 git.lowcodeplatform.net/fabric/logbox-client v0.0.0-20230129180131-bf48bfbee92f h1:cIy3ydYa2OjXR1k/jnm/hHrIlA8dX9IwenRQ39aX8kY=
 git.lowcodeplatform.net/fabric/logbox-client v0.0.0-20230129180131-bf48bfbee92f/go.mod h1:2VJOF5aTMh6dJEzXvOsfarKQdeQ2Q+Ve1I9OK+exaHg=
+git.lowcodeplatform.net/fabric/logbox-client v0.0.0-20230408182105-f91a13a56785 h1:WUeG1yVPNhh36yddhrFlj5ONFU12PS/r314ttI8ywRc=
+git.lowcodeplatform.net/fabric/logbox-client v0.0.0-20230408182105-f91a13a56785/go.mod h1:uucit5AcbZ2MjK7sGsnvFC5InwBGiaaC5sFgEcFymiI=
+git.lowcodeplatform.net/fabric/logbox-client v0.1.1 h1:58ps3Z9/1kpNI/2EirWkTtm/nV0snRNvu+ZSaSXhs1A=
+git.lowcodeplatform.net/fabric/logbox-client v0.1.1/go.mod h1:uucit5AcbZ2MjK7sGsnvFC5InwBGiaaC5sFgEcFymiI=
 git.lowcodeplatform.net/fabric/models v0.1.10 h1:jYTHWkoNaA2hADUE3UMefgzh2sr++6s4IuciX9PODWY=
 git.lowcodeplatform.net/fabric/models v0.1.10/go.mod h1:kTVmb3xTTlMOV0PJ+IFHC3kS6pkOszNigaRsZeZp0M0=
 git.lowcodeplatform.net/fabric/packages v0.0.0-20230129123752-a3dc6393a856 h1:jZP6kGB6bKcXUEtW/FAtPVTPWPdBvPwYvbo0u25wWVU=

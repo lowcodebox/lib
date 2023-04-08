@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LogboxClient interface {
 	Upsert(ctx context.Context, in *UpsertRequest, opts ...grpc.CallOption) (*UpsertResponse, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 }
 
 type logboxClient struct {
@@ -42,11 +43,21 @@ func (c *logboxClient) Upsert(ctx context.Context, in *UpsertRequest, opts ...gr
 	return out, nil
 }
 
+func (c *logboxClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/logbox_client.Logbox/Search", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LogboxServer is the server API for Logbox service.
 // All implementations must embed UnimplementedLogboxServer
 // for forward compatibility
 type LogboxServer interface {
 	Upsert(context.Context, *UpsertRequest) (*UpsertResponse, error)
+	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	mustEmbedUnimplementedLogboxServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedLogboxServer struct {
 
 func (UnimplementedLogboxServer) Upsert(context.Context, *UpsertRequest) (*UpsertResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Upsert not implemented")
+}
+func (UnimplementedLogboxServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedLogboxServer) mustEmbedUnimplementedLogboxServer() {}
 
@@ -88,6 +102,24 @@ func _Logbox_Upsert_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Logbox_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LogboxServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/logbox_client.Logbox/Search",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LogboxServer).Search(ctx, req.(*SearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Logbox_ServiceDesc is the grpc.ServiceDesc for Logbox service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Logbox_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Upsert",
 			Handler:    _Logbox_Upsert_Handler,
+		},
+		{
+			MethodName: "Search",
+			Handler:    _Logbox_Search_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

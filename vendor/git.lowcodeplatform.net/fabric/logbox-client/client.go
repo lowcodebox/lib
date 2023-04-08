@@ -14,6 +14,7 @@ type client struct {
 
 type Client interface {
 	Upsert(ctx context.Context, in upsertReq) (out upsertRes, err error)
+	Search(ctx context.Context, in searchRes) (out searchReq, err error)
 
 	NewUpsertReq() *upsertReq
 	NewEvent(config, level, msg, name, srv, time, uid string) *event

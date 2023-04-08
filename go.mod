@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/fabric/lib
 go 1.17
 
 require (
-	git.lowcodeplatform.net/fabric/logbox-client v0.0.0-20230129180131-bf48bfbee92f
+	git.lowcodeplatform.net/fabric/logbox-client v0.1.1
 	git.lowcodeplatform.net/fabric/models v0.1.10
 	github.com/BurntSushi/toml v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.1
@@ -24,7 +24,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	cloud.google.com/go/iam v0.7.0 // indirect
 	cloud.google.com/go/storage v1.28.0 // indirect
-	git.lowcodeplatform.net/fabric/logbox v0.0.0-20221207204326-a4e8049979c9 // indirect
+	git.lowcodeplatform.net/fabric/logbox v0.1.1 // indirect
 	git.lowcodeplatform.net/fabric/packages v0.0.0-20230129123752-a3dc6393a856 // indirect
 	github.com/Azure/azure-sdk-for-go v32.5.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.9.0 // indirect

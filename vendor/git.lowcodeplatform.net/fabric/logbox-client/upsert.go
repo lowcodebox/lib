@@ -11,13 +11,11 @@ import (
 func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err error) {
 	conn, err := c.client.Conn(ctx)
 	if err != nil {
-		err = fmt.Errorf("cannot get grpc connection")
-
+		err = fmt.Errorf("cannot get grpc connection. err: %s", err)
 		return out, err
 	}
 	if conn == nil {
 		err = fmt.Errorf("cannot get grpc connection (connection is null)")
-
 		return out, err
 	}
 
@@ -40,6 +38,9 @@ func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err e
 
 	client := pb.NewLogboxClient(conn)
 	res, err := client.Upsert(ctxWithDeadline, events)
+	out.Status = res.Status
+	out.Error = res.Error
+
 	if err != nil {
 		return out, err
 	}
