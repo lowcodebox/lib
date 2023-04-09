@@ -22,7 +22,7 @@ func NewLogboxLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err err
 	var output io.Writer
 	m := sync.Mutex{}
 
-	client, err := logboxclient.New(ctx, cfg.Logbox.Endpoint, 10*time.Second)
+	client, err := logboxclient.New(ctx, cfg.Logbox.Endpoint, cfg.Logbox.RequestTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("error create connection whith logbox-server. err: %s", err)
 	}
