@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/fabric/lib
 go 1.17
 
 require (
-	git.lowcodeplatform.net/fabric/logbox-client v0.1.1
+	git.lowcodeplatform.net/fabric/logbox-client v0.1.2
 	git.lowcodeplatform.net/fabric/models v0.1.10
 	github.com/BurntSushi/toml v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.1

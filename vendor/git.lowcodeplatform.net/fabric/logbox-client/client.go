@@ -8,6 +8,8 @@ import (
 	"git.lowcodeplatform.net/fabric/packages/grpcbalancer"
 )
 
+var timeoutDefault = 1 * time.Second
+
 type client struct {
 	client *grpcbalancer.Client
 }
@@ -25,6 +27,9 @@ func (c *client) NewUpsertReq() *upsertReq {
 }
 
 func New(ctx context.Context, url string, reqTimeout time.Duration) (Client, error) {
+	if reqTimeout == 0 {
+		reqTimeout = timeoutDefault
+	}
 	b, err := grpcbalancer.New(
 		grpcbalancer.WithUrls(url),
 		grpcbalancer.WithInsecure(),

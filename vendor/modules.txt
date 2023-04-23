@@ -22,7 +22,7 @@ cloud.google.com/go/storage/internal/apiv2/stubs
 # git.lowcodeplatform.net/fabric/logbox v0.1.1
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk
-# git.lowcodeplatform.net/fabric/logbox-client v0.1.1
+# git.lowcodeplatform.net/fabric/logbox-client v0.1.2
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/logbox-client
 # git.lowcodeplatform.net/fabric/models v0.1.10

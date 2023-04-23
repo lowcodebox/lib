@@ -11,7 +11,7 @@ import (
 func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err error) {
 	conn, err := c.client.Conn(ctx)
 	if err != nil {
-		err = fmt.Errorf("cannot get grpc connection. err: %s", err)
+		err = fmt.Errorf("cannot get grpc connection. err: %s, client: %+v", err, c.client)
 		return out, err
 	}
 	if conn == nil {
@@ -45,7 +45,7 @@ func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err e
 		return out, err
 	}
 	if res.Error != "" {
-		err = fmt.Errorf("error send message. err: %s", err)
+		err = fmt.Errorf("error send message. err: %s", res.Error)
 	}
 	if !res.Status {
 		err = fmt.Errorf("fail status. err: %s", err)
