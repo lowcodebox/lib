@@ -9,7 +9,7 @@ import (
 const sep = string(os.PathSeparator)
 
 // RunServiceFuncCLI обраатываем параметры с консоли и вызываем переданую функцию
-func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string)) error {
+func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string) error) error {
 	var err error
 
 	appCLI := cli.NewApp()
@@ -28,8 +28,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				port := c.String("port")
 
-				funcCLI("", "", port, "", "", "", "", "", "", "webinit", "")
-				return nil
+				err = funcCLI("", "", port, "", "", "", "", "", "", "webinit", "")
+				return err
 			},
 		},
 		{
@@ -51,8 +51,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 				service := c.String("service")
 				version := c.String("version")
 
-				funcCLI("", "", "", "", service, "", "", "", "", "update", version)
-				return nil
+				err = funcCLI("", "", "", "", service, "", "", "", "", "update", version)
+				return err
 			},
 		},
 		{
@@ -68,8 +68,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 
-				funcCLI("", "", "", "", service, "", "", "", "", "stop", "")
-				return nil
+				err = funcCLI("", "", "", "", service, "", "", "", "", "stop", "")
+				return err
 			},
 		},
 		{
@@ -115,8 +115,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				funcCLI(configfile, dir, port, mode, service, "", "", "", "", "start", "")
-				return nil
+				err = funcCLI(configfile, dir, port, mode, service, "", "", "", "", "start", "")
+				return err
 			},
 		},
 		{
@@ -172,12 +172,12 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				funcCLI("", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
-				return nil
+				err = funcCLI("", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
+				return err
 			},
 		},
 	}
-	appCLI.Run(os.Args)
+	err = appCLI.Run(os.Args)
 
 	return err
 }
