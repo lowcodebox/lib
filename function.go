@@ -83,21 +83,35 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]
 
-		err = CreateDir("debug"+sep+srv, 0777)
-		config_name := strings.Replace(config, "-", "", -1)
+		dirPath := "debug" + sep + srv
+		err = CreateDir(dirPath, 0777)
+		if err != nil {
+			return 0, fmt.Errorf("error create directory for debug-file. path: %s, err: %s", dirPath, err)
+		}
 
-		f, _ := os.Create("debug" + sep + srv + sep + config_name + "_" + fmt.Sprint(t) + ".log")
+		filePath := "debug" + sep + srv + sep + fmt.Sprint(t) + "_" + UUID()[:6] + ".log"
+		f, err := os.Create(filePath)
+		if err != nil {
+			return 0, fmt.Errorf("error create debug-file. path: %s, err: %s", filePath, err)
+		}
 		cmd.Stdout = f
 		cmd.Stderr = f
 	}
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	err = cmd.Start()
+	err = cmd.Run()
 	if err != nil {
+		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
+
 		return 0, err
 	}
 
 	pid = cmd.Process.Pid
+
+	time.Sleep(10 * time.Second)
+	if cmd.ProcessState.ExitCode() != 0 {
+		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
+	}
 
 	return
 }
@@ -161,7 +175,7 @@ func JsonEscape(i string) string {
 	return s[1 : len(s)-1]
 }
 
-// SearchConfigDir получаем путь до искомой конфигурации от переданной директории
+// SearchConfig получаем путь до искомой конфигурации от переданной директории
 func SearchConfig(projectDir, configuration string) (configPath string, err error) {
 	var nextPath string
 
