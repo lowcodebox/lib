@@ -175,7 +175,7 @@ func JsonEscape(i string) string {
 	return s[1 : len(s)-1]
 }
 
-// SearchConfig получаем путь до искомой конфигурации от переданной директории
+// SearchConfigDir получаем путь до искомой конфигурации от переданной директории
 func SearchConfig(projectDir, configuration string) (configPath string, err error) {
 	var nextPath string
 
