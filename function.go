@@ -110,7 +110,7 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 
 	time.Sleep(10 * time.Second)
 	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
+		err = fmt.Errorf("status: %d, config: %s, err: %s", cmd.ProcessState.ExitCode(), config, cmd.Stderr)
 	}
 
 	return
