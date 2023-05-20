@@ -38,12 +38,16 @@ func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err e
 
 	client := pb.NewLogboxClient(conn)
 	res, err := client.Upsert(ctxWithDeadline, events)
-	out.Status = res.Status
-	out.Error = res.Error
-
 	if err != nil {
 		return out, err
 	}
+	if res == nil {
+		return out, fmt.Errorf("error upsert message to logbox. result from upsert is empty")
+	}
+
+	out.Status = res.Status
+	out.Error = res.Error
+
 	if res.Error != "" {
 		err = fmt.Errorf("error send message. err: %s", res.Error)
 	}
