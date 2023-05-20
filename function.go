@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -67,6 +68,7 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 // RunProcess стартуем сервис из конфига
 func RunProcess(path, config, command, mode string) (pid int, err error) {
 	var cmd *exec.Cmd
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	if config == "" {
 		return 0, fmt.Errorf("%s", "Configuration file is not found")
@@ -99,7 +101,7 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 	}
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	err = cmd.Run()
+	err = cmd.Start()
 	if err != nil {
 		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
 
@@ -108,9 +110,28 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 
 	pid = cmd.Process.Pid
 
-	time.Sleep(10 * time.Second)
-	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf("status: %d, config: %s, err: %s", cmd.ProcessState.ExitCode(), config, cmd.Stderr)
+	// в течение заданного интервала ожидаем завершающий статус запуска
+	// или выходим если -1 (в процессе)
+	for {
+		exitCode := cmd.ProcessState.ExitCode()
+		timer := time.NewTimer(100 * time.Millisecond)
+		// успешный запуск
+		if exitCode == 0 {
+			timer.Stop()
+			return
+		}
+		// финальный неуспех
+		if exitCode > 0 {
+			cancel()
+		}
+
+		select {
+		case <-timer.C:
+			timer.Stop()
+		case <-ctx.Done(): // ожидание завершилось, если -1 - то работает
+			timer.Stop()
+			return
+		}
 	}
 
 	return
