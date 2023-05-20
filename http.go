@@ -144,3 +144,22 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 
 	return port, err
 }
+
+func ClearSlash(url string) (result string) {
+	if len(url) == 0 {
+		return ""
+	}
+	// удаляем слеш сзади
+	lastSleshF := url[len(url)-1:]
+	if lastSleshF == "/" {
+		url = url[:len(url)-1]
+	}
+
+	// удаляем слеш спереди
+	lastSleshS := url[0:1]
+	if lastSleshS == "/" {
+		url = url[1:len(url)]
+	}
+
+	return url
+}
