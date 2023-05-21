@@ -100,6 +100,7 @@ func CopyFolder(source string, dest string) (err error) {
 	}
 
 	directory, _ := os.Open(source)
+	defer directory.Close()
 	objects, err := directory.Readdir(-1)
 
 	for _, obj := range objects {
