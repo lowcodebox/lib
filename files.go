@@ -76,12 +76,12 @@ func ReadFile(path string) (result string, err error) {
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err == nil {
 		result = string(b)
 	}
-	defer file.Close()
 
 	return result, err
 }
