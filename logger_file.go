@@ -135,6 +135,8 @@ func NewFileLogger(ctx context.Context, cfg ConfigLogger) (Log, error) {
 	}
 
 	file, err = os.OpenFile(pathFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	defer file.Close()
+
 	l.File = file
 	l.Output = file
 	if err != nil {
