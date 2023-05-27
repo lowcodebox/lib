@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
@@ -25,28 +26,23 @@ type locks struct {
 }
 
 // Get возвращает информацию о том идет ли в данный момент обновление конкретного ключа.
-func (c *locks) Get(key string) bool {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
+func (l *locks) Get(key string) bool {
+	l.mx.RLock()
+	defer l.mx.RUnlock()
 
-	return c.keys[key]
+	return l.keys[key]
 }
 
 // Set устанавливает блокировку на обновление конкретного ключа другими горутинами.
-func (c *locks) Set(key string, value bool) {
-	c.mx.Lock()
-	c.keys[key] = value
-	c.mx.Unlock()
-}
-
-// Getter - интерфейс получения данные, которые надо закешировать
-type Getter interface {
-	Get(key string) (value interface{}, err error)
+func (l *locks) Set(key string, value bool) {
+	l.mx.Lock()
+	l.keys[key] = value
+	l.mx.Unlock()
 }
 
 type cache struct {
 	// Getter определяет механизм получения данных от любого источника к/р поддерживает интерфейс
-	Getter          Getter
+	reader          io.Reader
 	cache           *ttlcache.Cache
 	persistentCache *ttlcache.Cache
 	locks           locks
@@ -80,7 +76,8 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 	c.locks.Set(key, true)
 	defer c.locks.Set(key, false)
 
-	value, err = c.Getter.Get(key)
+	values := []byte{}
+	_, err = c.reader.Read(values)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get value from getter")
 	}
@@ -115,8 +112,10 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 }
 
 // InitCache инициализировали глобальную переменную defaultCache
-func InitCache(ttl time.Duration) {
+// source - источник, откуда мы получаем значения для кеширования
+func InitCache(ttl time.Duration, source io.Reader) {
 	defaultCache = &cache{
 		cacheTTL: ttl,
+		reader:   source,
 	}
 }
