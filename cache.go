@@ -111,9 +111,9 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	return oldValue, err
 }
 
-// InitCache инициализировали глобальную переменную defaultCache
+// CacheInit инициализировали глобальную переменную defaultCache
 // source - источник, откуда мы получаем значения для кеширования
-func InitCache(ttl time.Duration, source io.Reader) {
+func CacheInit(ttl time.Duration, source io.Reader) {
 	defaultCache = &cache{
 		cacheTTL: ttl,
 		reader:   source,
