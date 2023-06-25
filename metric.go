@@ -291,7 +291,7 @@ func (s *serviceMetric) Middleware(next http.Handler) http.Handler {
 }
 
 // interval - интервалы времени, через которые статистика будет сбрасыватсья в лог
-func NewMetric(ctx context.Context, logger any, interval time.Duration) (metrics ServiceMetric) {
+func NewMetric(ctx context.Context, interval time.Duration) (metrics ServiceMetric) {
 	m := sync.Mutex{}
 	t := StateHost{}
 	s := Metrics{
@@ -315,12 +315,12 @@ func NewMetric(ctx context.Context, logger any, interval time.Duration) (metrics
 		ctx:            ctx,
 	}
 
-	go RunMetricLogger(ctx, metrics, logger, interval)
+	go RunMetricLogger(ctx, metrics, interval)
 
 	return metrics
 }
 
-func RunMetricLogger(ctx context.Context, m ServiceMetric, logger any, interval time.Duration) {
+func RunMetricLogger(ctx context.Context, m ServiceMetric, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
