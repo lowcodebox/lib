@@ -5,6 +5,7 @@ package lib
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"strings"
@@ -40,6 +41,8 @@ type Vfs interface {
 	List(prefix string, pageSize int) (files []Item, err error)
 	Read(file string) (data []byte, mimeType string, err error)
 	ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error)
+	ReadCloser(file string) (reader io.ReadCloser, err error)
+	ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error)
 	Write(file string, data []byte) (err error)
 	Connect() (err error)
 	Close() (err error)
@@ -127,49 +130,17 @@ func (v *vfs) Read(file string) (data []byte, mimeType string, err error) {
 	return v.ReadFromBucket(file, v.bucket)
 }
 
-// Read чтение по указанному пути из указанного бакета
+// ReadFromBucket чтение по указанному пути из указанного бакета
 func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error) {
-	var urlPath url.URL
+	var r io.ReadCloser
 
-	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
-	if v.comma != "" {
-		file = strings.Replace(file, v.comma, sep, -1)
-	}
-
-	// если локально, то добавляем к endpoint бакет
-	if v.kind == "local" {
-		file = v.endpoint + sep + bucket + sep + file
-		// подчищаем //
-		file = strings.Replace(file, sep+sep, sep, -1)
-	} else {
-		// подчищаем от части путей, которая использовалась раньше в локальном хранилище
-		// легаси, удалить когда все сайты переедут на использование только vfs
-		//localPrefix := sep + "upload" + sep + v.bucket
-		localPrefix := "upload" + sep + bucket
-		file = strings.Replace(file, localPrefix, "", -1)
-		file = strings.Replace(file, sep+sep, sep, -1)
-	}
-
-	//fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
-
-	urlPath.Host = bucket
-	urlPath.Path = file
-
-	item, err := v.location.ItemByURL(&urlPath)
-	if item != nil {
-		r, err := item.Open()
-		if err != nil {
-			return data, mimeType, err
-		}
-		data, err = ioutil.ReadAll(r)
-		mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
-	}
-
-	//fmt.Printf("item: %+v, len data: %-v, mimeType: %s, err: %s", item, len(data), mimeType, err)
-
+	r, err = v.ReadCloserFromBucket(file, bucket)
+	data, err = ioutil.ReadAll(r)
+	mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
 	if err != nil {
-		err = fmt.Errorf("%s. urlPath: %+v, file: %s, bucket: %s, v.container: %+v\n", err, urlPath, file, bucket, v.container)
+		err = fmt.Errorf("%s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
 	}
+
 	return data, mimeType, err
 }
 
@@ -203,6 +174,46 @@ func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
 	})
 
 	return files, err
+}
+
+func (v *vfs) ReadCloser(file string) (reader io.ReadCloser, err error) {
+	return v.ReadCloserFromBucket(file, v.bucket)
+}
+
+func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error) {
+	var urlPath url.URL
+
+	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
+	if v.comma != "" {
+		file = strings.Replace(file, v.comma, sep, -1)
+	}
+
+	// если локально, то добавляем к endpoint бакет
+	if v.kind == "local" {
+		file = v.endpoint + sep + bucket + sep + file
+		// подчищаем //
+		file = strings.Replace(file, sep+sep, sep, -1)
+	} else {
+		// подчищаем от части путей, которая использовалась раньше в локальном хранилище
+		// легаси, удалить когда все сайты переедут на использование только vfs
+		//localPrefix := sep + "upload" + sep + v.bucket
+		localPrefix := "upload" + sep + bucket
+		file = strings.Replace(file, localPrefix, "", -1)
+		file = strings.Replace(file, sep+sep, sep, -1)
+	}
+
+	//fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
+
+	urlPath.Host = bucket
+	urlPath.Path = file
+
+	item, err := v.location.ItemByURL(&urlPath)
+	if item != nil {
+
+	}
+	reader, err = item.Open()
+
+	return reader, err
 }
 
 func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma string) Vfs {
