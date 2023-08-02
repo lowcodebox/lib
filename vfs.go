@@ -130,16 +130,21 @@ func (v *vfs) Read(file string) (data []byte, mimeType string, err error) {
 	return v.ReadFromBucket(file, v.bucket)
 }
 
-// ReadFromBucket чтение по указанному пути из указанного бакета
+// Read чтение по указанному пути из указанного бакета
 func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error) {
 	var r io.ReadCloser
 
 	r, err = v.ReadCloserFromBucket(file, bucket)
-	data, err = ioutil.ReadAll(r)
-	mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
 	if err != nil {
-		err = fmt.Errorf("%s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+		err = fmt.Errorf("error ReadCloserFromBucket, err: %s, file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+		return
 	}
+	data, err = ioutil.ReadAll(r)
+	if err != nil {
+		err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+		return
+	}
+	mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
 
 	return data, mimeType, err
 }
@@ -208,9 +213,13 @@ func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, e
 	urlPath.Path = file
 
 	item, err := v.location.ItemByURL(&urlPath)
-	if item != nil {
-
+	if err != nil {
+		return reader, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
 	}
+	if item == nil {
+		return reader, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
+	}
+
 	reader, err = item.Open()
 
 	return reader, err
