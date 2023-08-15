@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Masterminds/sprig"
-	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -16,63 +14,69 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Masterminds/sprig"
+	"github.com/satori/go.uuid"
 )
 
 var FuncMapS = sprig.FuncMap()
 
 var FuncMap = template.FuncMap{
-	"separator": 	 separator,
-	"cookie": 	 	 cookie,
-	"attr":	 		 attr,
-	"addfloat":	 	 addfloat,
-	"datetotext":	 datetotext,
-	"output": 	 	 output,
-	"cut":			 cut,
+	"separator":     separator,
+	"cookie":        cookie,
+	"attr":          attr,
+	"addfloat":      addfloat,
+	"datetotext":    datetotext,
+	"output":        output,
+	"cut":           cut,
 	"concatination": concatination,
-	"join": 		 join,
-	"rand":			 rand,
-	"uuid":			 UUID,
-	"refind":		 refind,
-	"rereplace":	 rereplace,
-	"replace":		 Replace,
-	"contains": 	 contains,
+	"join":          join,
+	"rand":          rand,
+	"uuid":          UUID,
+	"refind":        refind,
+	"rereplace":     rereplace,
+	"replace":       Replace,
+	"contains":      contains,
 	"dict":          dict,
 	"sum":           sum,
 	"split":         split,
 	"set":           set,
 	"get":           get,
 	"delete":        deletekey,
+	"sliceset":      sliceset,
+	"sliceappend":   sliceappend,
+	"slicedelete":   slicedelete,
 	"marshal":       marshal,
-	"value":       	 value,
-	"hash":       	 hash,
+	"value":         value,
+	"hash":          hash,
 	"unmarshal":     unmarshal,
-	"compare":    	 compare,
-	"totree": 	 	 totree,
-	"tostring":		 tostring,
-	"toint":		 toint,
-	"tofloat":		 tofloat,
-	"tointerface":	 tointerface,
-	"tohtml":		 tohtml,
-	"timefresh":	 Timefresh,
-	"timenow":		 timenow,
-	"timeformat":	 timeformat,
+	"compare":       compare,
+	"totree":        totree,
+	"tostring":      tostring,
+	"toint":         toint,
+	"tofloat":       tofloat,
+	"tointerface":   tointerface,
+	"tohtml":        tohtml,
+	"timefresh":     Timefresh,
+	"timenow":       timenow,
+	"timeformat":    timeformat,
 	"timetostring":  timetostring,
-	"timeyear":	 	 timeyear,
-	"timemount":	 timemount,
-	"timeday":	 	 timeday,
-	"timeparse":	 timeparse,
-	"tomoney":		 tomoney,
+	"timeyear":      timeyear,
+	"timemount":     timemount,
+	"timeday":       timeday,
+	"timeparse":     timeparse,
+	"tomoney":       tomoney,
 	//"timeaddday":    timeaddday,
-	"invert":		 invert,
-	"substring":	 substring,
-	"dogparse":		 dogparse,
-	"confparse":	 confparse,
-	"varparse":	 	 parseparam,
-	"parseparam":	 parseparam,
-	"divfloat":		 divfloat,
-	"sendmail":		 Sendmail,
-	"jsonescape":	 jsonEscape,
-	"jsonescapeunlessamp":	 jsonEscapeUnlessAmp,
+	"invert":              invert,
+	"substring":           substring,
+	"dogparse":            dogparse,
+	"confparse":           confparse,
+	"varparse":            parseparam,
+	"parseparam":          parseparam,
+	"divfloat":            divfloat,
+	"sendmail":            Sendmail,
+	"jsonescape":          jsonEscape,
+	"jsonescapeunlessamp": jsonEscapeUnlessAmp,
 }
 
 // формируем сепаратор для текущей ОС
@@ -80,7 +84,7 @@ func separator() string {
 	return string(filepath.Separator)
 }
 
-// отправка email-сообщения
+// Sendmail отправка email-сообщения
 // from - от кого отправляется <petrov@mail.ru> или [petrov@mail.ru] или Петров [petrov@mail.ru] или Петров <petrov@mail.ru>
 // to - кому (можно несколько через запятую)
 // server - почтовый сервер
@@ -111,7 +115,7 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 		for _, v := range slFrom {
 			addr := ""
 			a1 := strings.Split(v, "[")
-			if len(a1) == 1 {	// нет имени, только адрес
+			if len(a1) == 1 { // нет имени, только адрес
 				addr = strings.TrimSpace(a1[0])
 			} else {
 				addr = strings.Trim(a1[1], "]")
@@ -123,7 +127,7 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 		for _, v := range slTo {
 			addr := ""
 			a1 := strings.Split(v, "[")
-			if len(a1) == 1 {	// нет имени, только адрес
+			if len(a1) == 1 { // нет имени, только адрес
 				addr = strings.TrimSpace(a1[0])
 			} else {
 				addr = strings.Trim(a1[1], "]")
@@ -136,9 +140,9 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 		to = Replace(to, "]", ">", -1)
 		to = Replace(to, "[", "<", -1)
 		mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-		fromFull = "From: "+from+"\n"
-		toFull = "To: "+to+"\n"
-		subjectFull = "Subject: "+subject+"\n"
+		fromFull = "From: " + from + "\n"
+		toFull = "To: " + to + "\n"
+		subjectFull = "Subject: " + subject + "\n"
 
 		resMessage = message
 
@@ -185,7 +189,7 @@ func divfloat(a, b interface{}) interface{} {
 }
 
 // обработка @-функций внутри конфигурации (в шаблонизаторе)
-func confparse(configuration string, r *http.Request, queryData interface{}) (result interface{})  {
+func confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
 	var d Data
 	var lb app
 
@@ -212,10 +216,10 @@ func confparse(configuration string, r *http.Request, queryData interface{}) (re
 }
 
 // обработка @-функций внутри шаблонизатора
-func dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string)  {
+func dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
 	var d Data
 	var lb app
-	
+
 	b, _ := json.Marshal(queryData)
 	json.Unmarshal(b, &d)
 
@@ -325,7 +329,7 @@ func timeparse(str, mask string) (res time.Time, err error) {
 	switch mask {
 	case "UTC":
 		res, err = time.Parse("2006-02-01 15:04:05 -0700 UTC", str)
-	case "NOW","THIS":
+	case "NOW", "THIS":
 		res, err = time.Parse("2006-02-01 15:04:05", str)
 	case "ANSIC":
 		res, err = time.Parse(time.ANSIC, str)
@@ -394,17 +398,17 @@ func timeparse(str, mask string) (res time.Time, err error) {
 //	return input, ""
 //}
 
-func refind(mask, str string, n int) (res [][]string)  {
-		if n == 0 {
-			n = -1
-		}
-		re := regexp.MustCompile(mask)
-		res = re.FindAllStringSubmatch(str, n)
+func refind(mask, str string, n int) (res [][]string) {
+	if n == 0 {
+		n = -1
+	}
+	re := regexp.MustCompile(mask)
+	res = re.FindAllStringSubmatch(str, n)
 
-		return
+	return
 }
 
-func rereplace(str, mask, new string) (res string)  {
+func rereplace(str, mask, new string) (res string) {
 	re := regexp.MustCompile(mask)
 	res = re.ReplaceAllString(str, new)
 
@@ -476,7 +480,7 @@ func split(str, sep string) (result interface{}) {
 }
 
 // переводим в денежное отображение строки - 12.344.342
-func tomoney(str,dec string) (res string) {
+func tomoney(str, dec string) (res string) {
 
 	for i, v1 := range invert(str) {
 		if (i == 3) || (i == 6) || (i == 9) {
@@ -491,7 +495,7 @@ func tomoney(str,dec string) (res string) {
 
 func contains1(message, str, substr string) string {
 	sl1 := strings.Split(substr, "|")
-	for _,v := range sl1 {
+	for _, v := range sl1 {
 		if strings.Contains(str, v) {
 			return message
 		}
@@ -501,7 +505,7 @@ func contains1(message, str, substr string) string {
 
 func contains(str, substr, message, messageelse string) string {
 	sl1 := strings.Split(substr, "|")
-	for _,v := range sl1 {
+	for _, v := range sl1 {
 		if strings.Contains(str, v) {
 			return message
 		}
@@ -511,7 +515,7 @@ func contains(str, substr, message, messageelse string) string {
 
 // преобразую дату из 2013-12-24 в 24 января 2013
 func datetotext(str string) (result string) {
-	mapMount := map[string]string{"01":"января","02":"февраля","03":"марта","04":"апреля","05":"мая","06":"июня","07":"июля","08":"августа","09":"сентября","10":"октября","11":"ноября","12":"декабря"}
+	mapMount := map[string]string{"01": "января", "02": "февраля", "03": "марта", "04": "апреля", "05": "мая", "06": "июня", "07": "июля", "08": "августа", "09": "сентября", "10": "октября", "11": "ноября", "12": "декабря"}
 	spd := strings.Split(str, "-")
 	if len(spd) == 3 {
 		result = spd[2] + " " + mapMount[spd[1]] + " " + spd[0]
@@ -568,6 +572,26 @@ func dict(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
+// sliceset - заменяем значение в переданном слайсе
+func sliceset(d []interface{}, index int, value interface{}) []interface{} {
+	d[index] = value
+	return d
+}
+
+// sliceappend - добавляет значение в переданный слайс
+func sliceappend(d []interface{}, value interface{}) []interface{} {
+	return append(d, value)
+}
+
+// slicedelete - удаляет из слайса
+func slicedelete(d []interface{}, index int) []interface{} {
+	copy(d[index:], d[index+1:])
+	d[len(d)-1] = ""
+	d = d[:len(d)-1]
+
+	return d
+}
+
 func set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
 	d[key] = value
 	return d
@@ -585,8 +609,9 @@ func deletekey(d map[string]interface{}, key string) (value string) {
 	delete(d, key)
 	return "true"
 }
+
 // суммируем
-func sum(res,i int) int {
+func sum(res, i int) int {
 	res = res + i
 	return res
 }
@@ -625,15 +650,15 @@ func substring(str string, args ...int) string {
 	}
 
 	// длина строки меньше чем ДО куда надо образать
-		if from < 0 {
-			return string([]rune(str)[lenstr+from:])	// с конца
-		}
+	if from < 0 {
+		return string([]rune(str)[lenstr+from:]) // с конца
+	}
 
-		if count == 0 {
-			return string([]rune(str)[from:])	// вырежем все символы до конца строки
-		}
+	if count == 0 {
+		return string([]rune(str)[from:]) // вырежем все символы до конца строки
+	}
 
-		return string([]rune(str)[from:to])	// вырежем диапазон
+	return string([]rune(str)[from:to]) // вырежем диапазон
 }
 
 func tostring(i interface{}) (res string) {
@@ -673,7 +698,7 @@ func totree(i interface{}, objstart string) (res interface{}) {
 	return objTree
 }
 
-func tohtml(i interface{}) (template.HTML) {
+func tohtml(i interface{}) template.HTML {
 
 	return template.HTML(i.(string))
 }
@@ -794,7 +819,6 @@ func output(element string, configuration, data interface{}, resulttype string) 
 	var dt Data
 	json.Unmarshal([]byte(marshal(data)), &dt)
 
-
 	if element == "" {
 		return ""
 	}
@@ -856,7 +880,7 @@ func jsonEscape(i string) (result string) {
 	}
 	s := string(b)
 
-	return s[1:len(s)-1]
+	return s[1 : len(s)-1]
 }
 
 // экранируем кроме аперсанда (&)
@@ -868,6 +892,6 @@ func jsonEscapeUnlessAmp(s string) (result string) {
 
 func hash(str string) string {
 	var lb *app
-	
+
 	return lb.hash(str)
 }
