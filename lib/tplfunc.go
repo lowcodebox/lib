@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/api-client"
+	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
 	"github.com/satori/go.uuid"
 )
@@ -77,6 +79,32 @@ var FuncMap = template.FuncMap{
 	"sendmail":            Sendmail,
 	"jsonescape":          jsonEscape,
 	"jsonescapeunlessamp": jsonEscapeUnlessAmp,
+	"apiobjget":           ObjGet,
+	"apiobjcreate":        ObjCreate,
+	"apiobjattrupdate":    ObjAttrUpdate,
+	"apilinkget":          LinkGet,
+	"apiquery":            Query,
+}
+
+// операции с объектами через клиента API
+func ObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
+	return api.New(apiURL, nil, nil).ObjGet(uids)
+}
+
+func ObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
+	return api.New(apiURL, nil, nil).ObjCreate(bodymap)
+}
+
+func ObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
+	return api.New(apiURL, nil, nil).ObjAttrUpdate(uid, name, value, src, editor)
+}
+
+func LinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+	return api.New(apiURL, nil, nil).LinkGet(tpl, obj, mode, short)
+}
+
+func Query(apiURL string, query, method, bodyJSON string) (result string, err error) {
+	return api.New(apiURL, nil, nil).Query(query, method, bodyJSON)
 }
 
 // формируем сепаратор для текущей ОС
