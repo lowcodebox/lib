@@ -1032,8 +1032,15 @@ func (l *app) ModuleError(err interface{}, r *http.Request) template.HTML {
 	//t = template.Must(template.ParseFiles(wd + "/upload/control/templates/errors/503.html"))
 
 	t, err = template.ParseGlob(errorTemplate503)
+	if err != nil {
+		return "error ParseGlob errorTemplate503"
+	}
 
-	t.Execute(&c, p)
+	err = t.Execute(&c, p)
+	if err != nil {
+		return "error Execute errorTemplate503"
+	}
+
 	result = template.HTML(c.String())
 
 	return result
