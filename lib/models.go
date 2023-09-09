@@ -10,7 +10,6 @@ import (
 )
 
 type app struct {
-	logger         *lib.Log
 	serviceMetrics lib.ServiceMetric
 	urlORM         string `json:"url_orm"`
 	urlAPI         string `json:"url_api"`
@@ -333,7 +332,7 @@ func (p *Block) CSSPath() {
 	return
 }
 
-func New(logger *lib.Log, metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, db *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs) App {
+func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, db *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs) App {
 
 	// добавляем карту функций FuncMap функциями из библиотеки github.com/Masterminds/sprig
 	// только те, которые не описаны в FuncMap самостоятельно
@@ -347,7 +346,6 @@ func New(logger *lib.Log, metric lib.ServiceMetric, urlORM, urlAPI, urlGUI strin
 	}
 
 	return &app{
-		logger:         logger,
 		serviceMetrics: metric,
 		urlAPI:         urlAPI,
 		urlORM:         urlORM,

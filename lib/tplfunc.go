@@ -177,23 +177,23 @@ func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incooki
 
 // ObjGet операции с объектами через клиента API
 func ObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
-	return api.New(apiURL, nil).ObjGet(uids)
+	return api.New(apiURL).ObjGet(uids)
 }
 
 func ObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
-	return api.New(apiURL, nil).ObjCreate(bodymap)
+	return api.New(apiURL).ObjCreate(bodymap)
 }
 
 func ObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
-	return api.New(apiURL, nil).ObjAttrUpdate(uid, name, value, src, editor)
+	return api.New(apiURL).ObjAttrUpdate(uid, name, value, src, editor)
 }
 
 func LinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
-	return api.New(apiURL, nil).LinkGet(tpl, obj, mode, short)
+	return api.New(apiURL).LinkGet(tpl, obj, mode, short)
 }
 
 func Query(apiURL string, query, method, bodyJSON string) (result string, err error) {
-	return api.New(apiURL, nil).Query(query, method, bodyJSON)
+	return api.New(apiURL).Query(query, method, bodyJSON)
 }
 
 // формируем сепаратор для текущей ОС
