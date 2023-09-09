@@ -19,56 +19,57 @@ import (
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
 	"github.com/satori/go.uuid"
+
+	"git.lowcodeplatform.net/fabric/lib"
 )
 
 var FuncMapS = sprig.FuncMap()
 
 var FuncMap = template.FuncMap{
-	"separator":     separator,
-	"cookie":        cookie,
-	"attr":          attr,
-	"addfloat":      addfloat,
-	"datetotext":    datetotext,
-	"output":        output,
-	"cut":           cut,
-	"concatination": concatination,
-	"join":          join,
-	"rand":          rand,
-	"uuid":          UUID,
-	"refind":        refind,
-	"rereplace":     rereplace,
-	"replace":       Replace,
-	"contains":      contains,
-	"dict":          dict,
-	"sum":           sum,
-	"split":         split,
-	"set":           set,
-	"get":           get,
-	"delete":        deletekey,
-	"sliceset":      sliceset,
-	"sliceappend":   sliceappend,
-	"slicedelete":   slicedelete,
-	"marshal":       marshal,
-	"value":         value,
-	"hash":          hash,
-	"unmarshal":     unmarshal,
-	"compare":       compare,
-	"totree":        totree,
-	"tostring":      tostring,
-	"toint":         toint,
-	"tofloat":       tofloat,
-	"tointerface":   tointerface,
-	"tohtml":        tohtml,
-	"timefresh":     Timefresh,
-	"timenow":       timenow,
-	"timeformat":    timeformat,
-	"timetostring":  timetostring,
-	"timeyear":      timeyear,
-	"timemount":     timemount,
-	"timeday":       timeday,
-	"timeparse":     timeparse,
-	"tomoney":       tomoney,
-	//"timeaddday":    timeaddday,
+	"separator":           separator,
+	"cookie":              cookie,
+	"attr":                attr,
+	"addfloat":            addfloat,
+	"datetotext":          datetotext,
+	"output":              output,
+	"cut":                 cut,
+	"concatination":       concatination,
+	"join":                join,
+	"rand":                rand,
+	"uuid":                UUID,
+	"refind":              refind,
+	"rereplace":           rereplace,
+	"replace":             Replace,
+	"contains":            contains,
+	"dict":                dict,
+	"sum":                 sum,
+	"split":               split,
+	"set":                 set,
+	"get":                 get,
+	"delete":              deletekey,
+	"sliceset":            sliceset,
+	"sliceappend":         sliceappend,
+	"slicedelete":         slicedelete,
+	"marshal":             marshal,
+	"value":               value,
+	"hash":                hash,
+	"unmarshal":           unmarshal,
+	"compare":             compare,
+	"totree":              totree,
+	"tostring":            tostring,
+	"toint":               toint,
+	"tofloat":             tofloat,
+	"tointerface":         tointerface,
+	"tohtml":              tohtml,
+	"timefresh":           Timefresh,
+	"timenow":             timenow,
+	"timeformat":          timeformat,
+	"timetostring":        timetostring,
+	"timeyear":            timeyear,
+	"timemount":           timemount,
+	"timeday":             timeday,
+	"timeparse":           timeparse,
+	"tomoney":             tomoney,
 	"invert":              invert,
 	"substring":           substring,
 	"dogparse":            dogparse,
@@ -84,6 +85,94 @@ var FuncMap = template.FuncMap{
 	"apiobjattrupdate":    ObjAttrUpdate,
 	"apilinkget":          LinkGet,
 	"apiquery":            Query,
+	"curl":                curl,
+	"parseform":           parseform,
+	"parsebody":           parsebody,
+	"redirect":            redirect,
+}
+
+// redirect
+func redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int) (result interface{}, err error) {
+	http.Redirect(w, r, url, statusCode)
+
+	return
+}
+
+// parsebody
+// json - преобразованный, по-умолчанию raw (строка)
+func parsebody(r *http.Request, format string) (result interface{}, err error) {
+	responseData, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+	defer r.Body.Close()
+
+	switch format {
+	case "json":
+		err = json.Unmarshal(responseData, result)
+		if err != nil {
+			return string(responseData), fmt.Errorf("error Unmarshal (output data in raw format. err: %s", err)
+		}
+	default:
+		return string(responseData), nil
+	}
+
+	return
+}
+
+// parseform парсит полученные в запросе значения в мапку
+func parseform(r *http.Request) map[string][]string {
+	err := r.ParseForm()
+	if err != nil {
+		return nil
+	}
+	data := make(map[string][]string)
+	for k, v := range r.PostForm {
+		data[k] = v
+	}
+	return data
+}
+
+// отправка запроса (повторяет интерфейс lib.Curl)
+// при передаче в куку времени протухани используется формат "2006-01-02T15:04:05Z07:00"
+func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}, err error) {
+	var cookies []*http.Cookie
+	var responseData models.ResponseData
+
+	if len(incookies) != 0 {
+		for _, v := range incookies {
+			c := http.Cookie{}
+			for i, j := range v {
+				switch strings.ToUpper(i) {
+				case "NAME":
+					c.Name = fmt.Sprint(j)
+				case "VALUE":
+					c.Value = fmt.Sprint(j)
+				case "PATH":
+					c.Path = fmt.Sprint(j)
+				case "DAMAIN":
+					c.Domain = fmt.Sprint(j)
+				case "EXPIRES":
+					c.Expires, _ = time.Parse(time.RFC3339, fmt.Sprint(j))
+				}
+			}
+			cookies = append(cookies, &c)
+		}
+	}
+
+	// КОСТЫЛЬ
+	// приводим к формату [string]string - потому, что unmarshal возвращаем [string]interface
+	h := map[string]string{}
+	for k, v := range headers {
+		h[k] = fmt.Sprint(v)
+	}
+
+	raw, err := lib.Curl(method, urlc, bodyJSON, responseData, h, cookies)
+	if len(responseData.Data) == 0 {
+		return raw, err
+	}
+
+	return responseData, err
 }
 
 // операции с объектами через клиента API
@@ -393,38 +482,6 @@ func timeparse(str, mask string) (res time.Time, err error) {
 
 	return res, err
 }
-
-// альтернативный формат добавления даты год-месяц-день (0-1-0)
-//func timeaddday(t time.Time, dateformat string) (input time.Time, error string) {
-//	var intervalYMD []int
-//	intervalSl := strings.Split(dateformat, "-")
-//
-//	if len(intervalSl) != 3 {
-//		return input, "Error! Params failed. (want: year-mount-day, e.g. 0-0-1)"
-//	}
-//
-//	i0, err := strconv.Atoi(intervalSl[0])
-//	if err != nil {
-//		return input, fmt.Sprintln(err)
-//	}
-//	intervalYMD = append(intervalYMD, i0)
-//
-//	i1, err := strconv.Atoi(intervalSl[1])
-//	if err != nil {
-//		return input, fmt.Sprintln(err)
-//	}
-//	intervalYMD = append(intervalYMD, i1)
-//
-//	i2, err := strconv.Atoi(intervalSl[2])
-//	if err != nil {
-//		return input, fmt.Sprintln(err)
-//	}
-//	intervalYMD = append(intervalYMD, i2)
-//
-//	input = t.AddDate(intervalYMD[0], intervalYMD[1], intervalYMD[2])
-//
-//	return input, ""
-//}
 
 func refind(mask, str string, n int) (res [][]string) {
 	if n == 0 {

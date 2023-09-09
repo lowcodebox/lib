@@ -129,6 +129,7 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	values["Referer"] = r.Referer()
 	values["RequestURI"] = r.RequestURI
 	values["Profile"] = profile
+	values["ProxyPath"] = c.ConfigGet("ProxyPointsrc")
 
 	result := c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
 
@@ -239,6 +240,7 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	values["Referer"] = r.Referer()
 	values["RequestURI"] = r.RequestURI
 	values["Profile"] = profile
+	values["ProxyPath"] = c.ConfigGet("ProxyPointsrc")
 
 	result := c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
 

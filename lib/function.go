@@ -358,6 +358,12 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	b.Value["Cookie"] = r.Cookies()
 	b.Value["Request"] = r
 
+	// ФИКС, работает только если есть переход
+	p := strings.Split(r.Referer(), Domain)
+	if len(p) > 0 {
+		b.Value["ProxyPath"] = p[0]
+	}
+
 	// обработк @-функции в конфигурации
 	dv = []Data{block}
 	dogParseConfiguration := l.DogParse(tconfiguration, r, &dv, b.Value)
@@ -666,6 +672,12 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	b.Value["Profile"] = profile
 	b.Value["Cookie"] = r.Cookies()
 	b.Value["Request"] = r
+
+	// ФИКС, работает только если есть переход
+	pp := strings.Split(r.Referer(), Domain)
+	if len(pp) > 0 {
+		b.Value["ProxyPath"] = pp[0]
+	}
 
 	// обработк @-функции в конфигурации
 	dp = []Data{p}
@@ -1036,11 +1048,7 @@ func (l *app) ModuleError(err interface{}, r *http.Request) template.HTML {
 		return "error ParseGlob errorTemplate503"
 	}
 
-	err = t.Execute(&c, p)
-	if err != nil {
-		return "error Execute errorTemplate503"
-	}
-
+	t.Execute(&c, p)
 	result = template.HTML(c.String())
 
 	return result

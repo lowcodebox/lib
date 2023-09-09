@@ -13,29 +13,29 @@ import (
 ////////////////////////////////////////////////////////////
 
 type Formula struct {
-	Value 		string `json:"value"`
-	Document 	[]Data `json:"document"`
-	Request		*http.Request
-	Inserts		[]*Insert
-	Values     	map[string]interface{}	//  параметры переданные в шаблон при генерации страницы (доступны в шаблоне как $.Value)
-	App 		*app
+	Value    string `json:"value"`
+	Document []Data `json:"document"`
+	Request  *http.Request
+	Inserts  []*Insert
+	Values   map[string]interface{} //  параметры переданные в шаблон при генерации страницы (доступны в шаблоне как $.Value)
+	App      *app
 }
 
 // Вставка - это одна функция, которая может иметь вложения
 // Text - строка вставки, по которому мы будем заменять в общем тексте
 type Insert struct {
-	Text 		string 		`json:"text"`
-	Arguments 	[]string 	`json:"arguments"`
-	Result		interface{} 		`json:"result"`
-	Functions	Function
+	Text      string      `json:"text"`
+	Arguments []string    `json:"arguments"`
+	Result    interface{} `json:"result"`
+	Functions Function
 }
 
 // Исчисляемая фукнция с аргументами и параметрами
 // может иметь вложения
 type Function struct {
-	Name 		string 		`json:"name"`
-	Arguments 	[]string 	`json:"arguments"`
-	Result 		string 		`json:"result"`
+	Name      string   `json:"name"`
+	Arguments []string `json:"arguments"`
+	Result    string   `json:"result"`
 }
 
 ////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ func (p *Formula) Replace() (result string) {
 	return p.Value
 }
 
-func (p *Formula) Parse() bool  {
+func (p *Formula) Parse() bool {
 
 	if p.Value == "" {
 		return false
@@ -80,7 +80,7 @@ func (p *Formula) Parse() bool  {
 		strFunc1 = strings.Replace(strFunc1, ")", "", -1)
 		f1 := strings.Split(strFunc1, "(")
 
-		if len(f1) == 1 {	// если не нашли ( значит неверно задана @-фукнций
+		if len(f1) == 1 { // если не нашли ( значит неверно задана @-фукнций
 			return false
 		}
 
@@ -96,7 +96,7 @@ func (p *Formula) Parse() bool  {
 
 			// очищаем каждый параметр от ' если есть
 			argsClear := []string{}
-			for _, v := range args{
+			for _, v := range args {
 				v = strings.Trim(v, " ")
 				v = strings.Trim(v, "'")
 				argsClear = append(argsClear, v)
@@ -137,12 +137,14 @@ func (p *Formula) Parse() bool  {
 	return true
 }
 
-func (p *Formula) Calculate()  {
+func (p *Formula) Calculate() {
 
 	for k, v := range p.Inserts {
 		param := strings.ToUpper(v.Functions.Name)
 
 		switch param {
+		case "IMGRESIZE":
+			p.Inserts[k].Result = p.App.Sendmail(v.Functions.Arguments)
 		case "RAND":
 			uuid := UUID()
 			p.Inserts[k].Result = uuid[1:6]
@@ -192,7 +194,6 @@ func (p *Formula) Calculate()  {
 	}
 
 }
-
 
 ///////////////////////////////////////////////////
 // Фукнции @ обработки
@@ -296,7 +297,6 @@ func (c *app) SplitIndex(arg []string) (result string) {
 		result = valueDefault
 	}
 
-
 	//fmt.Println(result)
 
 	return result
@@ -309,7 +309,7 @@ func (c *app) Time(arg []string) (result string) {
 		param := strings.ToUpper(arg[0])
 
 		switch param {
-		case "NOW","THIS":
+		case "NOW", "THIS":
 			result = time.Now().Format("2006-01-02 15:04:05")
 		default:
 			result = time.Now().String()
@@ -325,9 +325,9 @@ func (c *app) TimeFormat(arg []string) (result string) {
 
 	if len(arg) > 0 {
 
-		thisdate := strings.ToUpper(arg[0])	// переданное время (строка) можно вручную или Now (текущее)
-		mask := strings.ToUpper(arg[1])		// маска для перевода переданного времени в Time
-		format := strings.ToUpper(arg[2])	// формат преобразования времени (как вывести)
+		thisdate := strings.ToUpper(arg[0]) // переданное время (строка) можно вручную или Now (текущее)
+		mask := strings.ToUpper(arg[1])     // маска для перевода переданного времени в Time
+		format := strings.ToUpper(arg[2])   // формат преобразования времени (как вывести)
 		if len(arg) == 4 {
 			valueDefault = strings.ToUpper(arg[2])
 		}
@@ -364,7 +364,6 @@ func (c *app) FuncURL(r *http.Request, arg []string) (result string) {
 	if result == "" {
 		result = valueDefault
 	}
-
 
 	return result
 }
@@ -450,10 +449,9 @@ func (c *app) UserObj(r *http.Request, arg []string) (result string) {
 
 		json.Unmarshal([]byte(marshal(ctxUser)), &uu)
 
-
 		if &uu != nil {
 			switch param {
-			case "UID","ID":
+			case "UID", "ID":
 				result = uu.Uid
 			case "PHOTO":
 				result = uu.Photo
@@ -484,7 +482,7 @@ func (c *app) UserProfile(r *http.Request, arg []string) (result string) {
 
 		param := strings.ToUpper(arg[0])
 		ctxUser := r.Context().Value("User") // текущий профиль пользователя
-		
+
 		var uu *ProfileData
 		if ctxUser != nil {
 			ii, _ := json.Marshal(ctxUser)
@@ -494,7 +492,7 @@ func (c *app) UserProfile(r *http.Request, arg []string) (result string) {
 		if uu != nil {
 			role := uu.CurrentProfile
 			switch param {
-			case "UID","ID":
+			case "UID", "ID":
 				result = role.Uid
 			case "TITLE":
 				result = role.Title
@@ -506,7 +504,7 @@ func (c *app) UserProfile(r *http.Request, arg []string) (result string) {
 		}
 
 	}
-	
+
 	return result
 }
 
@@ -528,7 +526,7 @@ func (c *app) UserRole(r *http.Request, arg []string) (result string) {
 			role := uu.CurrentRole
 
 			switch param {
-			case "UID","ID":
+			case "UID", "ID":
 				result = role.Uid
 			case "TITLE":
 				result = role.Title
@@ -591,7 +589,7 @@ func (c *app) Obj(data []Data, arg []string) (result string) {
 	}
 
 	param := strings.ToUpper(arg[0])
-	separator := ","	// значение разделителя по-умолчанию
+	separator := "," // значение разделителя по-умолчанию
 
 	if len(arg) == 0 {
 		return "Ошибка в переданных параметрах."
@@ -603,12 +601,9 @@ func (c *app) Obj(data []Data, arg []string) (result string) {
 		separator = arg[2]
 	}
 
-
-
-
 	for _, d := range data {
 		switch param {
-		case "UID":	// получаем все uid-ы из переданного массива объектов
+		case "UID": // получаем все uid-ы из переданного массива объектов
 			r = d.Uid
 		case "ID":
 			r = d.Id
@@ -638,7 +633,7 @@ func (c *app) FieldValue(data []Data, arg []string) (result string) {
 	var valueDefault, separator string
 	var resSlice = []string{}
 
-	separator = ","	// значение разделителя по-умолчанию
+	separator = "," // значение разделителя по-умолчанию
 
 	if len(arg) == 0 {
 		return "Ошибка в переданных параметрах."
@@ -699,7 +694,6 @@ func (c *app) FieldSrc(data []Data, arg []string) (result string) {
 
 	return result
 }
-
 
 // Разбиваем значения по элементу (Value(по-умолчанию)/Src) элементов из формы по разделителю и возвращаем
 // значение по указанному номеру (начала от 0)
@@ -805,7 +799,35 @@ func (c *app) Sendmail(arg []string) (result string) {
 	return result
 }
 
-// Делаем вложенный запрос
+// ImgResize изменяем размер изображение и отдаем новую ссылку на отрендеренный файл
+// path - путь к файлу
+// widht, height - ожидаемые размеры (если 0, то не меняем)
+// arg - задаем форматы обрезки/сжатия и тд
+func (c *app) ImgResize(path string, widht, height int, arg []string) (result string, err error) {
+	pathResized := strings.Split(path, ".")[0]
+
+	// сначала проверяем наличие файла нужного размера в хранилище
+	// если нет - ресайзим и сохраняем
+
+	data, _, err := c.vfs.Read(pathResized)
+	if err != nil {
+		return "", fmt.Errorf("error ImgResize, err: %s", err)
+	}
+	if len(data) > 0 {
+		return pathResized, nil
+	}
+
+	data, mime, err := c.vfs.Read(path)
+	if err != nil {
+		return "", fmt.Errorf("error ImgResize, err: %s", err)
+	}
+
+	fmt.Printf(string(data), mime, err)
+
+	return result, err
+}
+
+// Query Делаем вложенный запрос
 // аргументы:
 // queryName - первый параметр - имя запрсоа
 // mode - тип ответа
@@ -820,7 +842,7 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}) {
 	if len(arg) == 2 {
 		valueDefault = arg[1]
 	}
-	
+
 	urlCurl := c.ConfigGet("url_api") + "/query/" + arg[0]
 	objs := c.GUIQuery(urlCurl, r)
 
@@ -848,7 +870,6 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}) {
 	}
 	return ""
 }
-
 
 // Собачья-обработка (поиск в строке @функций и их обработка)
 func (c *app) DogParse(p string, r *http.Request, queryData *[]Data, values map[string]interface{}) (result string) {
