@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"runtime"
 	"runtime/debug"
-	"strings"
 	"syscall"
 	"time"
 
@@ -23,12 +22,18 @@ import (
 	iam "git.lowcodeplatform.net/fabric/iam-client"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
+	"go.uber.org/zap"
 
 	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
 )
 
 const sep = string(os.PathSeparator)
 const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь, относительно bucket-а проекта
+var (
+	serviceVersion string
+	hashCommit     string
+)
 
 func main() {
 	//limit := 1
@@ -57,12 +62,23 @@ func main() {
 
 	//time.Sleep(100 * time.Second)
 
-	lib.RunServiceFuncCLI(Start)
+	var err error
+
+	err = lib.RunServiceFuncCLI(Start)
+	if err != nil {
+		fmt.Printf("%s (os.exit 1)", err)
+		os.ErrExist = err
+		os.Exit(1)
+	}
+
+	return
 }
 
 // Start стартуем сервис приложения
-func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourcedb, action, version string) {
+func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourcedb, action, version string) error {
 	var cfg model.Config
+	var initType string
+	var err error
 
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
@@ -73,76 +89,81 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	}()
 
 	// инициируем пакеты
-	err := lib.ConfigLoad(configfile, &cfg)
+	err = lib.ConfigLoad(configfile, &cfg)
 	if err != nil {
-		fmt.Printf("%s (%s)", "Error. Load config is failed.", err)
-		return
+		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
 	}
 
 	cfg.UidService = cfg.DataUid
+	cfg.ConfigName = cfg.DataUid
+	cfg.HashRun = lib.UUID()
+	cfg.Name, cfg.ServiceType = lib.ValidateNameVersion("", cfg.ServiceType, cfg.Domain)
+
+	// задаем значение бакера для текущего проекта
+	if cfg.VfsBucket == "" {
+		cfg.VfsBucket = cfg.Name
+	}
+
+	err = logger.SetupDefaultLogboxLogger(cfg.Name+"/"+cfg.ServiceType, logger.LogboxConfig{
+		Endpoint:       cfg.LogboxEndpoint,
+		AccessKeyID:    cfg.LogboxAccessKeyId,
+		SecretKey:      cfg.LogboxSecretKey,
+		RequestTimeout: cfg.LogboxRequestTimeout.Value,
+	}, map[string]string{
+		logger.ServiceIDKey:   cfg.HashRun,
+		logger.ConfigIDKey:    cfg.UidService,
+		logger.ServiceTypeKey: cfg.ServiceType,
+	})
+
+	if err != nil {
+		fmt.Errorf("%s Error init Logbox logger. Was init default logger. err: %s\n", fail, err)
+		logger.SetupDefaultLogger(cfg.Name+"/"+cfg.ServiceType,
+			logger.WithCustomField(logger.ServiceIDKey, cfg.HashRun),
+			logger.WithCustomField(logger.ConfigIDKey, cfg.UidService),
+			logger.WithCustomField(logger.ServiceTypeKey, cfg.ServiceType),
+		)
+	}
+
+	logger.SetupDefaultLogger(cfg.Name+"/"+cfg.ServiceType,
+		logger.WithCustomField(logger.ServiceIDKey, cfg.HashRun),
+		logger.WithCustomField(logger.ConfigIDKey, cfg.UidService),
+		logger.WithCustomField(logger.ServiceTypeKey, cfg.ServiceType),
+	)
 
 	// подключаемся к файловому хранилищу
-	if cfg.VfsBucket == "" {
-		cfg.VfsBucket = strings.Replace(cfg.Domain, "/", "_", -1)
-	}
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
 	err = vfs.Connect()
 	if err != nil {
-		fmt.Printf("%s Error connect to filestorage: %s\n", fail, err)
 		log.Info("Error connect to filestorage (", configfile, ")", err)
-		return
+		return fmt.Errorf("%s Error connect to filestorage. err: %s\n cfg: VfsKind: %s, VfsEndpoint: %s, VfsAccessKeyId: %s, VfsSecretKey: %s, VfsRegion: %s, VfsBucket: %s, VfsComma: %s", fail, err, cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
 	}
 
-	// формируем значение переменных по-умолчанию или исходя из требований сервиса
-	cfg.SetClientPath()
-	cfg.SetRootDir()
-	cfg.SetConfigName()
+	fmt.Printf("%s Enabled logs (type: %s). Level:%s, Dir:%s\n", done, initType, cfg.LogsLevelPointsrc, cfg.LogsDir)
+	log.Info("Запускаем gui-сервис: ", cfg.Domain)
 
-	cfg.Workingdir = cfg.RootDir
+	defer func() {
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+	//////////////////////////////////////////////////
 
-	///////////////// ЛОГИРОВАНИЕ //////////////////
-	// формирование пути к лог-файлам и метрикам
-	if cfg.LogsDir == "" {
-		cfg.LogsDir = "logs"
-	}
-	// если путь указан относительно / значит задан абсолютный путь, иначе в директории
-	if cfg.LogsDir[:1] != sep {
-		rootDir, _ := lib.RootDir()
-		cfg.LogsDir = rootDir + sep + "upload" + sep + cfg.Domain + sep + cfg.LogsDir
-	}
-	// инициализируем кеширование
-	cfg.Namespace = strings.ReplaceAll(cfg.Domain, "/", "_")
-	cfg.UrlProxy = cfg.ProxyPointsrc
-
-	// инициализировать лог и его ротацию
-	var logger = lib.NewLogger(
-		cfg.LogsDir,
-		cfg.LogsLevel,
-		lib.UUID(),
-		cfg.Domain,
-		"app",
-		cfg.UidService,
-		cfg.LogIntervalReload.Value,
-		cfg.LogIntervalClearFiles.Value,
-		cfg.LogPeriodSaveFiles,
-	)
-	logger.RotateInit(ctx)
-
-	fmt.Printf("%s Enabled logs. Level:%s, Dir:%s\n", done, cfg.LogsLevel, cfg.LogsDir)
-	logger.Info("Запускаем app-сервис: ", cfg.Domain)
+	fmt.Printf("%s Enabled logs (type: %s). Level:%s, Dir:%s\n", done, initType, cfg.LogsLevelPointsrc, cfg.LogsDir)
+	logger.Info(ctx, "Запускаем app-сервис: ", zap.String("domain", cfg.Domain))
+	//////////////////////////////////////////////////
 
 	// создаем метрики
-	metrics := lib.NewMetric(
-		ctx,
-		logger,
-		cfg.LogIntervalMetric.Value,
-	)
+	//metrics := lib.NewMetric(
+	//	ctx,
+	//	logger,
+	//	cfg.LogIntervalMetric.Value,
+	//)
 
 	defer func() {
 		rec := recover()
 		if rec != nil {
 			b := string(debug.Stack())
-			logger.Panic(fmt.Errorf("%s", b), "Recover panic from main function.")
+			logger.Panic(ctx, "Recover panic from main function.", zap.String("debug stack", b))
 			cancel()
 			runtime.Goexit()
 		}
@@ -152,30 +173,27 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 
 	api := api.New(
 		cfg.UrlApi,
-		logger,
-		metrics,
 	)
 
 	fnc := function.New(
 		cfg,
-		logger,
 		api,
 	)
 
 	if ClearSlash(cfg.UrlIam) == "" {
+		logger.Error(ctx, "Error: UrlIam is empty", zap.Error(err))
 		fmt.Println("Error: UrlIam is empty")
-		return
+		return err
 	}
 
 	iam := iam.New(
 		ClearSlash(cfg.UrlIam),
 		cfg.ProjectKey,
-		logger,
-		metrics,
+		nil,
+		nil,
 	)
 
 	ses := session.New(
-		logger,
 		cfg,
 		api,
 		iam,
@@ -188,23 +206,20 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortInterval)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return err
 		}
 	}
 	cfg.PortApp = port
 
 	cach := cache.New(
 		cfg,
-		logger,
 		fnc,
 	)
 
 	// собираем сервис
 	src := service.New(
 		ctx,
-		logger,
 		cfg,
-		metrics,
 		cach,
 		msg,
 		ses,
@@ -218,8 +233,6 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		ctx,
 		cfg,
 		src,
-		metrics,
-		logger,
 		iam,
 		ses,
 	)
@@ -227,25 +240,26 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	// для завершения сервиса ждем сигнал в процесс
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	go ListenForShutdown(ch, logger, cancel)
+	go ListenForShutdown(ch, cancel)
 
 	srv := servers.New(
 		"http",
 		src,
 		httpserver,
-		metrics,
 		cfg,
 	)
 	srv.Run()
+
+	return err
 }
 
-func ListenForShutdown(ch <-chan os.Signal, logger lib.Log, cancelFunc context.CancelFunc) {
+func ListenForShutdown(ch <-chan os.Signal, cancelFunc context.CancelFunc) {
 	var done = color.Grey("[OK]")
+	ctx := context.Background()
 
 	<-ch
 	cancelFunc()
-	logger.Warning("Service is stopped. Logfile is closed.")
-	logger.Close()
+	logger.Info(ctx, "Service is stopped. Logfile is closed.")
 
 	fmt.Printf("%s Service is stopped. Logfile is closed.\n", done)
 

@@ -34,9 +34,7 @@ type dynamicParams struct {
 }
 
 type service struct {
-	logger   lib.Log
 	cfg      model.Config
-	metrics  lib.ServiceMetric
 	cache    cache.Cache
 	block    block.Block
 	function function.Function
@@ -63,9 +61,7 @@ type Service interface {
 
 func New(
 	ctx context.Context,
-	logger lib.Log,
 	cfg model.Config,
-	metrics lib.ServiceMetric,
 	cache cache.Cache,
 	msg i18n.I18n,
 	session session.Session,
@@ -78,17 +74,15 @@ func New(
 		PublicRoutes: constPublicLink,
 	}
 
-	var tplfunc = function.NewTplFunc(cfg, logger, api)
-	var function = function.New(cfg, logger, api)
-	var blocks = block.New(cfg, logger, function, tplfunc, api, vfs)
+	var tplfunc = function.NewTplFunc(cfg, api)
+	var function = function.New(cfg, api)
+	var blocks = block.New(cfg, function, tplfunc, api, vfs)
 
 	// асинхронно обновляем список публичный страниц/блоков
 	go dps.reloadPublicPages(ctx, api, 10*time.Second)
 
 	return &service{
-		logger,
 		cfg,
-		metrics,
 		cache,
 		blocks,
 		function,

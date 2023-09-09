@@ -2,27 +2,30 @@ package handlers
 
 import (
 	"context"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"net/http"
 	"strings"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 	in, err := storageDecodeRequest(r.Context(), r)
 	if err != nil {
-		h.logger.Error(err, "[Alive] Error function execution (storageDecodeRequest).")
+		logger.Error(h.ctx, "[Alive] Error function execution (storageDecodeRequest).", zap.Error(err))
 		return
 	}
 	serviceResult, err := h.service.Storage(r.Context(), in)
 	if err != nil {
-		h.logger.Error(err, "[Alive] Error service execution (service.Alive).")
+		logger.Error(h.ctx, "[Alive] Error function execution (service.Alive).", zap.Error(err))
 		h.transportError(w, 500, err, "[Alive] Error service execution (service.Alive).")
 		return
 	}
 	response, _ := storageEncodeResponse(r.Context(), serviceResult)
 	if err != nil {
+		logger.Error(h.ctx, "[Alive] Error function execution (storageEncodeResponse).", zap.Error(err))
 		h.transportError(w, 500, err, "[Alive] Error function execution (storageEncodeResponse)")
-		h.logger.Error(err, "[Alive] Error function execution (storageEncodeResponse).")
 		return
 	}
 

@@ -76,12 +76,12 @@ func ReadFile(path string) (result string, err error) {
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err == nil {
 		result = string(b)
 	}
-	defer file.Close()
 
 	return result, err
 }
@@ -100,6 +100,7 @@ func CopyFolder(source string, dest string) (err error) {
 	}
 
 	directory, _ := os.Open(source)
+	defer directory.Close()
 	objects, err := directory.Readdir(-1)
 
 	for _, obj := range objects {

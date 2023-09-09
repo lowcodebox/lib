@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"context"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"net/http"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 // Alive get user by login+pass pair
@@ -16,17 +19,17 @@ import (
 func (h *handlers) Alive(w http.ResponseWriter, r *http.Request) {
 	_, err := aliveDecodeRequest(r.Context(), r)
 	if err != nil {
-		h.logger.Error(err, "[Alive] Error function execution (aliveDecodeRequest).")
+		logger.Error(h.ctx, "[Alive] Error function execution (aliveDecodeRequest).", zap.Error(err))
 		return
 	}
 	serviceResult, err := h.service.Alive(r.Context())
 	if err != nil {
-		h.logger.Error(err, "[Alive] Error service execution (service.Alive).")
+		logger.Error(h.ctx, "[Alive] Error service execution (service.Alive).", zap.Error(err))
 		return
 	}
 	response, _ := aliveEncodeResponse(r.Context(), serviceResult)
 	if err != nil {
-		h.logger.Error(err, "[Alive] Error function execution (aliveEncodeResponse).")
+		logger.Error(h.ctx, "[Alive] Error function execution (aliveEncodeResponse).", zap.Error(err))
 		return
 	}
 	err = h.transportResponse(w, response)

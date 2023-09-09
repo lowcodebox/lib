@@ -2,6 +2,7 @@ package cache
 
 //import "C"
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,7 +11,9 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/function"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/labstack/gommon/color"
+	"go.uber.org/zap"
 
 	"github.com/restream/reindexer"
 )
@@ -18,7 +21,6 @@ import (
 type cache struct {
 	DB       *reindexer.Reindexer
 	cfg      model.Config
-	logger   lib.Log
 	function function.Function
 	active   bool `json:"active"`
 }
@@ -147,6 +149,7 @@ func (c *cache) Read(key string) (result, status string, flagExpired bool, err e
 // blockUid, pageUid - ид-ы блока и страницы (для формирования возможности выборочного сброса кеша)
 // data - то, что кладется в кеш
 func (c *cache) Write(key, cacheParams string, cacheInterval int, blockUid, pageUid string, value string) (err error) {
+	ctx := context.Background()
 	var valueCache = model.ValueCache{}
 	var deadTime time.Duration
 
@@ -173,7 +176,7 @@ func (c *cache) Write(key, cacheParams string, cacheInterval int, blockUid, page
 
 	err = c.DB.Upsert(c.cfg.Namespace, valueCache)
 	if err != nil {
-		c.logger.Error(err, "Error! Created cache from is failed!")
+		logger.Error(ctx, "Error! Created cache from is failed!", zap.Error(err))
 		return fmt.Errorf("%s", "Error! Created cache from is failed!")
 	}
 
@@ -200,12 +203,12 @@ func (c *cache) Clear(links string) (count int, err error) {
 	return
 }
 
-func New(cfg model.Config, logger lib.Log, function function.Function) Cache {
+func New(cfg model.Config, function function.Function) Cache {
+	ctx := context.Background()
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
 	var cach = cache{
 		cfg:      cfg,
-		logger:   logger,
 		function: function,
 	}
 
@@ -216,11 +219,11 @@ func New(cfg model.Config, logger lib.Log, function function.Function) Cache {
 		if err != nil {
 			fmt.Printf("%s Error connecting to database. Plaese check this parameter in the configuration. %s\n", fail, cfg.CachePointsrc)
 			fmt.Printf("%s\n", err)
-			logger.Error(err, "Error connecting to database. Plaese check this parameter in the configuration: ", cfg.CachePointsrc)
+			logger.Error(ctx, fmt.Sprintf("Error connecting to database. Plaese check this parameter in the configuration: %s", cfg.CachePointsrc), zap.Error(err))
 			return &cach
 		} else {
 			fmt.Printf("%s Cache-service is running\n", done)
-			logger.Info("Cache-service is running")
+			logger.Info(ctx, "Cache-service is running")
 			cach.active = true
 		}
 	}

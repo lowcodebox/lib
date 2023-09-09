@@ -2,18 +2,17 @@
 package servers
 
 import (
+	"strings"
+
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	bbmetric "git.lowcodeplatform.net/fabric/lib"
-	"strings"
 )
 
 type servers struct {
 	mode       string
 	service    service.Service
 	httpserver httpserver.Server
-	metrics    bbmetric.ServiceMetric
 	cfg        model.Config
 }
 
@@ -32,14 +31,12 @@ func New(
 	mode string,
 	service service.Service,
 	httpserver httpserver.Server,
-	metrics bbmetric.ServiceMetric,
 	cfg model.Config,
 ) Servers {
 	return &servers{
 		mode,
 		service,
 		httpserver,
-		metrics,
 		cfg,
 	}
 }

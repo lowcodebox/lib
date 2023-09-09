@@ -3,8 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"git.lowcodeplatform.net/fabric/models"
 	"net/http"
+
+	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 // Ping get user by login+pass pair
@@ -17,22 +20,22 @@ import (
 func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
 	_, err := pingDecodeRequest(r.Context(), r)
 	if err != nil {
-		h.logger.Error(err, "[Ping] Error function execution (PLoginDecodeRequest).")
+		logger.Error(h.ctx, "[Ping] Error function execution (PLoginDecodeRequest).", zap.Error(err))
 		return
 	}
 	serviceResult, err := h.service.Ping(r.Context())
 	if err != nil {
-		h.logger.Error(err, "[Ping] Error service execution (service.Ping).")
+		logger.Error(h.ctx, "[Ping] Error function execution (service.Ping).", zap.Error(err))
 		return
 	}
 	response, _ := pingEncodeResponse(r.Context(), serviceResult)
 	if err != nil {
-		h.logger.Error(err, "[Ping] Error function execution (PLoginEncodeResponse).")
+		logger.Error(h.ctx, "[Ping] Error function execution (PLoginEncodeResponse).", zap.Error(err))
 		return
 	}
 	err = pingTransportResponse(w, response)
 	if err != nil {
-		h.logger.Error(err, "[Ping] Error function execution (PLoginTransportResponse).")
+		logger.Error(h.ctx, "[Ping] Error function execution (PLoginTransportResponse).", zap.Error(err))
 		return
 	}
 

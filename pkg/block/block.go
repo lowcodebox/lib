@@ -2,6 +2,7 @@ package block
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -17,7 +18,9 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	uuid2 "github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const sep = string(filepath.Separator)
@@ -25,7 +28,6 @@ const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь,
 
 type block struct {
 	cfg      model.Config
-	logger   lib.Log
 	function function.Function
 	tplfunc  function.TplFunc
 	api      api.Api
@@ -43,7 +45,7 @@ type Block interface {
 
 func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
 	var c bytes.Buffer
-
+	ctx := context.Background()
 	result.Id = block.Id
 
 	// обработка всех странных ошибок
@@ -95,7 +97,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	dv := []models.Data{block}
 	extfilter, err = b.function.Exec(extfilter, dv, bl.Value, in, block.Id+"_extfilter")
 	if err != nil {
-		b.logger.Error(err, "[Generate] Error parsing Exec from block.")
+		logger.Error(ctx, "[Generate] Error parsing Exec from block.")
 		fmt.Println("[Generate] Error parsing Exec from block: ", err)
 	}
 
@@ -104,7 +106,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	// парсим переденную строку фильтра
 	m, err := url.ParseQuery(extfilter)
 	if err != nil {
-		b.logger.Error(err, "[Generate] Error parsing extfilter from block.")
+		logger.Error(ctx, "[Generate] Error parsing extfilter from block.", zap.Error(err))
 		fmt.Println("[Generate] Error parsing extfilter from block.: ", err)
 	}
 
@@ -155,7 +157,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		mes := "[Generate] Error DogParse configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
 		result.Result = b.ModuleError(mes)
 		result.Err = err
-		b.logger.Error(err, mes)
+		logger.Error(ctx, mes, zap.Error(err))
+
 		return
 	}
 
@@ -170,7 +173,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		mes := "[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
 		result.Result = b.ModuleError("[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration)
 		result.Err = err
-		b.logger.Error(err, mes)
+		logger.Error(ctx, mes, zap.Error(err))
+
 		return
 	}
 
@@ -183,7 +187,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		mes := "[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration
 		result.Result = b.ModuleError("[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration)
 		result.Err = err
-		b.logger.Error(err, mes)
+		logger.Error(ctx, mes, zap.Error(err))
+
 		return
 	}
 
@@ -201,7 +206,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 			result.Err = err
 			result.Stat = stat
 			mes := "[Generate] Error generate datasets."
-			b.logger.Error(err, mes)
+			logger.Error(ctx, mes, zap.Error(err))
+
 			return result, err
 		}
 	}
@@ -293,9 +299,10 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	// ошибка при генерации страницы
 	if err != nil {
 		mes := fmt.Sprintf("Error. Generate module is failed. err: (%s)", err)
-		b.logger.Error(err, mes)
+		logger.Error(ctx, mes, zap.Error(err))
 		result.Result = template.HTML(mes)
 		result.Id = block.Id
+
 		return result, nil
 	}
 
@@ -444,27 +451,32 @@ func (b *block) QueryWorker(queryUID, dataname string, source []map[string]strin
 	return resp
 }
 
-// вывод ошибки выполнения блока
+// ErrorPage вывод ошибки выполнения блока
 func (b *block) ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	p := model.ErrorForm{
 		Err: err,
 		R:   *r,
 	}
-	b.logger.Error(nil, err)
+	logger.Info(ctx, "get ErrorPage", zap.Error(fmt.Errorf("err: %s", err)))
 
 	t := template.Must(template.ParseFiles("./upload/control/templates/errors/500.html"))
-	t.Execute(w, p)
+	err = t.Execute(w, p)
+	if err != nil {
+		logger.Error(ctx, "error Execute in ErrorPage", zap.Error(fmt.Errorf("err: %s", err)))
+	}
 }
 
-// вывод ошибки выполнения блока
+// ModuleError вывод ошибки выполнения блока
 func (l *block) ModuleError(err interface{}) template.HTML {
 	var c bytes.Buffer
+	ctx := context.Background()
 
 	p := model.ErrorForm{
 		Err: err,
 	}
 
-	l.logger.Error(nil, err)
+	logger.Info(ctx, "ModuleError", zap.Error(fmt.Errorf("err: %s", err)))
 	//fmt.Println("ModuleError: ", err)
 
 	wd := l.cfg.Workingdir
@@ -476,7 +488,7 @@ func (l *block) ModuleError(err interface{}) template.HTML {
 	return result
 }
 
-// отправка запроса на получения данных из интерфейса GUI
+// GUIQuery отправка запроса на получения данных из интерфейса GUI
 // параметры переданные в строке (r.URL) отправляем в теле запроса
 func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response) {
 	var err error
@@ -553,7 +565,6 @@ func (l *block) clearPath(file string) string {
 
 func New(
 	cfg model.Config,
-	logger lib.Log,
 	function function.Function,
 	tplfunc function.TplFunc,
 	api api.Api,
@@ -561,7 +572,6 @@ func New(
 ) Block {
 	return &block{
 		cfg:      cfg,
-		logger:   logger,
 		function: function,
 		tplfunc:  tplfunc,
 		api:      api,

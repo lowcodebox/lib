@@ -9,8 +9,7 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
 	"git.lowcodeplatform.net/fabric/app/pkg/session"
 	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/fabric/lib"
-	bbmetric "git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/labstack/gommon/color"
 
 	"github.com/pkg/errors"
@@ -24,8 +23,6 @@ type httpserver struct {
 	ctx     context.Context
 	cfg     model.Config
 	src     service.Service
-	metric  bbmetric.ServiceMetric
-	logger  lib.Log
 	iam     iam.IAM
 	session session.Session
 }
@@ -39,12 +36,6 @@ func (h *httpserver) Run() error {
 	done := color.Green("[OK]")
 	fail := color.Red("[NO]")
 
-	// закрываем логи при завешрении работы сервера
-	defer func() {
-		h.logger.Warning("Service is stopped. Logfile is closed.")
-		h.logger.Close()
-	}()
-
 	//err := httpscerts.Check(h.cfg.SSLCertPath, h.cfg.SSLPrivateKeyPath)
 	//if err != nil {
 	//	panic(err)
@@ -56,7 +47,7 @@ func (h *httpserver) Run() error {
 		WriteTimeout: h.cfg.WriteTimeout.Value,
 	}
 	fmt.Printf("%s Service run (port:%s)\n", done, h.cfg.PortApp)
-	h.logger.Info("Запуск https сервера", zap.String("port", h.cfg.PortApp))
+	logger.Info(h.ctx, "Запуск https сервера", zap.String("port", h.cfg.PortApp))
 	//e := srv.ListenAndServeTLS(h.cfg.SSLCertPath, h.cfg.SSLPrivateKeyPath)
 
 	e := srv.ListenAndServe()
@@ -71,8 +62,6 @@ func New(
 	ctx context.Context,
 	cfg model.Config,
 	src service.Service,
-	metric bbmetric.ServiceMetric,
-	logger lib.Log,
 	iam iam.IAM,
 	session session.Session,
 ) Server {
@@ -80,8 +69,6 @@ func New(
 		ctx,
 		cfg,
 		src,
-		metric,
-		logger,
 		iam,
 		session,
 	}

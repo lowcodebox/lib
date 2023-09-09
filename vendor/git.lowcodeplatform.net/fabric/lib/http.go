@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/labstack/gommon/color"
 )
-
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
@@ -19,6 +19,7 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 	var mapValues map[string]string
 	var req *http.Request
 	client := &http.Client{}
+	client.Timeout = 3 * time.Second
 
 	if method == "" {
 		method = "POST"
@@ -90,7 +91,7 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON)
+		fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
 		return "", err
 	} else {
 		defer resp.Body.Close()
@@ -109,6 +110,9 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 
 	// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
 	//json.Unmarshal([]byte(responseString), &result)
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("request is not success. request:%s, status: %s", urlc, resp.Status)
+	}
 
 	return responseString, err
 }
@@ -126,7 +130,10 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		var portDataAPI models.Response
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
-		Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		_, err := Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		if err != nil {
+			return "", err
+		}
 		port = fmt.Sprint(portDataAPI.Data)
 	}
 
@@ -136,4 +143,23 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 	}
 
 	return port, err
+}
+
+func ClearSlash(url string) (result string) {
+	if len(url) == 0 {
+		return ""
+	}
+	// удаляем слеш сзади
+	lastSleshF := url[len(url)-1:]
+	if lastSleshF == "/" {
+		url = url[:len(url)-1]
+	}
+
+	// удаляем слеш спереди
+	lastSleshS := url[0:1]
+	if lastSleshS == "/" {
+		url = url[1:len(url)]
+	}
+
+	return url
 }

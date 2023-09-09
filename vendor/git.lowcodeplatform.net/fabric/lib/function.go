@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -67,6 +68,7 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 // RunProcess стартуем сервис из конфига
 func RunProcess(path, config, command, mode string) (pid int, err error) {
 	var cmd *exec.Cmd
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	if config == "" {
 		return 0, fmt.Errorf("%s", "Configuration file is not found")
@@ -83,10 +85,17 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]
 
-		err = CreateDir("debug"+sep+srv, 0777)
-		config_name := strings.Replace(config, "-", "", -1)
+		dirPath := "debug" + sep + srv
+		err = CreateDir(dirPath, 0777)
+		if err != nil {
+			return 0, fmt.Errorf("error create directory for debug-file. path: %s, err: %s", dirPath, err)
+		}
 
-		f, _ := os.Create("debug" + sep + srv + sep + config_name + "_" + fmt.Sprint(t) + ".log")
+		filePath := "debug" + sep + srv + sep + fmt.Sprint(t) + "_" + UUID()[:6] + ".log"
+		f, err := os.Create(filePath)
+		if err != nil {
+			return 0, fmt.Errorf("error create debug-file. path: %s, err: %s", filePath, err)
+		}
 		cmd.Stdout = f
 		cmd.Stderr = f
 	}
@@ -94,10 +103,36 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err = cmd.Start()
 	if err != nil {
+		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
+
 		return 0, err
 	}
 
 	pid = cmd.Process.Pid
+
+	// в течение заданного интервала ожидаем завершающий статус запуска
+	// или выходим если -1 (в процессе)
+	for {
+		exitCode := cmd.ProcessState.ExitCode()
+		timer := time.NewTimer(100 * time.Millisecond)
+		// успешный запуск
+		if exitCode == 0 {
+			timer.Stop()
+			return
+		}
+		// финальный неуспех
+		if exitCode > 0 {
+			cancel()
+		}
+
+		select {
+		case <-timer.C:
+			timer.Stop()
+		case <-ctx.Done(): // ожидание завершилось, если -1 - то работает
+			timer.Stop()
+			return
+		}
+	}
 
 	return
 }

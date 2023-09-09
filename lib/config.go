@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 )
 
-// метод, которые проверяем наличие ключа в стейте приложения и если нет, то пишет в лог
+// ConfigGet метод, которые проверяем наличие ключа в стейте приложения и если нет, то пишет в лог
 func (s *app) ConfigGet(key string) (value string) {
 	s.config.mx.Lock()
 	defer s.config.mx.Unlock()
@@ -19,7 +19,7 @@ func (s *app) ConfigGet(key string) (value string) {
 	return value
 }
 
-// метод, которые проверяем наличие ключа в стейте приложения и если нет, то пишет в лог
+// ConfigSet метод, которые проверяем наличие ключа в стейте приложения и если нет, то пишет в лог
 func (s *app) ConfigSet(key, value string) (err error) {
 	s.config.mx.Lock()
 	defer s.config.mx.Unlock()
@@ -29,7 +29,7 @@ func (s *app) ConfigSet(key, value string) (err error) {
 }
 
 // метод возвращает все ключи
-func (s *app) ConfigParams() (map[string]string) {
+func (s *app) ConfigParams() map[string]string {
 	defer func() {
 		rec := recover()
 		if rec != nil {
@@ -37,7 +37,7 @@ func (s *app) ConfigParams() (map[string]string) {
 			fmt.Println(b)
 		}
 	}()
-	
+
 	s.config.mx.Lock()
 	defer s.config.mx.Unlock()
 

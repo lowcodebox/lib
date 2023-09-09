@@ -11,7 +11,6 @@ import (
 
 	api "git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	uuid "github.com/satori/go.uuid"
 )
@@ -952,8 +951,8 @@ func (d *function) TplFunc() TplFunc {
 	return d.tplfunc
 }
 
-func New(cfg model.Config, logger lib.Log, api api.Api) Function {
-	tplfunc := NewTplFunc(cfg, logger, api)
+func New(cfg model.Config, api api.Api) Function {
+	tplfunc := NewTplFunc(cfg, api)
 	dogfunc := NewDogFunc(cfg, tplfunc, api)
 	formula := NewFormula(cfg, dogfunc)
 

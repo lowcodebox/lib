@@ -1,15 +1,17 @@
 package models
 
+import "strings"
+
 type Data struct {
-	Uid        		string               `json:"uid"`
-	Id         		string               `json:"id"`
-	Source     		string               `json:"source"`
-	Parent     		string               `json:"parent"`
-	Type       		string               `json:"type"`
-	Title      		string               `json:"title"`
-	Rev        		string               `json:"rev"`
-	Сopies			string 				 `json:"copies"`
-	Attributes 		map[string]Attribute `json:"attributes"`
+	Uid        string               `json:"uid"`
+	Id         string               `json:"id"`
+	Source     string               `json:"source"`
+	Parent     string               `json:"parent"`
+	Type       string               `json:"type"`
+	Title      string               `json:"title"`
+	Rev        string               `json:"rev"`
+	Сopies     string               `json:"copies"`
+	Attributes map[string]Attribute `json:"attributes"`
 }
 
 type Attribute struct {
@@ -22,38 +24,37 @@ type Attribute struct {
 }
 
 type Response struct {
-	Data   	interface{} 	`json:"data"`
-	Status 	RestStatus    	`json:"status"`
-	Metrics Metrics 		`json:"metrics"`
+	Data    interface{} `json:"data"`
+	Status  RestStatus  `json:"status"`
+	Metrics Metrics     `json:"metrics"`
 }
 
 type ResponseData struct {
-	Data      []Data        `json:"data"`
-	Res   	  interface{} 	`json:"res"`
-	Status    RestStatus    `json:"status"`
-	Metrics   Metrics 		`json:"metrics"`
+	Data    []Data      `json:"data"`
+	Res     interface{} `json:"res"`
+	Status  RestStatus  `json:"status"`
+	Metrics Metrics     `json:"metrics"`
 }
 
 type Metrics struct {
-	ResultSize     	int `json:"result_size"`
-	ResultCount     int `json:"result_count"`
-	ResultOffset    int `json:"result_offset"`
-	ResultLimit     int `json:"result_limit"`
-	ResultPage 		int `json:"result_page"`
-	TimeExecution   string `json:"time_execution"`
-	TimeQuery   	string `json:"time_query"`
+	ResultSize    int    `json:"result_size"`
+	ResultCount   int    `json:"result_count"`
+	ResultOffset  int    `json:"result_offset"`
+	ResultLimit   int    `json:"result_limit"`
+	ResultPage    int    `json:"result_page"`
+	TimeExecution string `json:"time_execution"`
+	TimeQuery     string `json:"time_query"`
 
-	PageLast		int `json:"page_last"`
-	PageCurrent		int `json:"page_current"`
-	PageList		[]int `json:"page_list"`
-	PageFrom		int `json:"page_from"`
-	PageTo			int `json:"page_to"`
+	PageLast    int   `json:"page_last"`
+	PageCurrent int   `json:"page_current"`
+	PageList    []int `json:"page_list"`
+	PageFrom    int   `json:"page_from"`
+	PageTo      int   `json:"page_to"`
 }
 
 // возвращаем необходимый значение атрибута для объекта если он есть, инае пусто
 // а также из заголовка объекта
 func (p *Data) Attr(name, element string) (result string, found bool) {
-
 
 	if _, found := p.Attributes[name]; found {
 
@@ -102,7 +103,7 @@ func (p *Data) Attr(name, element string) (result string, found bool) {
 }
 
 // заменяем значение аттрибутов в объекте профиля
-func (p *Data) AttrSet(name, element, value string) bool  {
+func (p *Data) AttrSet(name, element, value string) bool {
 	g := Attribute{}
 
 	for k, v := range p.Attributes {
@@ -133,14 +134,13 @@ func (p *Data) AttrSet(name, element, value string) bool  {
 		}
 	}
 
-
 	return false
 }
 
 // удаляем элемент из слайса
 func (p *ResponseData) RemoveData(i int) bool {
 
-	if (i < len(p.Data)){
+	if i < len(p.Data) {
 		p.Data = append(p.Data[:i], p.Data[i+1:]...)
 	} else {
 		//log.Warning("Error! Position invalid (", i, ")")
@@ -148,4 +148,29 @@ func (p *ResponseData) RemoveData(i int) bool {
 	}
 
 	return true
+}
+
+// FilterRole применяем ограничения доступа для объектов типа ResponseData
+// фильтруем массив данных
+// если непустое поле access_read, значит назначены права, а следовательно проверяем право просмотра для роли пользователя
+// также возвращаем
+func (p *ResponseData) FilterRole(role string) {
+	sliceData := p.Data
+
+	for i := len(sliceData) - 1; i >= 0; i-- {
+		v := sliceData[i]
+		attr_read, _ := v.Attr("access_read", "src")
+		attr_write, _ := v.Attr("attr_write", "src")
+		attr_delete, _ := v.Attr("attr_delete", "src")
+		attr_admin, _ := v.Attr("attr_admin", "src")
+
+		if (!strings.Contains(attr_read, role) || attr_read == "") &&
+			(!strings.Contains(attr_write, role) || attr_write == "") &&
+			(!strings.Contains(attr_delete, role) || attr_delete == "") &&
+			(!strings.Contains(attr_admin, role) || attr_admin == "") {
+			p.RemoveData(i)
+		}
+	}
+
+	return
 }

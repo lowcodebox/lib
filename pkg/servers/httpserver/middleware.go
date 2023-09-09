@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
-func (h *httpserver) MiddleLogger(next http.Handler, name string, logger lib.Log, serviceMetrics lib.ServiceMetric) http.Handler {
+func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -23,11 +24,11 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string, logger lib.Log
 				r.RequestURI,
 				name,
 				timeInterval)
-			logger.Info(mes)
+			logger.Info(h.ctx, mes)
 		}
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)
-		serviceMetrics.SetTimeRequest(timeInterval)
+		//serviceMetrics.SetTimeRequest(timeInterval)
 	})
 }
 
@@ -173,8 +174,7 @@ func (h *httpserver) Recover(next http.Handler) http.Handler {
 			rec := recover()
 			if rec != nil {
 				b := string(debug.Stack())
-				//fmt.Println(r.URL.String())
-				h.logger.Panic(fmt.Errorf("%s", b), "Recover panic from path: ", r.URL.String(), "; form: ", r.Form)
+				logger.Panic(h.ctx, fmt.Sprintf("Recover panic from path: %s, form: %+v", r.URL.String(), r.Form), zap.String("debug stack", b))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}(r)

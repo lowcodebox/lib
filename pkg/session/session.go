@@ -3,17 +3,16 @@ package session
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"runtime/debug"
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
-
-func (s *session) Found(sessionID string) (status bool)  {
+func (s *session) Found(sessionID string) (status bool) {
 	s.Registry.Mx.Lock()
 	defer s.Registry.Mx.Unlock()
 
@@ -24,7 +23,7 @@ func (s *session) Found(sessionID string) (status bool)  {
 	return false
 }
 
-func (s *session) GetProfile(sessionID string) (profile *models.ProfileData, err error)  {
+func (s *session) GetProfile(sessionID string) (profile *models.ProfileData, err error) {
 	s.Registry.Mx.Lock()
 	defer s.Registry.Mx.Unlock()
 
@@ -36,7 +35,7 @@ func (s *session) GetProfile(sessionID string) (profile *models.ProfileData, err
 	return profile, err
 }
 
-func (s *session) Delete(sessionID string) (err error)  {
+func (s *session) Delete(sessionID string) (err error) {
 	if sessionID == "" {
 		return err
 	}
@@ -49,7 +48,7 @@ func (s *session) Delete(sessionID string) (err error)  {
 	return err
 }
 
-func (s *session) Set(sessionID string) (err error)  {
+func (s *session) Set(sessionID string) (err error) {
 	var profile models.ProfileData
 	var f = SessionRec{}
 
@@ -81,7 +80,7 @@ func (s *session) Set(sessionID string) (err error)  {
 }
 
 // список всех токенов для всех пользователей доступных для сервиса
-func (s *session) List() (result map[string]SessionRec)  {
+func (s *session) List() (result map[string]SessionRec) {
 	s.Registry.Mx.Lock()
 	defer s.Registry.Mx.Unlock()
 
@@ -90,46 +89,50 @@ func (s *session) List() (result map[string]SessionRec)  {
 	return result
 }
 
-//////////////////////////////////
+// Cleaner ////////////////////////////////
 // запускаем очиститель сессий для сервиса
 //////////////////////////////////
 func (s *session) Cleaner(ctx context.Context) (err error) {
 	ticker := time.NewTicker(s.cfg.IntervalCleaner.Value)
 	defer ticker.Stop()
 
-	defer func(l lib.Log) {
+	defer func() {
 		rec := recover()
 		if rec != nil {
 			b := string(debug.Stack())
-			l.Warning(fmt.Errorf("%s (Error: %s)", b, rec), "Panic error Balancer")
+			logger.Panic(ctx, "Panic error Balancer err", zap.String("debug stack", b))
 		}
-	}(s.logger)
+	}()
 
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return
-		case <- ticker.C:
-			s.CleanSession(ctx)
+		case <-ticker.C:
+			err = s.CleanSession(ctx)
+			if err != nil {
+				logger.Error(ctx, "error CleanSession", zap.Error(err))
+			}
 			ticker = time.NewTicker(s.cfg.IntervalCleaner.Value)
 		}
 	}
-
-	return
 }
 
 func (s *session) CleanSession(ctx context.Context) (err error) {
 
-	listIAM, err := s.iam.ProfileList()		// получаем список актуальных сессий с сервера IAM
+	listIAM, err := s.iam.ProfileList() // получаем список актуальных сессий с сервера IAM
 	if err != nil {
 		return err
 	}
-	listRegistry := s.List()				// текущий реестр сессий
+	listRegistry := s.List() // текущий реестр сессий
 
 	// пробегаем свой реестр и если нет в нем ключа из списка сессий с IAM, удаляем
 	for key, _ := range listRegistry {
 		if !strings.Contains(listIAM, key) {
-			s.Delete(key)					// удаляем значение сессии из реестра
+			err = s.Delete(key) // удаляем значение сессии из реестра
+			if err != nil {
+				break
+			}
 		}
 	}
 

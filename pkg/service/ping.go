@@ -2,14 +2,12 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
 
 	"git.lowcodeplatform.net/fabric/models"
 )
-
 
 // Ping ...
 func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
@@ -26,15 +24,26 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	}
 
 	pg, _ := strconv.Atoi(s.cfg.PortApp)
-	pid := strconv.Itoa(os.Getpid())+":"+s.cfg.UidService
-	state, _ := json.Marshal(s.metrics.Get())
+	pid := strconv.Itoa(os.Getpid()) + ":" + s.cfg.UidService
+	state := ""
 
 	https := false
 	if s.cfg.HttpsOnly != "" {
 		https = true
 	}
 	var r = []models.Pong{
-		{ s.cfg.DataUid,name, version, "run",pg, pid, string(state),s.cfg.ReplicasApp.Value, https, 0, ""},
+		{
+			Uid:      s.cfg.DataUid,
+			Name:     name,
+			Version:  version,
+			Status:   "run",
+			Port:     pg,
+			Pid:      pid,
+			State:    state,
+			Replicas: s.cfg.ReplicasApp.Value,
+			Https:    https,
+			DeadTime: 0,
+			Follower: ""},
 	}
 
 	return r, err

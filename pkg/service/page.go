@@ -15,6 +15,8 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 // Page ...
@@ -87,6 +89,8 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models.ResponseData, values map[string]interface{}) (result string, err error) {
 	var objMaket, objBlocks models.ResponseData
 	var t *template.Template
+	ctx := context.Background()
+
 	moduleResult := model.ModuleResult{}
 	//statModule := map[string]interface{}{}
 
@@ -245,7 +249,7 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 		for _, v := range objBlocks.Data {
 			moduleResult, err = s.GetBlock(in, v, page, shemaJSON, values)
 			if err != nil {
-				s.logger.Error(err, "[BPage] Error generate page ", page.Title+"("+page.Id+")")
+				logger.Error(ctx, fmt.Sprintf("[BPage] Error generate page, title: %s, id: %s", page.Title, page.Id), zap.Error(err))
 			}
 
 			p.Blocks[v.Id] = moduleResult.Result
@@ -278,7 +282,7 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 
 		byteFile, _, err := s.vfs.Read(maketFile)
 		if err != nil {
-			s.logger.Error(err, "error vfs.Read, maketFile", maketFile)
+			logger.Error(ctx, fmt.Sprintf("error vfs.Read, maketFile: %s", maketFile), zap.Error(err))
 		}
 		dataFile = string(byteFile)
 	}
@@ -336,6 +340,7 @@ func (s *service) GetBlockToChannel(ctx context.Context, in model.ServiceIn, blo
 func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSON string, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
 	var addСonditionPath bool
 	var addСonditionURL bool
+	ctx := context.Background()
 
 	cacheInt, _ := block.Attr("cache", "value") // включен ли режим кеширования
 	cache_nokey2, _ := block.Attr("cache_keyAddPath", "value")
@@ -402,8 +407,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 		}
 
 	} else {
-		s.logger.Error(nil, "Error. Block"+block.Id+" from page "+page.Id+" in not used.")
-		//fmt.Println("fail: ", block.Id)
+		logger.Error(ctx, fmt.Sprintf("error. block is not used, block: %s, page id: %s", block.Id, page.Id), zap.Error(err))
 	}
 
 	//fmt.Println("Time:", time.Since(t1), "Cache:", s.cache.Active(), "Block:", block.Id)

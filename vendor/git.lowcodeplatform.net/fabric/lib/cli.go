@@ -9,7 +9,7 @@ import (
 const sep = string(os.PathSeparator)
 
 // RunServiceFuncCLI обраатываем параметры с консоли и вызываем переданую функцию
-func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string)) error {
+func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string) error) error {
 	var err error
 
 	appCLI := cli.NewApp()
@@ -28,8 +28,31 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				port := c.String("port")
 
-				funcCLI("", "", port, "", "", "", "", "", "", "webinit", "")
-				return nil
+				err = funcCLI("", "", port, "", "", "", "", "", "", "webinit", "")
+				return err
+			},
+		},
+		{
+			Name: "update", ShortName: "",
+			Usage: "Update service",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "service, s",
+					Usage: "Обновить сервис",
+					Value: "lowcodebox",
+				},
+				cli.StringFlag{
+					Name:  "version, v",
+					Usage: "Версия, до которой обновляем",
+					Value: "latest",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				service := c.String("service")
+				version := c.String("version")
+
+				err = funcCLI("", "", "", "", service, "", "", "", "", "update", version)
+				return err
 			},
 		},
 		{
@@ -45,8 +68,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 
-				funcCLI("", "", "", "", service, "", "", "", "", "stop", "")
-				return nil
+				err = funcCLI("", "", "", "", service, "", "", "", "", "stop", "")
+				return err
 			},
 		},
 		{
@@ -56,12 +79,12 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 				cli.StringFlag{
 					Name:  "config, c",
 					Usage: "Название файла конфигурации, с которым будет запущен сервис",
-					Value: "default",
+					Value: "lowcodebox",
 				},
 				cli.StringFlag{
 					Name:  "dir, d",
 					Usage: "Путь к шаблонам",
-					Value: "default",
+					Value: "",
 				},
 				cli.StringFlag{
 					Name:  "port, p",
@@ -92,8 +115,8 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				funcCLI(configfile, dir, port, mode, service, "", "", "", "", "start", "")
-				return nil
+				err = funcCLI(configfile, dir, port, mode, service, "", "", "", "", "start", "")
+				return err
 			},
 		},
 		{
@@ -149,12 +172,12 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				funcCLI("", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
-				return nil
+				err = funcCLI("", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
+				return err
 			},
 		},
 	}
-	appCLI.Run(os.Args)
+	err = appCLI.Run(os.Args)
 
 	return err
 }

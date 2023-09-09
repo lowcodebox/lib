@@ -26,7 +26,7 @@ type Routes []Route
 
 func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	handler := handlers.New(h.src, h.logger, h.cfg)
+	handler := handlers.New(h.src, h.cfg)
 
 	router.HandleFunc("/alive", handler.Alive).Methods("GET")
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
@@ -71,7 +71,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
-		handler = h.MiddleLogger(handler, route.Name, h.logger, h.metric)
+		handler = h.MiddleLogger(handler, route.Name)
 
 		for _, v := range strings.Split(route.Method, ",") {
 			router.
@@ -83,7 +83,6 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	}
 
 	//router.Use(h.Recover)
-	router.Use(h.metric.Middleware)
 
 	// проверяем на возможность переадресации только для HTTP запросов
 	if checkHttpsOnly && h.cfg.HttpsOnly != "" {

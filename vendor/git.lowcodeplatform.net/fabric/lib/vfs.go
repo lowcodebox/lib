@@ -5,6 +5,7 @@ package lib
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"strings"
@@ -40,6 +41,8 @@ type Vfs interface {
 	List(prefix string, pageSize int) (files []Item, err error)
 	Read(file string) (data []byte, mimeType string, err error)
 	ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error)
+	ReadCloser(file string) (reader io.ReadCloser, err error)
+	ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error)
 	Write(file string, data []byte) (err error)
 	Connect() (err error)
 	Close() (err error)
@@ -129,6 +132,60 @@ func (v *vfs) Read(file string) (data []byte, mimeType string, err error) {
 
 // Read чтение по указанному пути из указанного бакета
 func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error) {
+	var r io.ReadCloser
+
+	r, err = v.ReadCloserFromBucket(file, bucket)
+	if err != nil {
+		err = fmt.Errorf("error ReadCloserFromBucket, err: %s, file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+		return
+	}
+	data, err = ioutil.ReadAll(r)
+	if err != nil {
+		err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+		return
+	}
+	mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
+
+	return data, mimeType, err
+}
+
+// Write создаем объект в хранилище
+func (v *vfs) Write(file string, data []byte) (err error) {
+	sdata := string(data)
+	r := strings.NewReader(sdata)
+	size := int64(len(sdata))
+
+	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
+	if v.comma != "" {
+		file = strings.Replace(file, sep, v.comma, -1)
+	}
+
+	_, err = v.container.Put(file, r, size, nil)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// List список файлов выбранного
+func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
+	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
+		if err != nil {
+			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
+			return err
+		}
+		files = append(files, item)
+		return nil
+	})
+
+	return files, err
+}
+
+func (v *vfs) ReadCloser(file string) (reader io.ReadCloser, err error) {
+	return v.ReadCloserFromBucket(file, v.bucket)
+}
+
+func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error) {
 	var urlPath url.URL
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
@@ -157,54 +214,15 @@ func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string,
 
 	item, err := v.location.ItemByURL(&urlPath)
 	if err != nil {
-		return 
+		return reader, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
 	}
-	if item != nil {
-		r, err := item.Open()
-		if err != nil {
-			return data, mimeType, err
-		}
-		data, err = ioutil.ReadAll(r)
-		mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
+	if item == nil {
+		return reader, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
 	}
 
-	//fmt.Printf("item: %+v, len data: %-v, mimeType: %s, err: %s", item, len(data), mimeType, err)
+	reader, err = item.Open()
 
-	return data, mimeType, err
-}
-
-// Write создаем объект в хранилище
-func (v *vfs) Write(file string, data []byte) (err error) {
-	sdata := string(data)
-	r := strings.NewReader(sdata)
-	size := int64(len(sdata))
-
-	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
-	if v.comma != "" {
-		file = strings.Replace(file, sep, v.comma, -1)
-	}
-
-	_, err = v.container.Put(file, r, size, nil)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-// List список файлов выбранного
-func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
-	fmt.Printf("init list vfs. connect:%+v, prefix: %s\n", v, prefix)
-
-	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
-		if err != nil {
-			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
-			return err
-		}
-		files = append(files, item)
-		return nil
-	})
-
-	return files, err
+	return reader, err
 }
 
 func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma string) Vfs {

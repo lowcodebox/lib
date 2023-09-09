@@ -2,7 +2,6 @@ package lib
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"sort"
 	"sync"
@@ -292,7 +291,7 @@ func (s *serviceMetric) Middleware(next http.Handler) http.Handler {
 }
 
 // interval - интервалы времени, через которые статистика будет сбрасыватсья в лог
-func NewMetric(ctx context.Context, logger Log, interval time.Duration) (metrics ServiceMetric) {
+func NewMetric(ctx context.Context, interval time.Duration) (metrics ServiceMetric) {
 	m := sync.Mutex{}
 	t := StateHost{}
 	s := Metrics{
@@ -316,12 +315,12 @@ func NewMetric(ctx context.Context, logger Log, interval time.Duration) (metrics
 		ctx:            ctx,
 	}
 
-	go RunMetricLogger(ctx, metrics, logger, interval)
+	go RunMetricLogger(ctx, metrics, interval)
 
 	return metrics
 }
 
-func RunMetricLogger(ctx context.Context, m ServiceMetric, logger Log, interval time.Duration) {
+func RunMetricLogger(ctx context.Context, m ServiceMetric, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -334,8 +333,8 @@ func RunMetricLogger(ctx context.Context, m ServiceMetric, logger Log, interval 
 			m.Generate()    // сгенерировали метрики
 			m.SaveToStash() // сохранили в карман
 			m.Clear()       // очистили объект метрик для приема новых данных
-			mes, _ := json.Marshal(m.Get())
-			logger.Trace(string(mes)) // записали в лог из кармана
+			//mes, _ := json.Marshal(m.Get())
+			//logger.Trace(string(mes)) // записали в лог из кармана
 
 			ticker = time.NewTicker(interval)
 		}

@@ -13,7 +13,6 @@ import (
 
 type App struct {
 	State          map[string]string
-	Logger         lib.Log
 	ServiceMetrics lib.ServiceMetric
 	UrlGUI         string `json:"url_gui"`
 	UrlAPI         string `json:"url_api"`

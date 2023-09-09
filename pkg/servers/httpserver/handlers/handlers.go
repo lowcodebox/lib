@@ -1,19 +1,21 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 type handlers struct {
+	ctx     context.Context
 	service service.Service
-	logger  lib.Log
 	cfg     model.Config
 }
 
@@ -44,7 +46,7 @@ func (h *handlers) transportError(w http.ResponseWriter, code int, error error, 
 	res.Status.Description = message
 	d, err := json.Marshal(res)
 
-	h.logger.Error(err, message)
+	logger.Error(h.ctx, message, zap.Error(err))
 
 	w.WriteHeader(code)
 	w.Write(d)
@@ -81,12 +83,13 @@ func (h *handlers) transportResponseHTTP(w http.ResponseWriter, response string)
 
 func New(
 	service service.Service,
-	logger lib.Log,
 	cfg model.Config,
 ) Handlers {
+	ctx := context.Background()
+
 	return &handlers{
+		ctx,
 		service,
-		logger,
 		cfg,
 	}
 }

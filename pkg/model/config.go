@@ -4,6 +4,12 @@ type Config struct {
 	HttpsOnly  string `envconfig:"HTTPS_ONLY" default:""`
 	ProjectKey string `envconfig:"PROJECT_KEY" default:"LKHlhb899Y09olUi"`
 
+	Name        string `envconfig:"NAME" default:"app" description:"имя сервиса (по-умолчанию = тип сервиса)"`
+	ServiceType string `envconfig:"SERVICE_TYPE" default:"app"`
+	HashRun     string `envconfig:"HASH_RUN" default:"is empty"`
+
+	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
+
 	IntervalCleaner Duration `envconfig:"INTERVAL_CLEANER" default:"10m" description:"период очистки кеша сессий через запрос актуальных сессий в IAM"`
 
 	// VFS
@@ -45,7 +51,17 @@ type Config struct {
 	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`
 	ProxyPointvalue string `envconfig:"PROXY_POINTVALUE" default:""`
 
-	// Logger
+	// LOGBOX
+	LogboxEndpoint       string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:9090"`
+	LogboxAccessKeyId    string   `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
+	LogboxSecretKey      string   `envconfig:"LOGBOX_SECRET_KEY" default:""`
+	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+
+	// Метрики + реплики
+	LogsLevelPointsrc   string `envconfig:"LOGS_LEVEL_POINTSRC" default:""`
+	LogsLevelPointvalue string `envconfig:"LOGS_LEVEL_POINTVALUE" default:""`
+	Replicas            Int    `envconfig:"REPLICAS" default:"1"`
+
 	LogsDir               string   `envconfig:"LOGS_DIR" default:"logs"`
 	LogsLevel             string   `envconfig:"LOGS_LEVEL" default:""`
 	LogIntervalReload     Duration `envconfig:"LOG_INTERVAL_RELOAD" default:"10m" description:"интервал проверки необходимости пересозданния нового файла"`
