@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -89,6 +90,47 @@ var FuncMap = template.FuncMap{
 	"parseform":           parseform,
 	"parsebody":           parsebody,
 	"redirect":            redirect,
+	"groupbyfield":        groupbyfield,
+}
+
+// groupbyfield группируем полученные данные (объекты) формата models.ResponseData согласно шаблону
+// TODO сделать сортировку по полю
+func groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+	var d models.ResponseData
+
+	b, _ := json.Marshal(queryData)
+	err = json.Unmarshal(b, &d)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshal queryData. err: %s, payload: %s", err, string(b))
+	}
+
+	// разбираем структуру ответа по заданному полю/поинту
+	resultMap := map[string][]models.Data{}
+	for _, v := range d.Data {
+		key, found := v.Attr(groupField, groupPoint)
+		if !found {
+			resultMap[key] = []models.Data{}
+		}
+		resultMap[key] = append(resultMap[key], v)
+	}
+
+	// сортируем внутри каждого группы по заданному полю
+	resultSortedMap := map[string][]models.Data{}
+	for n, m := range resultMap {
+		sort.Slice(m, func(i, j int) bool {
+			switch sortPoint {
+			case "src":
+				return m[i].Attributes[sortField].Src < m[j].Attributes[sortField].Src
+			case "rev":
+				return m[i].Attributes[sortField].Rev < m[j].Attributes[sortField].Rev
+			default:
+				return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
+			}
+		})
+		resultSortedMap[n] = m
+	}
+
+	return resultSortedMap, nil
 }
 
 // redirect
