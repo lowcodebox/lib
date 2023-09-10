@@ -189,7 +189,6 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	if &objPage == nil {
 		return template.HTML("Error: Not found page-object.") // если не найден объект страницы
 	}
-
 	if len(objPage.Data) == 0 {
 		return template.HTML("Error: Not found page-object.") // если не найден объект страницы
 	}
@@ -204,6 +203,9 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	c.Curl("GET", "_objs/"+appUid, "", &objApp, r.Cookies())
 	if &objApp == nil {
 		return template.HTML("Error: Not found application-object.") // если не найден объект приложения
+	}
+	if len(objApp.Data) == 0 {
+		return template.HTML("Error: Not found application-object.") // если не найден объект страницы
 	}
 
 	//fmt.Println("objApp: ", objApp)
@@ -291,6 +293,12 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 
 	// 3 запрос на объект макета
 	l.Curl("GET", "_objs/"+maketUID, "", &objMaket, r.Cookies())
+	if &objMaket == nil {
+		return "Error: Not found maketUID: " + maketUID // если не найден объект
+	}
+	if len(objMaket.Data) == 0 {
+		return "Error: Data maketUID id empty. maketUID: " + maketUID // если не найден объект
+	}
 
 	// 4 из объекта макета берем путь к шаблону + css и js
 	maketFile, _ := objMaket.Data[0].Attr("file", "value")
@@ -457,6 +465,14 @@ func (c *app) GetBlock(w http.ResponseWriter, r *http.Request) {
 	dataPage := Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 
 	c.Curl("GET", "_objs/"+block, "", &objBlock, r.Cookies())
+	if &objBlock == nil {
+		w.Write([]byte("Error: block is not found. block: " + block)) // если не найден объект
+		return
+	}
+	if len(objBlock.Data) == 0 {
+		w.Write([]byte("Error: objBlock.Data is empty. block: " + block)) // если не найден объект
+		return
+	}
 
 	moduleResult := c.ModuleBuild(objBlock.Data[0], r, dataPage, nil, false)
 
