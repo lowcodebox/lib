@@ -1,22 +1,21 @@
 package app_lib
 
 import (
-	"net/http"
-	"html/template"
-	"sync"
 	"context"
+	"html/template"
+	"net/http"
+	"sync"
 )
 
 type App interface {
-
 	UrlAPI() string
 	UrlORM() string
-	
+
 	// Config
 	ConfigGet(key string) (value string)
 	ConfigSet(key, value string) (err error)
-	ConfigParams() (map[string]string)
-	
+	ConfigParams() map[string]string
+
 	// Handlers
 	TIndex(w http.ResponseWriter, r *http.Request, Config map[string]string) template.HTML
 	TBlock(r *http.Request, block Data, Config map[string]string) template.HTML
@@ -24,7 +23,7 @@ type App interface {
 	ProxyPing(w http.ResponseWriter, r *http.Request)
 	BPage(r *http.Request, blockSrc string, objPage ResponseData, values map[string]interface{}) string
 	GetBlock(w http.ResponseWriter, r *http.Request)
-	
+
 	// Function
 	hash(str string) string
 	CreateFile(path string)
@@ -34,18 +33,18 @@ type App interface {
 	ModuleBuild(block Data, r *http.Request, page Data, values map[string]interface{}, enableCache bool) (result ModuleResult)
 	ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request, page Data, values map[string]interface{}, enableCache bool, buildChan chan ModuleResult, wg *sync.WaitGroup)
 	ErrorModuleBuild(stat map[string]interface{}, buildChan chan ModuleResult, timerRun interface{}, errT error)
-	QueryWorker(queryUID, dataname string, source[]map[string]string, r *http.Request) interface{}
+	QueryWorker(queryUID, dataname string, source []map[string]string, r *http.Request) (result interface{}, err error)
 	ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request)
 	ModuleError(err interface{}, r *http.Request) template.HTML
-	GUIQuery(tquery string, r *http.Request) Response
-	
+	GUIQuery(tquery string, r *http.Request) (returnResp Response, err error)
+
 	// Cache
 	SetCahceKey(r *http.Request, p Data) (key, keyParam string)
 	СacheGet(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string) (string, bool)
 	CacheSet(key string, block Data, page Data, value, url string) bool
 	cacheUpdate(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string)
 	refreshTime(options Data) int
-	
+
 	// DogFunc
 	TplValue(v map[string]interface{}, arg []string) (result string)
 	ConfigValue(arg []string) (result string)
@@ -65,6 +64,6 @@ type App interface {
 	FieldSplit(data []Data, arg []string) (result string)
 	DateModify(arg []string) (result string)
 	Sendmail(arg []string) (result string)
-	Query(r *http.Request, arg []string) (result interface{})
+	Query(r *http.Request, arg []string) (result interface{}, err error)
 	DogParse(p string, r *http.Request, queryData *[]Data, values map[string]interface{}) (result string)
 }

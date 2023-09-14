@@ -231,6 +231,7 @@ type Block struct {
 	JS               []string               `json:"js"`
 	Metric           template.HTML          `json:"metric"`
 	Request          *http.Request
+	Error            error `json:"error"`
 	mx               sync.Mutex
 }
 

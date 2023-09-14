@@ -1,6 +1,7 @@
 package app_lib
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 ////////////////////////////////////////////////////////////
@@ -160,7 +164,13 @@ func (p *Formula) Calculate() {
 			p.Inserts[k].Result = p.App.DateModify(v.Functions.Arguments)
 
 		case "QUERY":
-			p.Inserts[k].Result = p.App.Query(p.Request, v.Functions.Arguments)
+			r, err := p.App.Query(p.Request, v.Functions.Arguments)
+			if err != nil {
+				p.Inserts[k].Result = err
+			} else {
+				p.Inserts[k].Result = r
+			}
+
 		case "USER":
 			p.Inserts[k].Result = p.App.UserObj(p.Request, v.Functions.Arguments)
 		case "ROLE":
@@ -834,41 +844,52 @@ func (c *app) ImgResize(path string, widht, height int, arg []string) (result st
 // 		id (по-умолчанию) 	- список UID-ов
 // 		data 				- []Data
 //		response			- полный ответ формате Response
-func (c *app) Query(r *http.Request, arg []string) (result interface{}) {
+func (c *app) Query(r *http.Request, arg []string) (result interface{}, err error) {
 	valueDefault := "id"
 	if len(arg) == 0 {
-		return "Ошибка в переданных параметрах."
+		return "Ошибка в переданных параметрах.", fmt.Errorf("error input param")
 	}
 	if len(arg) == 2 {
 		valueDefault = arg[1]
 	}
 
 	urlCurl := c.ConfigGet("url_api") + "/query/" + arg[0]
-	objs := c.GUIQuery(urlCurl, r)
+	objs, err := c.GUIQuery(urlCurl, r)
+	if err != nil {
+		return "", fmt.Errorf("error GUIQuery, urlCurl: %s, er: %s", urlCurl, err)
+	}
 
 	switch valueDefault {
 	case "data":
-		return objs.Data
+		return objs.Data, nil
 	case "response":
-		return "objs"
+		return "objs", nil
 	default:
 		var resUIDs []string
 		var respData []Data
 
 		// если можно привести, значит формат внутреннего запроса и возвращаем список uid
-		r, _ := json.Marshal(objs.Data)
-		err := json.Unmarshal(r, &respData)
+		r, err := json.Marshal(objs.Data)
 		if err != nil {
-			return "Error execute dogfunc Query"
+			return "Error Marshal Query", fmt.Errorf("error Marshal, urlCurl: %s, er: %s", urlCurl, err)
 		}
+
+		err = json.Unmarshal(r, &respData)
+		if err != nil {
+			return "Error Unmarshal Query", fmt.Errorf("error Unmarshal, urlCurl: %s, er: %s", urlCurl, err)
+		}
+
 		for _, v := range respData {
 			resUIDs = append(resUIDs, v.Uid)
 		}
+
 		res := join(resUIDs, ",")
-		fmt.Println(res)
-		return res
+		logger.Debug(context.Background(), "Query", zap.String("res", res))
+
+		return res, err
 	}
-	return ""
+
+	return "", err
 }
 
 // Собачья-обработка (поиск в строке @функций и их обработка)

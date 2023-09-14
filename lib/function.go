@@ -425,7 +425,10 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 				}
 			}
 
-			ress := l.QueryWorker(queryUID, dataname, source, r)
+			ress, err := l.QueryWorker(queryUID, dataname, source, r)
+			if err != nil {
+				b.Error = err
+			}
 			dataSet[dataname] = ress
 		}
 
@@ -733,7 +736,10 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 					dataname = name
 				}
 			}
-			ress := l.QueryWorker(queryUID, dataname, source, r)
+			ress, err := l.QueryWorker(queryUID, dataname, source, r)
+			if err != nil {
+				b.Error = err
+			}
 			dataSet[dataname] = ress
 		}
 	}
@@ -940,10 +946,13 @@ func (c *app) ErrorModuleBuild(stat map[string]interface{}, buildChan chan Modul
 }
 
 // queryUID - ид-запроса
-func (c *app) QueryWorker(queryUID, dataname string, source []map[string]string, r *http.Request) interface{} {
+func (c *app) QueryWorker(queryUID, dataname string, source []map[string]string, r *http.Request) (result interface{}, err error) {
 	//var resp Response
 
-	resp := c.GUIQuery(queryUID, r)
+	resp, err := c.GUIQuery(queryUID, r)
+	if err != nil {
+		return resp, fmt.Errorf("error GUIQuery in QueryWorker, err: %s", err)
+	}
 
 	//switch x := resp1.(type) {
 	//case Response:
@@ -958,8 +967,16 @@ func (c *app) QueryWorker(queryUID, dataname string, source []map[string]string,
 	///////////////////////////////////////////
 
 	var m3 Response
-	b1, _ := json.Marshal(resp)
-	json.Unmarshal(b1, &m3)
+	b1, err := json.Marshal(resp)
+	if err != nil {
+		return resp, fmt.Errorf("error Marshal in QueryWorker, err: %s", err)
+	}
+
+	err = json.Unmarshal(b1, &m3)
+	if err != nil {
+		return resp, fmt.Errorf("error Unmarshal in QueryWorker, err: %s", err)
+	}
+
 	var last, current, from, to, size int
 	var list []int
 
@@ -1012,7 +1029,7 @@ func (c *app) QueryWorker(queryUID, dataname string, source []map[string]string,
 	///////////////////////////////////////////
 	///////////////////////////////////////////
 
-	return resp
+	return resp, err
 
 }
 
@@ -1056,11 +1073,10 @@ func (l *app) ModuleError(err interface{}, r *http.Request) template.HTML {
 
 // отправка запроса на получения данных из интерфейса GUI
 // параметры переданные в строке (r.URL) отправляем в теле запроса
-func (c *app) GUIQuery(tquery string, r *http.Request) Response {
+func (c *app) GUIQuery(tquery string, r *http.Request) (returnResp Response, err error) {
 
 	var resultInterface interface{}
-	var err error
-	var dataResp, returnResp Response
+	var dataResp Response
 
 	formValues := r.PostForm
 	bodyJSON, _ := json.Marshal(formValues)
@@ -1095,10 +1111,11 @@ func (c *app) GUIQuery(tquery string, r *http.Request) Response {
 	// не получилось передать в app состояние, поэтому добавляю ранее путь к GUI и если он указан, то отправляю по полному пути
 	// дополняем путем до API если не передан вызов внешнего запроса через http://
 	//if tquery[:4] != "http" {
-	resultInterface, err = lib.Curl(r.Method, c.urlGUI+"/query/"+tquery+filters, string(bodyJSON), &dataResp, map[string]string{}, r.Cookies())
+	q := c.urlGUI + "/query/" + tquery + filters
+	resultInterface, err = lib.Curl(r.Method, q, string(bodyJSON), &dataResp, map[string]string{}, r.Cookies())
 	if err != nil {
-		//fmt.Println("Error. Request failed: " + "/query/" + tquery + filters)
-		return returnResp
+		err = fmt.Errorf("error get in GUIQuery, query: %s, err: %s", q, err)
+		return returnResp, err
 	}
 	//} else {
 	//	resultInterface, err = c.Curl(r.Method, tquery+filters, string(bodyJSON), &dataResp, r.Cookies())
@@ -1126,10 +1143,18 @@ func (c *app) GUIQuery(tquery string, r *http.Request) Response {
 	}
 
 	var dd ResponseData
-	ff, _ := json.Marshal(dd)
-	json.Unmarshal(ff, &dd)
+	ff, err := json.Marshal(dd)
+	if err != nil {
+		err = fmt.Errorf("error Marshal in GUIQuery, query: %s, err: %s", q, err)
+		return
+	}
 
-	return returnResp
+	err = json.Unmarshal(ff, &dd)
+	if err != nil {
+		err = fmt.Errorf("error Unmarshal in GUIQuery, query: %s, err: %s", q, err)
+	}
+
+	return returnResp, err
 }
 
 // удаляем элемент из слайса
