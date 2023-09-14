@@ -77,6 +77,7 @@ var FuncMap = template.FuncMap{
 	"confparse":           confparse,
 	"varparse":            parseparam,
 	"parseparam":          parseparam,
+	"parseformsep":        parseformsep,
 	"divfloat":            divfloat,
 	"sendmail":            Sendmail,
 	"jsonescape":          jsonEscape,
@@ -151,9 +152,9 @@ func parsebody(r *http.Request, format string) (result interface{}, err error) {
 
 	switch format {
 	case "json":
-		err = json.Unmarshal(responseData, result)
+		err = json.Unmarshal(responseData, &result)
 		if err != nil {
-			return string(responseData), fmt.Errorf("error Unmarshal (output data in raw format. err: %s", err)
+			return string(responseData), fmt.Errorf("error Unmarshal (output data in raw format. err: %s, raw: %s", err, string(responseData))
 		}
 	default:
 		return string(responseData), nil
@@ -163,6 +164,21 @@ func parsebody(r *http.Request, format string) (result interface{}, err error) {
 }
 
 // parseform парсит полученные в запросе значения в мапку
+func parseformsep(r *http.Request, separator string) map[string]string {
+	if separator == "" {
+		separator = ","
+	}
+	err := r.ParseForm()
+	if err != nil {
+		return nil
+	}
+	data := make(map[string]string)
+	for k, v := range r.PostForm {
+		data[k] = strings.Join(v, separator)
+	}
+	return data
+}
+
 func parseform(r *http.Request) map[string][]string {
 	err := r.ParseForm()
 	if err != nil {
