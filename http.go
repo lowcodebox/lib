@@ -1,9 +1,11 @@
 package lib
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,13 +15,35 @@ import (
 	"github.com/labstack/gommon/color"
 )
 
+const clientHttpTimeout = 60 * time.Second
+
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
 func Curl(method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
 	var mapValues map[string]string
 	var req *http.Request
-	client := &http.Client{}
-	client.Timeout = 3 * time.Second
+	var skipTLSVerify = true
+
+	client := &http.Client{
+		Timeout: clientHttpTimeout,
+	}
+
+	dialer := net.Dialer{
+		Timeout: clientHttpTimeout,
+	}
+
+	//nolint:gosec
+	tlsConfig := tls.Config{
+		InsecureSkipVerify: skipTLSVerify, // ignore expired SSL certificates
+	}
+
+	transCfg := &http.Transport{
+		DialContext:         dialer.DialContext,
+		TLSHandshakeTimeout: clientHttpTimeout / 5,
+		TLSClientConfig:     &tlsConfig,
+	}
+
+	client.Transport = transCfg
 
 	if method == "" {
 		method = "POST"
