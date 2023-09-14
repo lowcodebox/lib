@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,6 +26,7 @@ import (
 )
 
 const sep = string(os.PathSeparator)
+const clientHttpTimeout = 60 * time.Second
 
 func (c *app) hash(str string) string {
 	h := sha1.New()
@@ -105,7 +108,28 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 	var mapValues map[string]string
 	var req *http.Request
 	var flagExtRequest bool
-	client := &http.Client{}
+	var skipTLSVerify = true
+
+	client := &http.Client{
+		Timeout: clientHttpTimeout,
+	}
+
+	dialer := net.Dialer{
+		Timeout: clientHttpTimeout,
+	}
+
+	//nolint:gosec
+	tlsConfig := tls.Config{
+		InsecureSkipVerify: skipTLSVerify, // ignore expired SSL certificates
+	}
+
+	transCfg := &http.Transport{
+		DialContext:         dialer.DialContext,
+		TLSHandshakeTimeout: clientHttpTimeout / 5,
+		TLSClientConfig:     &tlsConfig,
+	}
+
+	client.Transport = transCfg
 
 	if urlc[:4] == "http" {
 		flagExtRequest = true
