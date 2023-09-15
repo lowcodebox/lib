@@ -74,9 +74,9 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	title := c.ConfigGet("title")
 	Domain = c.ConfigGet("domain")
 	ClientPath = c.ConfigGet("client_path")
-	if ClientPath == "" {
-		ClientPath = Domain
-	}
+	//if ClientPath == "" {
+	//	ClientPath = Domain
+	//}
 
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if page == "" {
