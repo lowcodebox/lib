@@ -42,7 +42,6 @@ type Config struct {
 
 	ClientPath string `envconfig:"CLIENT_PATH" default:""`
 	UrlGui     string `envconfig:"URL_GUI" default:""`
-	UrlProxy   string `envconfig:"URL_PROXY" default:""`
 	UrlApi     string `envconfig:"URL_API" default:""`
 	UrlIam     string `envconfig:"URL_IAM" default:""`
 	UidService string `envconfig:"UID_SERVICE" default:""`

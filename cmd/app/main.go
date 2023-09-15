@@ -203,7 +203,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	go ses.Cleaner(ctx)
 
 	if port == "" {
-		port, err = lib.AddressProxy(cfg.UrlProxy, cfg.PortInterval)
+		port, err = lib.AddressProxy(cfg.ProxyPointsrc, cfg.PortInterval)
 		if err != nil {
 			fmt.Println(err)
 			return err

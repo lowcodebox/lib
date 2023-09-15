@@ -545,7 +545,7 @@ func (d *dogfunc) Path(dm []models.Data, arg []string) (result string, err error
 		case "GUI":
 			result = d.cfg.UrlGui
 		case "PROXY":
-			result = d.cfg.UrlProxy
+			result = d.cfg.ProxyPointsrc
 		case "CLIENT":
 			result = d.cfg.ClientPath
 		case "DOMAIN":

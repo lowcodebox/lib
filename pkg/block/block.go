@@ -67,8 +67,8 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	// заменяем в State localhost на адрес домена (если это подпроцесс то все норм, но если это корневой сервис,
 	// то у него url_proxy - localhost и узнать реньше адрес мы не можем, ибо еще домен не инициировался
 	// а значит подменяем localhost при каждом обращении к модулю
-	if strings.Contains(b.cfg.UrlProxy, "localhost") {
-		b.cfg.UrlProxy = "//" + in.Host
+	if strings.Contains(b.cfg.ProxyPointsrc, "localhost") {
+		b.cfg.ProxyPointsrc = "//" + in.Host
 	}
 
 	bl := model.Block{}
