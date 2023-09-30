@@ -227,7 +227,7 @@ func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, e
 	return reader, err
 }
 
-func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma string) Vfs {
+func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacert string) Vfs {
 	return &vfs{
 		kind:        kind,
 		endpoint:    endpoint,
@@ -236,5 +236,6 @@ func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma string
 		region:      region,
 		bucket:      bucket,
 		comma:       comma,
+		cacert:      cacert,
 	}
 }
