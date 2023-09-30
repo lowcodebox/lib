@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"strings"
 
+	"git.lowcodeplatform.net/fabric/lib/pkg/s3"
 	"github.com/graymeta/stow"
 	"github.com/graymeta/stow/azure"
 	"github.com/graymeta/stow/local"
-	"github.com/graymeta/stow/s3"
 
 	// support Azure storage
 	_ "github.com/graymeta/stow/azure"
@@ -35,6 +35,7 @@ type vfs struct {
 	location                                       stow.Location
 	container                                      stow.Container
 	comma                                          string
+	cacert                                         string
 }
 
 type Vfs interface {
@@ -67,6 +68,7 @@ func (v *vfs) Connect() (err error) {
 			s3.ConfigAccessKeyID: v.accessKeyID,
 			s3.ConfigSecretKey:   v.secretKey,
 			s3.ConfigRegion:      v.region,
+			s3.ConfigCaCert:      v.cacert,
 		}
 	case "azure":
 		config = stow.ConfigMap{
