@@ -1,13 +1,20 @@
 package httpserver
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"strings"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
+	"git.lowcodeplatform.net/packages/cache"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/version"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"go.uber.org/zap"
 )
 
 type Result struct {
@@ -23,6 +30,9 @@ type Route struct {
 }
 
 type Routes []Route
+type prometheusReader struct {
+	res prometheus.Gatherer
+}
 
 func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
@@ -32,6 +42,16 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
+
+	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
+	version.Version = h.serviceVersion
+	version.Revision = h.hashCommit
+
+	pr := prometheusReader{}
+	err := cache.Cache().Register("prometheus", &pr, h.cfg.MetricIntervalCached.Value)
+	if err != nil {
+		logger.Panic(h.ctx, "cache collection is not init", zap.Error(err))
+	}
 
 	//apiRouter := rt.PathPrefix("/gui/v1").Subrouter()
 	//router.Use(h.JsonHeaders)
@@ -101,4 +121,16 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	//router.PathPrefix("/templates/").Handler(http.StripPrefix("/templates/", http.FileServer(http.Dir(h.cfg.Workingdir + "/templates"))))
 
 	return router
+}
+
+func (p *prometheusReader) ReadSource() (res []byte, err error) {
+	mf, err := prometheus.DefaultGatherer.Gather()
+	if err != nil {
+		err = fmt.Errorf("error prometheus Gather. err: %s", err)
+		return
+	}
+
+	res, err = json.Marshal(mf)
+
+	return res, nil
 }

@@ -25,6 +25,9 @@ type httpserver struct {
 	src     service.Service
 	iam     iam.IAM
 	session session.Session
+
+	serviceVersion string
+	hashCommit     string
 }
 
 type Server interface {
@@ -64,6 +67,8 @@ func New(
 	src service.Service,
 	iam iam.IAM,
 	session session.Session,
+	serviceVersion string,
+	hashCommit string,
 ) Server {
 	return &httpserver{
 		ctx,
@@ -71,5 +76,7 @@ func New(
 		src,
 		iam,
 		session,
+		serviceVersion,
+		hashCommit,
 	}
 }

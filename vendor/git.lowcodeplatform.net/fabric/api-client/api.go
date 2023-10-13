@@ -12,7 +12,7 @@ import (
 )
 
 type api struct {
-	url    string
+	url string
 }
 
 type Api interface {

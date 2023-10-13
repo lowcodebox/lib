@@ -134,12 +134,12 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
 	err = vfs.Connect()
 	if err != nil {
-		log.Info("Error connect to filestorage (", configfile, ")", err)
+		logger.Error(ctx, "Error connect to filestorage", zap.String("configfile", configfile), zap.Error(err))
 		return fmt.Errorf("%s Error connect to filestorage. err: %s\n cfg: VfsKind: %s, VfsEndpoint: %s, VfsAccessKeyId: %s, VfsSecretKey: %s, VfsRegion: %s, VfsBucket: %s, VfsComma: %s", fail, err, cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
 	}
 
 	fmt.Printf("%s Enabled logs (type: %s). Level:%s, Dir:%s\n", done, initType, cfg.LogsLevelPointsrc, cfg.LogsDir)
-	log.Info("Запускаем gui-сервис: ", cfg.Domain)
+	logger.Info(ctx, "Запускаем app-сервис: ", zap.String("domain", cfg.Domain))
 
 	defer func() {
 		if err != nil {
@@ -205,6 +205,8 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	if port == "" {
 		port, err = lib.AddressProxy(cfg.ProxyPointsrc, cfg.PortInterval)
 		if err != nil {
+			logger.Error(ctx, "Error: AddressProxy", zap.String("ProxyPointsrc", cfg.ProxyPointsrc), zap.String("ProxyPointsrc", cfg.ProxyPointsrc), zap.Error(err))
+
 			fmt.Println(err)
 			return err
 		}
@@ -235,6 +237,8 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		src,
 		iam,
 		ses,
+		serviceVersion,
+		hashCommit,
 	)
 
 	// для завершения сервиса ждем сигнал в процесс

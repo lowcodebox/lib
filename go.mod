@@ -3,8 +3,8 @@ module git.lowcodeplatform.net/fabric/app
 go 1.18
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.1.11
-	git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221023080507-84fb9ed9a65d
+	git.lowcodeplatform.net/fabric/api-client v0.1.12
+	git.lowcodeplatform.net/fabric/iam-client v0.1.1
 	git.lowcodeplatform.net/fabric/lib v0.1.56
 	git.lowcodeplatform.net/fabric/models v0.1.15
 	github.com/Masterminds/sprig v2.22.0+incompatible
@@ -30,6 +30,7 @@ require (
 	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
 	git.lowcodeplatform.net/fabric/logbox v0.1.3 // indirect
 	git.lowcodeplatform.net/fabric/logbox-client v0.1.6 // indirect
+	git.lowcodeplatform.net/packages/cache v0.0.0-20230603080834-b3c659c259f1 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect
 	git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 // indirect
 	git.lowcodeplatform.net/packages/logger v0.1.0 // indirect
@@ -77,15 +78,15 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/ncw/swift v1.0.53 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/prometheus/client_golang v1.14.0 // indirect
-	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.37.0 // indirect
-	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/prometheus/client_golang v1.17.0 // indirect
+	github.com/prometheus/client_model v0.5.0 // indirect
+	github.com/prometheus/common v0.44.0 // indirect
+	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/kafka-go v0.4.40 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
@@ -99,9 +100,9 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/oauth2 v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
@@ -109,6 +110,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.56.1 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
