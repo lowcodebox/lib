@@ -19,6 +19,9 @@ type Pong struct {
 	Follower    string      `json:"follower"`
 	Metrics     interface{} `json:"metrics"`
 
+	ServiceVersion string `json:"service_version"`
+	HashCommit     string `json:"hash_commit"`
+
 	//deprecated
 	Port  int    `json:"port"`
 	State string `json:"state"`

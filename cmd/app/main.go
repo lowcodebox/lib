@@ -94,6 +94,8 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
 	}
 
+	cfg.ServiceVersion = serviceVersion
+	cfg.HashCommit = hashCommit
 	cfg.UidService = cfg.DataUid
 	cfg.ConfigName = cfg.DataUid
 	cfg.HashRun = lib.UUID()
@@ -131,7 +133,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	)
 
 	// подключаемся к файловому хранилищу
-	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 	err = vfs.Connect()
 	if err != nil {
 		logger.Error(ctx, "Error connect to filestorage", zap.String("configfile", configfile), zap.Error(err))

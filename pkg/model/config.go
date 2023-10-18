@@ -20,9 +20,13 @@ type Config struct {
 	VfsSecretKey   string `envconfig:"VFS_SECRET_KEY" default:"minioadmin"`
 	VfsRegion      string `envconfig:"VFS_REGION" default:""`
 	VfsComma       string `envconfig:"VFS_COMMA" default:""`
+	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:""`
 
 	// Cache
 	TimeoutCacheGenerate Duration `envconfig:"TIMEOUT_CACHE_GENERATE" default:"3m" description:"интервал после которого будет реинициализировано обновление кеша для статуса updated"`
+
+	ServiceVersion string `envconfig:"SERVICE_VERSION" default:""`
+	HashCommit     string `envconfig:"HASH_COMMIT" default:""`
 
 	// Config
 	ConfigName          string `envconfig:"CONFIG_NAME" default:""`
