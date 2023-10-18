@@ -136,7 +136,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 
 	bl.Value["Rand"] = uuid[1:6] // переопределяем отдельно для каждого модуля
 	bl.Value["URL"] = in.Url
-	bl.Value["Prefix"] = "/" + b.cfg.Domain + "/" + b.cfg.PathTemplates
+	bl.Value["Prefix"] = "/" + b.cfg.Domain + b.cfg.PathTemplates
 	bl.Value["Domain"] = b.cfg.Domain
 	bl.Value["CDN"] = b.cfg.UrlFs
 	bl.Value["Path"] = b.cfg.ClientPath

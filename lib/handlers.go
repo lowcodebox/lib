@@ -123,7 +123,7 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	//jsonRequest, _ := json.Marshal(r)
 	// values["Request"] = string(jsonRequest)
 
-	values["Prefix"] = ClientPath + "/" + path_template
+	values["Prefix"] = ClientPath + path_template
 	values["Domain"] = Domain
 	values["Path"] = ClientPath
 	values["CDN"] = ""

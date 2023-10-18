@@ -24,7 +24,9 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 				r.RequestURI,
 				name,
 				timeInterval)
-			logger.Info(h.ctx, mes)
+			logger.Info(h.ctx, mes,
+				zap.Float64("timing", timeInterval.Seconds()),
+			)
 		}
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)

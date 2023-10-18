@@ -79,11 +79,6 @@ func SendServiceParamsToMetric(uid, name, version, status, pid, replicas, portHT
 func ValidateNameVersion(project, version, domain string) (resName, resVersion string) {
 	name := "unknown"
 
-	spld := strings.Split(domain, "-")
-	if len(spld) == 2 {
-		return spld[0], spld[1]
-	}
-
 	if project != "" {
 		if len(strings.Split(project, "-")) > 3 { // признак того, что получили UID (для совместимости)
 			if domain != "" {
