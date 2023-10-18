@@ -45,7 +45,7 @@ func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err e
 	client := pb.NewLogboxClient(conn)
 	res, err := client.Upsert(ctxWithDeadline, events)
 	if err != nil {
-		return out, fmt.Errorf("request timing: %s, err: %dms", time.Since(startTime).Milliseconds(), err)
+		return out, fmt.Errorf("request timing: %d, err: %dms", time.Since(startTime).Milliseconds(), err)
 	}
 	if res == nil {
 		return out, fmt.Errorf("error upsert message to logbox. result from upsert is empty")

@@ -11,11 +11,10 @@ import (
 )
 
 type ConfigVfsLogger struct {
-	Kind, Endpoint, AccessKeyID, SecretKey, Region, Bucket, Comma string
-	Dir                                                           string
-	IntervalReload                                                time.Duration
+	Kind, Endpoint, AccessKeyID, SecretKey, Region, Bucket, Comma, CACert string
+	Dir                                                                   string
+	IntervalReload                                                        time.Duration
 }
-
 
 // NewVfsLogger инициализация отправки логов на сервер сбора
 // ВНИМАНИЕ! крайне неэффективно
@@ -24,7 +23,7 @@ func NewVfsLogger(ctx context.Context, cfg ConfigLogger) (logger Log, err error)
 	var output io.Writer
 	m := sync.Mutex{}
 
-	vfs := lib.NewVfs(cfg.Vfs.Kind, cfg.Vfs.Endpoint, cfg.Vfs.AccessKeyID, cfg.Vfs.SecretKey, cfg.Vfs.Region, cfg.Vfs.Bucket, cfg.Vfs.Comma)
+	vfs := lib.NewVfs(cfg.Vfs.Kind, cfg.Vfs.Endpoint, cfg.Vfs.AccessKeyID, cfg.Vfs.SecretKey, cfg.Vfs.Region, cfg.Vfs.Bucket, cfg.Vfs.Comma, cfg.Vfs.CACert)
 	err = vfs.Connect()
 	if err != nil {
 		return nil, err

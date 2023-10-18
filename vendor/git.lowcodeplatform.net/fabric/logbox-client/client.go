@@ -18,14 +18,14 @@ type Client interface {
 	Upsert(ctx context.Context, in upsertReq) (out upsertRes, err error)
 	Search(ctx context.Context, in searchRes) (out searchReq, err error)
 
-	NewUpsertReq() *upsertReq
-	NewEvent(Uid string, Level string, Type string, Name string, ConfigID string, RequestID string, ServiceID string, Msg string, Time string, Timing string, Payload string) *event
+	NewUpsertReq() upsertReq
+	NewEvent(Uid string, Level string, Type string, Name string, ConfigID string, RequestID string, ServiceID string, Msg string, Time string, Timing string, Payload string) event
 
 	Close() error
 }
 
-func (c *client) NewUpsertReq() *upsertReq {
-	return &upsertReq{}
+func (c *client) NewUpsertReq() upsertReq {
+	return upsertReq{}
 }
 
 func (c *client) Close() error {

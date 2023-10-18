@@ -45,7 +45,7 @@ func (v *logboxSender) Write(p []byte) (n int, err error) {
 		if err != nil {
 			return 0, fmt.Errorf("error unmarshal to logline. err: %s, value: %s", err, string(value))
 		}
-		newReq.AddEvent(*v.logboxClient.NewEvent(
+		newReq.AddEvent(v.logboxClient.NewEvent(
 			l.Uid,
 			l.Level,
 			l.Type,
@@ -60,7 +60,7 @@ func (v *logboxSender) Write(p []byte) (n int, err error) {
 		))
 	}
 
-	_, err = v.logboxClient.Upsert(reqTimeout, *newReq)
+	_, err = v.logboxClient.Upsert(reqTimeout, newReq)
 
 	return len(p), err
 }

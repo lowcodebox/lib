@@ -44,7 +44,7 @@ func (c *client) Search(ctx context.Context, in searchRes) (out searchReq, err e
 
 	result, err := client.Search(ctxWithDeadline, inClient)
 	if err != nil {
-		return out, fmt.Errorf("[client] [logbox] request error request Search. timing: %s, err: %dms", time.Since(startTime).Milliseconds(), err)
+		return out, fmt.Errorf("[client] [logbox] request error request Search. timing: %d, err: %dms", time.Since(startTime).Milliseconds(), err)
 	}
 	if result == nil {
 		return out, fmt.Errorf("[client] [logbox] error request Search. result is empty")
@@ -68,7 +68,7 @@ func (c *client) Search(ctx context.Context, in searchRes) (out searchReq, err e
 			m.Timing,
 			m.Payload,
 		)
-		out.Data = append(out.Data, *ev)
+		out.Data = append(out.Data, ev)
 	}
 
 	return out, err

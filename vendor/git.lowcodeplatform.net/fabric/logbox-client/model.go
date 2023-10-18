@@ -62,8 +62,8 @@ func (c *client) NewEvent(
 	Time string,
 	Timing string,
 	Payload string,
-) *event {
-	return &event{
+) event {
+	return event{
 		Level:     Level,
 		Msg:       Msg,
 		Name:      Name,
