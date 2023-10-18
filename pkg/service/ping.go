@@ -49,6 +49,8 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	pong.PortGrpc = 0
 	pong.PortMetric = 8080
 	pong.Metrics = mobj
+	pong.ServiceVersion = s.cfg.ServiceVersion
+	pong.HashCommit = s.cfg.HashCommit
 
 	pong.State = ""
 	pong.Https = https
