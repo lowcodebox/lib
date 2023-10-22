@@ -12,22 +12,22 @@ import (
 func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
 	in, err := h.changeroleDecodeRequest(r.Context(), r)
 	if err != nil {
-		logger.Error(h.ctx, "[changerole] Error function execution (changeroleDecodeRequest).", zap.Error(err))
+		logger.Error(r.Context(), "[changerole] Error function execution (changeroleDecodeRequest).", zap.Error(err))
 		return
 	}
 	serviceResult, err := h.service.AuthChangeRole(r.Context(), in)
 	if err != nil {
-		logger.Error(h.ctx, "[changerole] Error function execution (AuthChangeRole).", zap.Error(err))
+		logger.Error(r.Context(), "[changerole] Error function execution (AuthChangeRole).", zap.Error(err))
 		return
 	}
 	out, _ := h.changeroleEncodeResponse(r.Context(), serviceResult, in)
 	if err != nil {
-		logger.Error(h.ctx, "[changerole] Error function execution (changeroleEncodeResponse).", zap.Error(err))
+		logger.Error(r.Context(), "[changerole] Error function execution (changeroleEncodeResponse).", zap.Error(err))
 		return
 	}
 	err = h.changeroleTransportResponse(w, r, out)
 	if err != nil {
-		logger.Error(h.ctx, "[changerole] Error function execution (changeroleTransportResponse).", zap.Error(err))
+		logger.Error(r.Context(), "[changerole] Error function execution (changeroleTransportResponse).", zap.Error(err))
 
 		return
 	}

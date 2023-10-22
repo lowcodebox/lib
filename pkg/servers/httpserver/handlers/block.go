@@ -3,11 +3,12 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"net/http"
+
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/gorilla/mux"
-	"html/template"
-	"net/http"
 )
 
 // Block get user by login+pass pair
@@ -20,29 +21,29 @@ import (
 func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 	in, err := blockDecodeRequest(r.Context(), r)
 	if err != nil {
-		h.transportError(w, 500, err, "[Block] Error function execution (BlockDecodeRequest)")
+		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (BlockDecodeRequest)")
 		return
 	}
 	serviceResult, err := h.service.Block(r.Context(), in)
 	if err != nil {
-		h.transportError(w, 500, err, "[Block] Error function execution (Block)")
+		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (Block)")
 		return
 	}
 	response, _ := blockEncodeResponse(r.Context(), &serviceResult)
 	if err != nil {
-		h.transportError(w, 500, err, "[Block] Error function execution (BlockEncodeResponse)")
+		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (BlockEncodeResponse)")
 		return
 	}
 	err = h.transportResponseHTTP(w, string(response))
 	if err != nil {
-		h.transportError(w, 500, err, "[Page] Error function execution (transportResponse)")
+		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (transportResponse)")
 		return
 	}
 
 	return
 }
 
-func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceIn, err error)  {
+func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceIn, err error) {
 	vars := mux.Vars(r)
 	in.Block = vars["block"]
 	r.ParseForm()
@@ -86,7 +87,7 @@ func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceI
 	return in, err
 }
 
-func blockEncodeResponse(ctx context.Context, serviceResult *model.ServiceBlockOut) (response template.HTML, err error)  {
+func blockEncodeResponse(ctx context.Context, serviceResult *model.ServiceBlockOut) (response template.HTML, err error) {
 	response = serviceResult.Result
 	return response, err
 }

@@ -20,22 +20,22 @@ import (
 func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
 	_, err := pingDecodeRequest(r.Context(), r)
 	if err != nil {
-		logger.Error(h.ctx, "[Ping] Error function execution (PLoginDecodeRequest).", zap.Error(err))
+		logger.Error(r.Context(), "[Ping] Error function execution (PLoginDecodeRequest).", zap.Error(err))
 		return
 	}
 	serviceResult, err := h.service.Ping(r.Context())
 	if err != nil {
-		logger.Error(h.ctx, "[Ping] Error function execution (service.Ping).", zap.Error(err))
+		logger.Error(r.Context(), "[Ping] Error function execution (service.Ping).", zap.Error(err))
 		return
 	}
 	response, _ := pingEncodeResponse(r.Context(), serviceResult)
 	if err != nil {
-		logger.Error(h.ctx, "[Ping] Error function execution (PLoginEncodeResponse).", zap.Error(err))
+		logger.Error(r.Context(), "[Ping] Error function execution (PLoginEncodeResponse).", zap.Error(err))
 		return
 	}
 	err = pingTransportResponse(w, response)
 	if err != nil {
-		logger.Error(h.ctx, "[Ping] Error function execution (PLoginTransportResponse).", zap.Error(err))
+		logger.Error(r.Context(), "[Ping] Error function execution (PLoginTransportResponse).", zap.Error(err))
 		return
 	}
 

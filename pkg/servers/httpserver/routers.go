@@ -114,6 +114,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		router.Use(h.AuthProcessor)
 	}
 
+	// добавление request-id в логер
+	router.Use(logger.HTTPMiddleware)
 	router.StrictSlash(true)
 
 	//router.PathPrefix("/.well-known/").Handler(http.StripPrefix("/.well-known/", http.FileServer(http.Dir(h.cfg.Workingdir + "/upload"))))

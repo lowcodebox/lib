@@ -117,6 +117,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		logger.ServiceTypeKey: cfg.ServiceType,
 	})
 
+	// логируем в консоль, если ошибка подлючения к сервису хранения логов
 	if err != nil {
 		fmt.Errorf("%s Error init Logbox logger. Was init default logger. err: %s\n", fail, err)
 		logger.SetupDefaultLogger(cfg.Name+"/"+cfg.ServiceType,
@@ -125,12 +126,6 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 			logger.WithCustomField(logger.ServiceTypeKey, cfg.ServiceType),
 		)
 	}
-
-	logger.SetupDefaultLogger(cfg.Name+"/"+cfg.ServiceType,
-		logger.WithCustomField(logger.ServiceIDKey, cfg.HashRun),
-		logger.WithCustomField(logger.ConfigIDKey, cfg.UidService),
-		logger.WithCustomField(logger.ServiceTypeKey, cfg.ServiceType),
-	)
 
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)

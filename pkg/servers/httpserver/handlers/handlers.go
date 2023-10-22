@@ -39,14 +39,14 @@ func (h *handlers) transportResponse(w http.ResponseWriter, response interface{}
 	return err
 }
 
-func (h *handlers) transportError(w http.ResponseWriter, code int, error error, message string) (err error) {
+func (h *handlers) transportError(ctx context.Context, w http.ResponseWriter, code int, error error, message string) (err error) {
 	var res = models.Response{}
 
 	res.Status.Error = error
 	res.Status.Description = message
 	d, err := json.Marshal(res)
 
-	logger.Error(h.ctx, message, zap.Error(err))
+	logger.Error(ctx, message, zap.Error(err))
 
 	w.WriteHeader(code)
 	w.Write(d)

@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"context"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"net/http"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/model"
 )
 
 // Cache clear
@@ -13,29 +14,29 @@ import (
 func (h *handlers) Cache(w http.ResponseWriter, r *http.Request) {
 	in, err := cacheDecodeRequest(r.Context(), r)
 	if err != nil {
-		h.transportError(w, 500, err, "[Cache] Error function execution (CacheDecodeRequest)")
+		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (CacheDecodeRequest)")
 		return
 	}
 	serviceResult, err := h.service.Cache(r.Context(), in)
 	if err != nil {
-		h.transportError(w, 500, err, "[Cache] Error function execution (Cache)")
+		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (Cache)")
 		return
 	}
 	response, _ := cacheEncodeResponse(r.Context(), serviceResult)
 	if err != nil {
-		h.transportError(w, 500, err, "[Cache] Error function execution (CacheEncodeResponse)")
+		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (CacheEncodeResponse)")
 		return
 	}
 	err = h.transportResponse(w, response)
 	if err != nil {
-		h.transportError(w, 500, err, "[Page] Error function execution (transportResponse)")
+		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (transportResponse)")
 		return
 	}
 
 	return
 }
 
-func cacheDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceCacheIn, err error)  {
+func cacheDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceCacheIn, err error) {
 	in.Link = r.FormValue("link")
 	if in.Link == "" {
 		in.Link = r.FormValue("links")
@@ -44,6 +45,6 @@ func cacheDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceC
 	return in, err
 }
 
-func cacheEncodeResponse(ctx context.Context, serviceResult model.RestStatus) (response interface{}, err error)  {
+func cacheEncodeResponse(ctx context.Context, serviceResult model.RestStatus) (response interface{}, err error) {
 	return serviceResult, err
 }
