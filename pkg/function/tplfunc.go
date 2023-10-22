@@ -1006,7 +1006,7 @@ func (t *tplfunc) Output(element string, configuration, data interface{}, result
 	return result
 }
 
-// вспомогательная функция только для HTTP
+// RequestToInRequest вспомогательная функция только для HTTP
 // преобразуем полученный через прямой параметр запрос в темплейте
 // в формат model.ServiceIn в котором его понимаеют обработчики функций
 func (t *tplfunc) RequestToInRequest(r *http.Request) (result model.ServiceIn) {

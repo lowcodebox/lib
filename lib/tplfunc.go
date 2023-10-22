@@ -31,6 +31,7 @@ var FuncMap = template.FuncMap{
 	"cookie":              cookie,
 	"attr":                attr,
 	"addfloat":            addfloat,
+	"mulfloat":            mulfloat,
 	"datetotext":          datetotext,
 	"output":              output,
 	"cut":                 cut,
@@ -42,6 +43,7 @@ var FuncMap = template.FuncMap{
 	"rereplace":           rereplace,
 	"replace":             Replace,
 	"contains":            contains,
+	"contains1":           contains1,
 	"dict":                dict,
 	"sum":                 sum,
 	"split":               split,
@@ -92,6 +94,34 @@ var FuncMap = template.FuncMap{
 	"parsebody":           parsebody,
 	"redirect":            redirect,
 	"groupbyfield":        groupbyfield,
+
+	"objFromID": objFromID,
+}
+
+// mulfloat умножение с запятой
+func mulfloat(a float64, v ...float64) float64 {
+	for _, b := range v {
+		a = a * b
+	}
+
+	return a
+}
+
+// objFromID получить объект из массива объектов по id
+func objFromID(dt []models.Data, id string) (result interface{}) {
+	//var dt []models.Data
+
+	//err := json.Unmarshal([]byte(fmt.Sprint(data)), &dt)
+	//if err != nil {
+	//	return fmt.Sprint(err, data)
+	//}
+	for _, v := range dt {
+		if v.Id == id {
+			return v
+		}
+	}
+
+	return "nil"
 }
 
 // groupbyfield группируем полученные данные (объекты) формата models.ResponseData согласно шаблону
