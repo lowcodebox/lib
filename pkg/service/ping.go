@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/cache"
@@ -36,10 +37,16 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 
 	https := false
 
+	version := s.cfg.ServiceType
+	splDomain := strings.Split(s.cfg.Domain, "/")
+	if len(splDomain) == 2 {
+		version = splDomain[1]
+	}
+
 	pong := models.Pong{}
 	pong.Uid = s.cfg.DataUid
 	pong.Name = s.cfg.Name
-	pong.Version = s.cfg.ServiceType
+	pong.Version = version
 	pong.Status = "run"
 	pong.PortHTTP, pong.Port = pg, pg
 	pong.Config = s.cfg.ConfigName
