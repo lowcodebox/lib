@@ -24,7 +24,7 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 				r.RequestURI,
 				name,
 				timeInterval)
-			logger.Info(h.ctx, mes,
+			logger.Info(r.Context(), mes,
 				zap.Float64("timing", timeInterval.Seconds()),
 			)
 		}

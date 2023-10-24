@@ -62,6 +62,8 @@ git.lowcodeplatform.net/fabric/logbox-client v0.1.6 h1:xSf6DcvT8tOi+vPD0zbIwwAKV
 git.lowcodeplatform.net/fabric/logbox-client v0.1.6/go.mod h1:z6vzie+FDEeOLJQFhHtNeTDUv7UvDmZW4U+3lT5Et0w=
 git.lowcodeplatform.net/fabric/logbox-client v0.1.7 h1:toGc1cfZTCrGmFBrnMQQbFhtCxVt77c2Cgt7iJZzqL0=
 git.lowcodeplatform.net/fabric/logbox-client v0.1.7/go.mod h1:z6vzie+FDEeOLJQFhHtNeTDUv7UvDmZW4U+3lT5Et0w=
+git.lowcodeplatform.net/fabric/logbox-client v0.1.9 h1:x/E6srcdZ410TYHwmivyIm3wdJ9KctfKyym3sDeB5rs=
+git.lowcodeplatform.net/fabric/logbox-client v0.1.9/go.mod h1:4Z0QYhBgEH3eD6WEui5QtHAR+sGZA5NO+aQIDR4FGHc=
 git.lowcodeplatform.net/fabric/models v0.1.15 h1:GbvhMLwADOeStThYt7hC3aL9SlHCSSxp5XmivEp38ow=
 git.lowcodeplatform.net/fabric/models v0.1.15/go.mod h1:RSR+ysusHS7bhYOCDuWbkuGQkFL0Mum4r/FXPzStUQQ=
 git.lowcodeplatform.net/fabric/models v0.1.16 h1:7j9a5fSxIDFQXDAT6n/pb7GWOT8NkBvbUiSECLKXe4M=
@@ -78,6 +80,8 @@ git.lowcodeplatform.net/packages/logger v0.1.0 h1:RGmv6W9Es2RCYoyFqq8RoInmWoG5Qb
 git.lowcodeplatform.net/packages/logger v0.1.0/go.mod h1:Yl91CTdrA0vVUgFHTVbjBmZDJc6CbCEqVZXrwNk2yJM=
 git.lowcodeplatform.net/packages/logger v0.1.2 h1:Tz/zpjKpoEs4JBbGQuuK4qQPosSUxd6yFcvIkH+vc68=
 git.lowcodeplatform.net/packages/logger v0.1.2/go.mod h1:htTtr1x35HD2LlM6lbI+DDcqi7kv7l1VamiOLs+QH1E=
+git.lowcodeplatform.net/packages/logger v0.1.9 h1:wZU2esqvgV8NeD1xhu0E0JziyKO5loKAykpRQWCFM3E=
+git.lowcodeplatform.net/packages/logger v0.1.9/go.mod h1:iKq0VPSjGefyHHYukM7EhmBXHrCl1KWY8abQ3bIvifU=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v66.0.0+incompatible h1:bmmC38SlE8/E81nNADlgmVGurPWMHDX2YNXVQMrBpEE=
 github.com/Azure/azure-sdk-for-go v66.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
