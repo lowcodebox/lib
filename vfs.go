@@ -45,6 +45,7 @@ type Vfs interface {
 	ReadCloser(file string) (reader io.ReadCloser, err error)
 	ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error)
 	Write(file string, data []byte) (err error)
+	Delete(file string) (err error)
 	Connect() (err error)
 	Close() (err error)
 }
@@ -169,6 +170,20 @@ func (v *vfs) Write(file string, data []byte) (err error) {
 	return err
 }
 
+// Delete удаляем объект в хранилище
+func (v *vfs) Delete(file string) (err error) {
+	item, err := v.getItem(file, v.bucket)
+	if err != nil {
+		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
+	}
+
+	err = v.container.RemoveItem(item.ID())
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // List список файлов выбранного
 func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
 	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
@@ -188,6 +203,18 @@ func (v *vfs) ReadCloser(file string) (reader io.ReadCloser, err error) {
 }
 
 func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error) {
+
+	item, err := v.getItem(file, bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err = item.Open()
+
+	return reader, err
+}
+
+func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 	var urlPath url.URL
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
@@ -214,17 +241,15 @@ func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, e
 	urlPath.Host = bucket
 	urlPath.Path = file
 
-	item, err := v.location.ItemByURL(&urlPath)
+	item, err = v.location.ItemByURL(&urlPath)
 	if err != nil {
-		return reader, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
+		return nil, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
 	}
 	if item == nil {
-		return reader, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
+		return nil, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
 	}
 
-	reader, err = item.Open()
-
-	return reader, err
+	return item, err
 }
 
 func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacert string) Vfs {
