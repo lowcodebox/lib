@@ -266,7 +266,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 		var objModule models.ResponseData
 
 		// запрос на объект HTML
-		objModule, err = b.api.ObjGet(uidModule)
+		objModule, err = b.api.ObjGet(ctx, uidModule)
 		//_, err = b.tree.Curl("GET", "_objs/"+uidModule, "", &objModule, map[string]string{})
 
 		if err != nil {
@@ -493,6 +493,7 @@ func (l *block) ModuleError(err interface{}) template.HTML {
 func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response) {
 	var err error
 	bodyJSON, _ := json.Marshal(postForm)
+	ctx := context.Background()
 
 	// добавляем к пути в запросе переданные в блок параметры ULR-а (возможно там есть параметры для фильтров)
 	filters := queryRaw
@@ -512,7 +513,7 @@ func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Va
 		}
 	}
 
-	resultInterface, _ := b.api.Query(tquery+filters, method, string(bodyJSON))
+	resultInterface, _ := b.api.Query(ctx, tquery+filters, method, string(bodyJSON))
 
 	// попытка в ResponseData
 	var dd1 models.ResponseData

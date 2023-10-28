@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,7 +10,10 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/curl"
+	"git.lowcodeplatform.net/packages/logger"
 )
+
+const headerRequestId = "X-Request-Id"
 
 type api struct {
 	url string
@@ -20,16 +24,19 @@ type Api interface {
 }
 
 type Obj interface {
-	ObjGet(uids string) (result models.ResponseData, err error)
-	ObjCreate(bodymap map[string]string) (result models.ResponseData, err error)
-	ObjAttrUpdate(uid, name, value, src, editor string) (result models.ResponseData, err error)
-	LinkGet(tpl, obj, mode, short string) (result models.ResponseData, err error)
-	Query(query, method, bodyJSON string) (result string, err error)
-	Element(action, body string) (result models.ResponseData, err error)
+	ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error)
+	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
+	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
+	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
+	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 }
 
 // Query результат выводим в объект как при вызове Curl
-func (o *api) Query(query, method, bodyJSON string) (result string, err error) {
+func (o *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+
 	urlc := o.url + "/query/" + query
 	urlc = strings.Replace(urlc, "//query", "/query", 1)
 
@@ -47,7 +54,10 @@ func (o *api) Query(query, method, bodyJSON string) (result string, err error) {
 	return fmt.Sprint(res), err
 }
 
-func (o *api) ObjGet(uids string) (result models.ResponseData, err error) {
+func (o *api) ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+
 	urlc := o.url + "/objs/" + uids
 	urlc = strings.Replace(urlc, o.url+"//objs/", o.url+"/objs/", 1)
 
@@ -59,7 +69,10 @@ func (o *api) ObjGet(uids string) (result models.ResponseData, err error) {
 	return result, err
 }
 
-func (o *api) LinkGet(tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (o *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+
 	urlc := o.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short
 	urlc = strings.Replace(urlc, "//link", "/link", 1)
 
@@ -71,8 +84,10 @@ func (o *api) LinkGet(tpl, obj, mode, short string) (result models.ResponseData,
 	return result, err
 }
 
-// изменение значения аттрибута объекта
-func (a *api) ObjAttrUpdate(uid, name, value, src, editor string) (result models.ResponseData, err error) {
+// ObjAttrUpdate изменение значения аттрибута объекта
+func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 
 	post := map[string]string{}
 	thisTime := fmt.Sprintf("%v", time.Now().UTC())
@@ -87,7 +102,7 @@ func (a *api) ObjAttrUpdate(uid, name, value, src, editor string) (result models
 	post["editor"] = editor
 
 	dataJ, _ := json.Marshal(post)
-	result, err = a.Element("update", string(dataJ))
+	result, err = a.Element(ctx, "update", string(dataJ))
 
 	return result, err
 }
@@ -102,7 +117,9 @@ func (a *api) ObjAttrUpdate(uid, name, value, src, editor string) (result models
 // checkup - Проверяем переданное значение на соответствие выбранному условию
 // all (elements) - Получаем поля, по заданному в параметрах типу
 // "" - без действия - получаем все поля для объекта
-func (a *api) Element(action, body string) (result models.ResponseData, err error) {
+func (a *api) Element(ctx context.Context, action, body string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 
 	// получаем поля шаблона
 	if action == "elements" || action == "all" {
@@ -121,7 +138,10 @@ func (a *api) Element(action, body string) (result models.ResponseData, err erro
 	return result, err
 }
 
-func (a *api) ObjCreate(bodymap map[string]string) (result models.ResponseData, err error) {
+func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+
 	body, _ := json.Marshal(bodymap)
 	_, err = lib.Curl("POST", a.url+"/objs?format=json", string(body), &result, map[string]string{}, nil)
 	if err != nil {

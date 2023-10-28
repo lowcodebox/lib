@@ -6,6 +6,13 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/packages/grpcbalancer"
+	"github.com/google/uuid"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+)
+
+const (
+	requestIDField string = "request-id"
 )
 
 var timeoutDefault = 1 * time.Second
@@ -40,6 +47,7 @@ func New(ctx context.Context, url string, reqTimeout time.Duration) (Client, err
 		grpcbalancer.WithUrls(url),
 		grpcbalancer.WithInsecure(),
 		grpcbalancer.WithTimeout(reqTimeout),
+		grpcbalancer.WithChainUnaryInterceptors(GRPCUnaryClientInterceptor),
 	)
 	if err != nil {
 		fmt.Printf("failed init grpcbalancer, err: %s", err)
@@ -57,4 +65,35 @@ func New(ctx context.Context, url string, reqTimeout time.Duration) (Client, err
 	return &client{
 		client: b,
 	}, err
+}
+
+func GRPCUnaryClientInterceptor(
+	ctx context.Context,
+	method string,
+	req interface{},
+	reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	var requestID string
+
+	requestID = GetRequestIDCtx(ctx, requestIDField)
+
+	if requestID == "" {
+		requestID = uuid.New().String()
+	}
+
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("x-request-id", requestID))
+
+	err := invoker(ctx, method, req, reply, cc, opts...)
+
+	return err
+}
+
+func GetRequestIDCtx(ctx context.Context, name string) string {
+	nameKey := "logger." + name
+	requestID, _ := ctx.Value(nameKey).(string)
+
+	return requestID
 }

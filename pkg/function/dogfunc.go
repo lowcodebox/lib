@@ -294,7 +294,7 @@ func NewFormula(cfg model.Config, dogfunc DogFunc) Formula {
 // Фукнции @ обработки
 ///////////////////////////////////////////////////
 
-// Делаем вложенный запрос
+// Query Делаем вложенный запрос
 // аргументы:
 // queryName - первый параметр - имя запрсоа;
 // mode - тип ответа
@@ -320,7 +320,7 @@ func (d *dogfunc) Query(r *http.Request, arg []string) (result interface{}, err 
 		filters = "?" + filters
 	}
 
-	res, _ := d.api.Query(arg[0]+filters, "GET", string(bodyJSON))
+	res, _ := d.api.Query(r.Context(), arg[0]+filters, "GET", string(bodyJSON))
 	json.Unmarshal([]byte(res), &objs)
 	//d.utl.Curl("GET", "query/"+arg[0]+filters, string(bodyJSON), &objs, map[string]string{})
 

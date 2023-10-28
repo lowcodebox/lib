@@ -106,7 +106,7 @@ func (d *dynamicParams) reloadPublicPages(ctx context.Context, api api.Api, inte
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			res, err := api.Query(queryPublicPages, http.MethodGet, "")
+			res, err := api.Query(ctx, queryPublicPages, http.MethodGet, "")
 			if err != nil {
 				ticker = time.NewTicker(intervalReload)
 				continue
