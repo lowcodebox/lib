@@ -170,6 +170,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 
 	api := api.New(
 		cfg.UrlApi,
+		cfg.EnableObserverLogApi,
 	)
 
 	fnc := function.New(

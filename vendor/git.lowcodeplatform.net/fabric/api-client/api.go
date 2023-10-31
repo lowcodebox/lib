@@ -11,12 +11,14 @@ import (
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/curl"
 	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 const headerRequestId = "X-Request-Id"
 
 type api struct {
-	url string
+	url        string
+	observeLog bool
 }
 
 type Api interface {
@@ -36,6 +38,9 @@ type Obj interface {
 func (o *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "Query", err, query, method, bodyJSON)
+	}
 
 	urlc := o.url + "/query/" + query
 	urlc = strings.Replace(urlc, "//query", "/query", 1)
@@ -46,7 +51,7 @@ func (o *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 		urlc = strings.Replace(urlc, o.url+"//", o.url+"/", 1)
 	}
 
-	res, err := lib.Curl(method, urlc, bodyJSON, nil, map[string]string{}, nil)
+	res, err := lib.Curl(method, urlc, bodyJSON, nil, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
@@ -57,11 +62,14 @@ func (o *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 func (o *api) ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "ObjGet", err, uids)
+	}
 
 	urlc := o.url + "/objs/" + uids
 	urlc = strings.Replace(urlc, o.url+"//objs/", o.url+"/objs/", 1)
 
-	_, err = lib.Curl("GET", urlc, "", &result, map[string]string{}, nil)
+	_, err = lib.Curl("GET", urlc, "", &result, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
@@ -72,11 +80,14 @@ func (o *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 func (o *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "LinkGet", err, tpl, obj, mode, short)
+	}
 
 	urlc := o.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short
 	urlc = strings.Replace(urlc, "//link", "/link", 1)
 
-	_, err = lib.Curl("GET", urlc, "", &result, map[string]string{}, nil)
+	_, err = lib.Curl("GET", urlc, "", &result, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
@@ -88,6 +99,9 @@ func (o *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "ObjAttrUpdate", err, uid, name, value, src, editor)
+	}
 
 	post := map[string]string{}
 	thisTime := fmt.Sprintf("%v", time.Now().UTC())
@@ -119,20 +133,25 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 // "" - без действия - получаем все поля для объекта
 func (a *api) Element(ctx context.Context, action, body string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
+	var urlc string
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "Element", err, urlc, action, body)
+	}
 
 	// получаем поля шаблона
 	if action == "elements" || action == "all" {
-		_, err = lib.Curl("GET", a.url+"/element/"+body, "", &result, map[string]string{}, nil)
+		_, err = lib.Curl("GET", a.url+"/element/"+body, "", &result, handlers, nil)
 		if err != nil {
 			err = fmt.Errorf("%s (url: %s)", err, a.url+"/element/"+body)
 		}
 		return result, err
 	}
 
-	_, err = curl.NewRequestDefault().Method("POST").Payload(body).MapToObj(&result).Url(a.url + "/element/" + action + "?format=json").Do(nil)
+	urlc = a.url + "/element/" + action + "?format=json"
+	_, err = curl.NewRequestDefault().Method("POST").Payload(body).MapToObj(&result).Headers(handlers).Url(urlc).Do(nil)
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, a.url+"/element/"+action+"?format=json")
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
 
 	return result, err
@@ -140,19 +159,34 @@ func (a *api) Element(ctx context.Context, action, body string) (result models.R
 
 func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
+	var urlc string
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "ObjCreate", err, urlc, bodymap)
+	}
 
 	body, _ := json.Marshal(bodymap)
-	_, err = lib.Curl("POST", a.url+"/objs?format=json", string(body), &result, map[string]string{}, nil)
+	urlc = a.url + "/objs?format=json"
+	_, err = lib.Curl("POST", urlc, string(body), &result, map[string]string{}, nil)
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, a.url+"/objs?format=json")
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
 
 	return result, err
 }
 
-func New(url string) Api {
+func (a *api) observeLogger(ctx context.Context, start time.Time, method string, err error, arguments ...interface{}) {
+	logger.Info(ctx, "timing api query",
+		zap.String("method", method),
+		zap.Float64("timing", time.Since(start).Seconds()),
+		zap.String("arguments", fmt.Sprint(arguments)),
+		zap.Error(err),
+	)
+}
+
+func New(url string, observeLog bool) Api {
 	return &api{
 		url,
+		observeLog,
 	}
 }

@@ -44,11 +44,12 @@ type Config struct {
 	PayErrorRedirect string `envconfig:"PAY_ERROR_REDIRECT" default:"list/page/errorpay"`
 	MoneyGate        string `envconfig:"MONEY_GATE" default:"https://payment.yandex.net/api/v3/payments"`
 
-	ClientPath string `envconfig:"CLIENT_PATH" default:""`
-	UrlGui     string `envconfig:"URL_GUI" default:""`
-	UrlApi     string `envconfig:"URL_API" default:""`
-	UrlIam     string `envconfig:"URL_IAM" default:""`
-	UidService string `envconfig:"UID_SERVICE" default:""`
+	ClientPath           string `envconfig:"CLIENT_PATH" default:""`
+	UrlGui               string `envconfig:"URL_GUI" default:""`
+	UrlApi               string `envconfig:"URL_API" default:""`
+	EnableObserverLogApi bool   `envconfig:"ENABLE_OBSERVER_LOG_API" default:"true"`
+	UrlIam               string `envconfig:"URL_IAM" default:""`
+	UidService           string `envconfig:"UID_SERVICE" default:""`
 
 	PortInterval    string `envconfig:"PORT_INTERVAL" default:""`
 	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`
