@@ -46,6 +46,7 @@ var FuncMap = template.FuncMap{
 	"contains":            contains,
 	"contains1":           contains1,
 	"dict":                dict,
+	"dictstring":          dictstring,
 	"sum":                 sum,
 	"split":               split,
 	"set":                 set,
@@ -742,6 +743,21 @@ func dict(values ...interface{}) (map[string]interface{}, error) {
 			dict[key] = values[i]
 		}
 
+	}
+	return dict, nil
+}
+
+func dictstring(values ...string) (map[string]string, error) {
+	if len(values) == 0 {
+		return nil, errors.New("invalid dict call")
+	}
+	if len(values)%2 != 0 {
+		return nil, errors.New("params is not even")
+	}
+
+	dict := make(map[string]string)
+	for i := 0; i < len(values); i = i + 2 {
+		dict[values[i]] = values[i+1]
 	}
 	return dict, nil
 }
