@@ -10,25 +10,34 @@ import (
 )
 
 func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
-	in, err := h.changeroleDecodeRequest(r.Context(), r)
-	if err != nil {
-		logger.Error(r.Context(), "[changerole] Error function execution (changeroleDecodeRequest).", zap.Error(err))
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	in, er := h.changeroleDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleDecodeRequest")
 		return
 	}
-	serviceResult, err := h.service.AuthChangeRole(r.Context(), in)
-	if err != nil {
-		logger.Error(r.Context(), "[changerole] Error function execution (AuthChangeRole).", zap.Error(err))
+
+	serviceResult, er := h.service.AuthChangeRole(r.Context(), in)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec AuthChangeRole")
 		return
 	}
-	out, _ := h.changeroleEncodeResponse(r.Context(), serviceResult, in)
-	if err != nil {
-		logger.Error(r.Context(), "[changerole] Error function execution (changeroleEncodeResponse).", zap.Error(err))
+
+	out, er := h.changeroleEncodeResponse(r.Context(), serviceResult, in)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleEncodeResponse")
 		return
 	}
+
 	err = h.changeroleTransportResponse(w, r, out)
 	if err != nil {
-		logger.Error(r.Context(), "[changerole] Error function execution (changeroleTransportResponse).", zap.Error(err))
-
+		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleTransportResponse")
 		return
 	}
 

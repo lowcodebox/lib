@@ -9,7 +9,9 @@ import (
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // Page get user by login+pass pair
@@ -20,24 +22,34 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/page [get]
 func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
-	in, err := pageDecodeRequest(r.Context(), r)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (PageDecodeRequest)")
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	in, er := pageDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageDecodeRequest")
 		return
 	}
+
 	serviceResult, err := h.service.Page(r.Context(), in)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (Page)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec service.Page")
 		return
 	}
-	response, _ := pageEncodeResponse(r.Context(), &serviceResult)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (PageEncodeResponse)")
+
+	response, er := pageEncodeResponse(r.Context(), &serviceResult)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageEncodeResponse")
 		return
 	}
+
 	err = h.transportResponseHTTP(w, response)
 	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (transportResponse)")
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec transportResponseHTTP")
 		return
 	}
 
@@ -47,7 +59,10 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 func pageDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceIn, err error) {
 	vars := mux.Vars(r)
 	in.Page = vars["page"]
-	r.ParseForm()
+	err = r.ParseForm()
+	if err != nil {
+		logger.Error(ctx, "[Block] (blockDecodeRequest) error ParseForm", zap.Error(err))
+	}
 
 	in.Url = r.URL.Query().Encode()
 	in.Referer = r.Referer()

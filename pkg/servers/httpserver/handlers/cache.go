@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 // Cache clear
@@ -12,24 +14,34 @@ import (
 // ?links=all - clear full cache
 // @Router /cacheclear [get]
 func (h *handlers) Cache(w http.ResponseWriter, r *http.Request) {
-	in, err := cacheDecodeRequest(r.Context(), r)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (CacheDecodeRequest)")
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	in, er := cacheDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec cacheDecodeRequest")
 		return
 	}
+
 	serviceResult, err := h.service.Cache(r.Context(), in)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (Cache)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec service.Cache")
 		return
 	}
+
 	response, _ := cacheEncodeResponse(r.Context(), serviceResult)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Cache] Error function execution (CacheEncodeResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec cacheEncodeResponse")
 		return
 	}
+
 	err = h.transportResponse(w, response)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (transportResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec transportResponse")
 		return
 	}
 

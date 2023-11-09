@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"net/http"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // Block get user by login+pass pair
@@ -19,24 +20,34 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/block [get]
 func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
-	in, err := blockDecodeRequest(r.Context(), r)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (BlockDecodeRequest)")
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	in, er := blockDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockDecodeRequest")
 		return
 	}
-	serviceResult, err := h.service.Block(r.Context(), in)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (Block)")
+
+	serviceResult, er := h.service.Block(r.Context(), in)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec service.Block")
 		return
 	}
+
 	response, _ := blockEncodeResponse(r.Context(), &serviceResult)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Block] Error function execution (BlockEncodeResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockEncodeResponse")
 		return
 	}
+
 	err = h.transportResponseHTTP(w, string(response))
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Page] Error function execution (transportResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec transportResponseHTTP")
 		return
 	}
 
@@ -46,7 +57,10 @@ func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceIn, err error) {
 	vars := mux.Vars(r)
 	in.Block = vars["block"]
-	r.ParseForm()
+	err = r.ParseForm()
+	if err != nil {
+		logger.Error(ctx, "[Block] (blockDecodeRequest) error ParseForm", zap.Error(err))
+	}
 
 	in.Url = r.URL.Query().Encode()
 	in.Referer = r.Referer()
@@ -65,7 +79,7 @@ func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceI
 		in.Profile = profile
 	}
 
-	fmt.Println(profile, ok, ctx.Value("profile"))
+	//fmt.Println(profile, ok, ctx.Value("profile"))
 
 	//cookieCurrent, err := r.Cookie("sessionID")
 	//iam := ""

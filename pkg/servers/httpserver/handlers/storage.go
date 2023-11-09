@@ -11,27 +11,34 @@ import (
 )
 
 func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
-	in, err := storageDecodeRequest(r.Context(), r)
-	if err != nil {
-		logger.Error(r.Context(), "[Alive] Error function execution (storageDecodeRequest).", zap.Error(err))
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	in, er := storageDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageDecodeRequest")
 		return
 	}
+
 	serviceResult, err := h.service.Storage(r.Context(), in)
-	if err != nil {
-		logger.Error(r.Context(), "[Alive] Error function execution (service.Alive).", zap.Error(err))
-		h.transportError(r.Context(), w, 500, err, "[Alive] Error service execution (service.Alive).")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec service.Storage")
 		return
 	}
+
 	response, _ := storageEncodeResponse(r.Context(), serviceResult)
-	if err != nil {
-		logger.Error(r.Context(), "[Alive] Error function execution (storageEncodeResponse).", zap.Error(err))
-		h.transportError(r.Context(), w, 500, err, "[Alive] Error function execution (storageEncodeResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageEncodeResponse")
 		return
 	}
 
 	err = h.transportByte(w, response.MimeType, response.Body)
-	if err != nil {
-		h.transportError(r.Context(), w, 500, err, "[Query] Error function execution (transportResponse)")
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec transportByte")
 		return
 	}
 

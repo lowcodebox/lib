@@ -170,7 +170,7 @@ github.com/gabriel-vasile/mimetype
 github.com/gabriel-vasile/mimetype/internal/charset
 github.com/gabriel-vasile/mimetype/internal/json
 github.com/gabriel-vasile/mimetype/internal/magic
-# github.com/go-kit/kit v0.12.0
+# github.com/go-kit/kit v0.13.0
 ## explicit; go 1.17
 github.com/go-kit/kit/metrics
 github.com/go-kit/kit/metrics/internal/lv

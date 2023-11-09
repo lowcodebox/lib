@@ -41,15 +41,21 @@ func (h *handlers) transportResponse(w http.ResponseWriter, response interface{}
 
 func (h *handlers) transportError(ctx context.Context, w http.ResponseWriter, code int, error error, message string) (err error) {
 	var res = models.Response{}
+	logger.Error(ctx, message, zap.Error(err))
 
 	res.Status.Error = error
 	res.Status.Description = message
 	d, err := json.Marshal(res)
-
-	logger.Error(ctx, message, zap.Error(err))
+	if err != nil {
+		return fmt.Errorf("error exec transportError. err: %s", err)
+	}
 
 	w.WriteHeader(code)
-	w.Write(d)
+	_, err = w.Write(d)
+	if err != nil {
+		return fmt.Errorf("error exec transportError. err: %s", err)
+	}
+
 	return err
 }
 
@@ -67,7 +73,11 @@ func (h *handlers) transportByte(w http.ResponseWriter, mimeType string, respons
 	//fmt.Println("\n\n", w.Header().Values("content-type"))
 	//fmt.Println("\n\n", w.Header().Values("content-length"))
 
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		return fmt.Errorf("error exec transportError. err: %s", err)
+	}
+
 	return err
 }
 
@@ -77,7 +87,12 @@ func (h *handlers) transportResponseHTTP(w http.ResponseWriter, response string)
 	if err != nil {
 		w.WriteHeader(403)
 	}
-	w.Write([]byte(response))
+
+	_, err = w.Write([]byte(response))
+	if err != nil {
+		return fmt.Errorf("error exec transportError. err: %s", err)
+	}
+
 	return err
 }
 

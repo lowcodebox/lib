@@ -18,24 +18,34 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/ping [get]
 func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
-	_, err := pingDecodeRequest(r.Context(), r)
-	if err != nil {
-		logger.Error(r.Context(), "[Ping] Error function execution (PLoginDecodeRequest).", zap.Error(err))
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+		}
+	}()
+
+	_, er := pingDecodeRequest(r.Context(), r)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingDecodeRequest")
 		return
 	}
-	serviceResult, err := h.service.Ping(r.Context())
-	if err != nil {
-		logger.Error(r.Context(), "[Ping] Error function execution (service.Ping).", zap.Error(err))
+
+	serviceResult, er := h.service.Ping(r.Context())
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec service.Ping")
 		return
 	}
-	response, _ := pingEncodeResponse(r.Context(), serviceResult)
-	if err != nil {
-		logger.Error(r.Context(), "[Ping] Error function execution (PLoginEncodeResponse).", zap.Error(err))
+
+	response, er := pingEncodeResponse(r.Context(), serviceResult)
+	if er != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingEncodeResponse")
 		return
 	}
-	err = pingTransportResponse(w, response)
+
+	err = pingTransportResponse(r.Context(), w, response)
 	if err != nil {
-		logger.Error(r.Context(), "[Ping] Error function execution (PLoginTransportResponse).", zap.Error(err))
+		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingTransportResponse")
 		return
 	}
 
@@ -50,9 +60,16 @@ func pingEncodeResponse(ctx context.Context, serviceResult []models.Pong) (respo
 	return serviceResult, err
 }
 
-func pingTransportResponse(w http.ResponseWriter, response interface{}) (err error) {
+func pingTransportResponse(ctx context.Context, w http.ResponseWriter, response interface{}) (err error) {
 	d, err := json.Marshal(response)
+	if err != nil {
+		logger.Error(ctx, "[Ping] (pingTransportResponse) error ParseForm", zap.Error(err))
+	}
 
-	w.Write(d)
+	_, err = w.Write(d)
+	if err != nil {
+		logger.Error(ctx, "[Ping] (pingTransportResponse) error Write", zap.Error(err))
+	}
+
 	return err
 }
