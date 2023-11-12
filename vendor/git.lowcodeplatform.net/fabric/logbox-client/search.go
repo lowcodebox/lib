@@ -8,7 +8,7 @@ import (
 	pb "git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk"
 )
 
-func (c *client) Search(ctx context.Context, in searchRes) (out searchReq, err error) {
+func (c *client) search(ctx context.Context, in searchRes) (out searchReq, err error) {
 	conn, err := c.client.Conn(ctx)
 	if err != nil || conn == nil {
 		err = fmt.Errorf("[client] [logbox] cannot get grpc connection")

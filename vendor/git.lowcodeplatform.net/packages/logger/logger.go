@@ -2,11 +2,9 @@ package logger
 
 import (
 	"context"
-	"os"
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -17,94 +15,8 @@ var (
 	onceLevelObserver sync.Once
 )
 
-const sep = string(os.PathSeparator)
-
-// LogLine структура строк лог-файла. нужна для анмаршалинга
-type LogLine struct {
-	Uid       string      `json:"uid"`
-	Level     string      `json:"level"`
-	Name      string      `json:"logger"`
-	Type      string      `json:"service-type"`
-	Time      string      `json:"ts"`
-	Timing    string      `json:"timing"`
-	ConfigID  string      `json:"config-id"`
-	RequestID string      `json:"request-id"`
-	ServiceID string      `json:"service-id"`
-	Msg       interface{} `json:"msg"`
-}
-
 type Engine struct {
 	*zap.Logger
-}
-
-//goland:noinspection GoUnusedExportedFunction
-func SetupDefaultLogger(namespace string, options ...ConfigOption) {
-	logger := initLogger(options...)
-	defaultLogger = New(logger.Named(namespace))
-}
-
-func SetupDefaultKafkaLogger(namespace string, cfg KafkaConfig) error {
-	if len(cfg.Addr) == 0 {
-		return errors.New("kafka address must be specified")
-	}
-
-	if err := cfg.createTopic(); err != nil {
-		return errors.Wrapf(err, "cannot create topic: %s", cfg.Topic)
-	}
-
-	errorLogger := initLogger(WithStringCasting())
-
-	ws := &writerSyncer{
-		kwr:         cfg.writer(errorLogger),
-		topic:       cfg.Topic,
-		errorLogger: errorLogger,
-	}
-
-	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())
-	core := zapcore.NewCore(enc, ws, zap.NewAtomicLevelAt(zap.InfoLevel))
-
-	errOut, _, err := zap.Open("stderr")
-	if err != nil {
-		return err
-	}
-
-	opts := []zap.Option{zap.ErrorOutput(errOut), zap.AddCaller()}
-
-	logger := zap.New(core, opts...)
-	defaultLogger = New(logger.Named(namespace))
-
-	return nil
-}
-
-// SetupDefaultLogboxLogger инициируем логирование в сервис Logbox
-func SetupDefaultLogboxLogger(namespace string, cfg LogboxConfig, options map[string]string) error {
-	if len(cfg.Endpoint) == 0 {
-		return errors.New("logbox address must be specified")
-	}
-
-	// инициализировать лог и его ротацию
-	ws := &logboxSender{
-		requestTimeout: cfg.RequestTimeout,
-		logboxClient:   cfg.client(context.Background()),
-	}
-
-	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())
-	core := zapcore.NewCore(enc, ws, zap.NewAtomicLevelAt(zap.InfoLevel))
-
-	errOut, _, err := zap.Open("stderr")
-	if err != nil {
-		return err
-	}
-
-	opts := []zap.Option{zap.ErrorOutput(errOut), zap.AddCaller()}
-	for k, v := range options {
-		opts = append(opts, zap.Fields(zap.String(k, v)))
-	}
-
-	logger := zap.New(core, opts...)
-	defaultLogger = New(logger.Named(namespace))
-
-	return nil
 }
 
 func Logger(ctx context.Context) *Engine {

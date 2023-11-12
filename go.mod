@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.1.15
-	git.lowcodeplatform.net/fabric/iam-client v0.1.1
+	git.lowcodeplatform.net/fabric/iam-client v0.1.3
 	git.lowcodeplatform.net/fabric/lib v0.1.60
 	git.lowcodeplatform.net/fabric/models v0.1.16
 	github.com/Masterminds/sprig v2.22.0+incompatible
@@ -29,11 +29,11 @@ require (
 	cloud.google.com/go/storage v1.28.1 // indirect
 	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
 	git.lowcodeplatform.net/fabric/logbox v0.1.3 // indirect
-	git.lowcodeplatform.net/fabric/logbox-client v0.1.9 // indirect
+	git.lowcodeplatform.net/fabric/logbox-client v0.1.12 // indirect
 	git.lowcodeplatform.net/packages/cache v0.0.0-20230603080834-b3c659c259f1 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect
 	git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 // indirect
-	git.lowcodeplatform.net/packages/logger v0.1.9 // indirect
+	git.lowcodeplatform.net/packages/logger v0.1.16 // indirect
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.28 // indirect

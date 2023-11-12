@@ -111,6 +111,9 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 		AccessKeyID:    cfg.LogboxAccessKeyId,
 		SecretKey:      cfg.LogboxSecretKey,
 		RequestTimeout: cfg.LogboxRequestTimeout.Value,
+		CbMaxRequests:  cfg.CbMaxRequestsLogbox,
+		CbTimeout:      cfg.CbTimeoutLogbox.Duration,
+		CbInterval:     cfg.CbIntervalLogbox.Duration,
 	}, map[string]string{
 		logger.ServiceIDKey:   cfg.HashRun,
 		logger.ConfigIDKey:    cfg.UidService,
@@ -191,8 +194,6 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	iam := iam.New(
 		ClearSlash(cfg.UrlIam),
 		cfg.ProjectKey,
-		nil,
-		nil,
 	)
 
 	ses := session.New(

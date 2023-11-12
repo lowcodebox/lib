@@ -66,6 +66,11 @@ type Config struct {
 	LogboxSecretKey      string   `envconfig:"LOGBOX_SECRET_KEY" default:""`
 	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
 
+	// LOGBOX-client CircuitBreaker
+	CbMaxRequestsLogbox uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	CbTimeoutLogbox     Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	CbIntervalLogbox    Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
+
 	// Метрики + реплики
 	LogsLevelPointsrc   string `envconfig:"LOGS_LEVEL_POINTSRC" default:""`
 	LogsLevelPointvalue string `envconfig:"LOGS_LEVEL_POINTVALUE" default:""`

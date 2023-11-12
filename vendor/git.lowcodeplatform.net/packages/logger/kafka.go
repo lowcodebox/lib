@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type KafkaConfig struct {
@@ -110,4 +111,37 @@ type errorLogger struct {
 
 func (l *errorLogger) Printf(msg string, args ...interface{}) {
 	l.Error(fmt.Sprintf(msg, args...))
+}
+
+func SetupDefaultKafkaLogger(namespace string, cfg KafkaConfig) error {
+	if len(cfg.Addr) == 0 {
+		return errors.New("kafka address must be specified")
+	}
+
+	if err := cfg.createTopic(); err != nil {
+		return errors.Wrapf(err, "cannot create topic: %s", cfg.Topic)
+	}
+
+	errorLogger := initLogger(WithStringCasting())
+
+	ws := &writerSyncer{
+		kwr:         cfg.writer(errorLogger),
+		topic:       cfg.Topic,
+		errorLogger: errorLogger,
+	}
+
+	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())
+	core := zapcore.NewCore(enc, ws, zap.NewAtomicLevelAt(zap.InfoLevel))
+
+	errOut, _, err := zap.Open("stderr")
+	if err != nil {
+		return err
+	}
+
+	opts := []zap.Option{zap.ErrorOutput(errOut), zap.AddCaller()}
+
+	logger := zap.New(core, opts...)
+	defaultLogger = New(logger.Named(namespace))
+
+	return nil
 }

@@ -7,8 +7,11 @@ import (
 
 	"git.lowcodeplatform.net/packages/grpcbalancer"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/sony/gobreaker"
 )
 
 const (
@@ -19,6 +22,7 @@ var timeoutDefault = 1 * time.Second
 
 type client struct {
 	client *grpcbalancer.Client
+	cb     *gobreaker.CircuitBreaker
 }
 
 type Client interface {
@@ -39,7 +43,7 @@ func (c *client) Close() error {
 	return c.client.Close()
 }
 
-func New(ctx context.Context, url string, reqTimeout time.Duration) (Client, error) {
+func New(ctx context.Context, url string, reqTimeout time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) (Client, error) {
 	if reqTimeout == 0 {
 		reqTimeout = timeoutDefault
 	}
@@ -62,8 +66,35 @@ func New(ctx context.Context, url string, reqTimeout time.Duration) (Client, err
 		return nil, fmt.Errorf("error init connect (grpcbalancer) client")
 	}
 
+	if cbMaxRequests == 0 {
+		cbMaxRequests = 3
+	}
+	if cbTimeout == 0 {
+		cbTimeout = 5 * time.Second
+	}
+	if cbInterval == 0 {
+		cbInterval = 5 * time.Second
+	}
+
+	cb := gobreaker.NewCircuitBreaker(
+		gobreaker.Settings{
+			Name:        "apiCircuitBreaker",
+			MaxRequests: cbMaxRequests, // максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии
+			Timeout:     cbTimeout,     // период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние
+			Interval:    cbInterval,    // циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				fmt.Errorf("apiCircuitBreaker is ReadyToTrip. counts.ConsecutiveFailures: %+v, err: %+v", zap.Any("counts.ConsecutiveFailures", counts.ConsecutiveFailures), zap.Error(err))
+				return counts.ConsecutiveFailures > 2
+			},
+			OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+				fmt.Errorf("apiCircuitBreaker changed position: name: %+v, from: %+v, to: %+v, err: %+v", zap.Any("name", name), zap.Any("from", from), zap.Any("to", to), zap.Error(err))
+			},
+		},
+	)
+
 	return &client{
 		client: b,
+		cb:     cb,
 	}, err
 }
 

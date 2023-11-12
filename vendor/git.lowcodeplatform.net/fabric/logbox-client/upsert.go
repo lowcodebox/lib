@@ -8,7 +8,7 @@ import (
 	pb "git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk"
 )
 
-func (c *client) Upsert(ctx context.Context, in upsertReq) (out upsertRes, err error) {
+func (c *client) upsert(ctx context.Context, in upsertReq) (out upsertRes, err error) {
 	conn, err := c.client.Conn(ctx)
 	if err != nil {
 		err = fmt.Errorf("cannot get grpc connection. err: %s, client: %+v", err, c.client)

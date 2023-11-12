@@ -2,16 +2,12 @@ package client
 
 import (
 	"git.lowcodeplatform.net/fabric/iam/pkg/i18n"
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
 )
 
 type iam struct {
 	url        string
 	projectKey string
-	logger     logger.Log
-	metric     lib.ServiceMetric
 	msg        i18n.I18n
 }
 
@@ -22,7 +18,7 @@ type IAM interface {
 	ProfileList() (result string, err error)
 }
 
-func New(url, projectKey string, logger logger.Log, metric lib.ServiceMetric) IAM {
+func New(url, projectKey string) IAM {
 	if url[len(url)-1:] == "/" {
 		url = url[:len(url)-1]
 	}
@@ -30,8 +26,6 @@ func New(url, projectKey string, logger logger.Log, metric lib.ServiceMetric) IA
 	return &iam{
 		url,
 		projectKey,
-		logger,
-		metric,
 		msg,
 	}
 }

@@ -7,17 +7,38 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	logboxclient "git.lowcodeplatform.net/fabric/logbox-client"
 )
+
+// LogLine структура строк лог-файла. нужна для анмаршалинга
+type LogLine struct {
+	Uid       string      `json:"uid"`
+	Level     string      `json:"level"`
+	Name      string      `json:"logger"`
+	Type      string      `json:"service-type"`
+	Time      string      `json:"ts"`
+	Timing    string      `json:"timing"`
+	ConfigID  string      `json:"config-id"`
+	RequestID string      `json:"request-id"`
+	ServiceID string      `json:"service-id"`
+	Msg       interface{} `json:"msg"`
+}
 
 type LogboxConfig struct {
 	Endpoint, AccessKeyID, SecretKey string
 	RequestTimeout                   time.Duration
+	CbMaxRequests                    uint32
+	CbTimeout, CbInterval            time.Duration
 }
 
 func (l *LogboxConfig) client(ctx context.Context) (client logboxclient.Client) {
 	var err error
-	client, err = logboxclient.New(ctx, l.Endpoint, l.RequestTimeout)
+	client, err = logboxclient.New(ctx, l.Endpoint, l.RequestTimeout, l.CbMaxRequests, l.CbTimeout, l.CbInterval)
 	if err != nil {
 		return nil
 	}
@@ -67,4 +88,35 @@ func (v *logboxSender) Write(p []byte) (n int, err error) {
 
 func (v *logboxSender) Sync() error {
 	return v.logboxClient.Close()
+}
+
+// SetupDefaultLogboxLogger инициируем логирование в сервис Logbox
+func SetupDefaultLogboxLogger(namespace string, cfg LogboxConfig, options map[string]string) error {
+	if len(cfg.Endpoint) == 0 {
+		return errors.New("logbox address must be specified")
+	}
+
+	// инициализировать лог и его ротацию
+	ws := &logboxSender{
+		requestTimeout: cfg.RequestTimeout,
+		logboxClient:   cfg.client(context.Background()),
+	}
+
+	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())
+	core := zapcore.NewCore(enc, ws, zap.NewAtomicLevelAt(zap.InfoLevel))
+
+	errOut, _, err := zap.Open("stderr")
+	if err != nil {
+		return err
+	}
+
+	opts := []zap.Option{zap.ErrorOutput(errOut), zap.AddCaller()}
+	for k, v := range options {
+		opts = append(opts, zap.Fields(zap.String(k, v)))
+	}
+
+	logger := zap.New(core, opts...)
+	defaultLogger = New(logger.Named(namespace))
+
+	return nil
 }
