@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/fabric/app
 go 1.18
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.1.14
+	git.lowcodeplatform.net/fabric/api-client v0.1.15
 	git.lowcodeplatform.net/fabric/iam-client v0.1.1
 	git.lowcodeplatform.net/fabric/lib v0.1.60
 	git.lowcodeplatform.net/fabric/models v0.1.16
@@ -91,6 +91,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.40 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	github.com/urfave/cli v1.22.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

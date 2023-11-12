@@ -50,6 +50,8 @@ git.lowcodeplatform.net/fabric/api-client v0.1.13 h1:NgMKSxwyyGHhkNXlHUHV1cIymXU
 git.lowcodeplatform.net/fabric/api-client v0.1.13/go.mod h1:RxuI8FFvCH/wEk5L5tEsB2N88/+W+W+TAdxfDTtIMhg=
 git.lowcodeplatform.net/fabric/api-client v0.1.14 h1:r2a8jOekc63LPPb3ME7ssxxBsCxFCVo+Yn07Qjf7aWk=
 git.lowcodeplatform.net/fabric/api-client v0.1.14/go.mod h1:RxuI8FFvCH/wEk5L5tEsB2N88/+W+W+TAdxfDTtIMhg=
+git.lowcodeplatform.net/fabric/api-client v0.1.15 h1:XfjT+ZwEfI8soofnbbnJ/glfpAFEBuIiV3tiNraq5mI=
+git.lowcodeplatform.net/fabric/api-client v0.1.15/go.mod h1:6OPETp+X832t0hsTxdrzmvmdFtvN0qsbtaa29MDej2w=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221023080507-84fb9ed9a65d h1:a0XndOdemHQsqrcVuBAriUbSJ2xp1xie3snpQQ5JLnY=
@@ -422,6 +424,8 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
+github.com/sony/gobreaker v0.5.0 h1:dRCvqm0P490vZPmy7ppEk2qCnCieBooFJ+YoXGYB+yg=
+github.com/sony/gobreaker v0.5.0/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=

@@ -20,7 +20,7 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/api-client v0.1.14
+# git.lowcodeplatform.net/fabric/api-client v0.1.15
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/api-client
 # git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe
@@ -407,6 +407,9 @@ github.com/shirou/gopsutil/mem
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
+# github.com/sony/gobreaker v0.5.0
+## explicit; go 1.12
+github.com/sony/gobreaker
 # github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe
 ## explicit; go 1.15
 github.com/swaggo/files

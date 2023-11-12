@@ -267,23 +267,28 @@ func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incooki
 
 // ObjGet операции с объектами через клиента API
 func ObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
-	return api.New(apiURL, true).ObjGet(context.Background(), uids)
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
 }
 
 func ObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
-	return api.New(apiURL, true).ObjCreate(context.Background(), bodymap)
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
 }
 
 func ObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
-	return api.New(apiURL, true).ObjAttrUpdate(context.Background(), uid, name, value, src, editor)
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
 }
 
 func LinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
-	return api.New(apiURL, true).LinkGet(context.Background(), tpl, obj, mode, short)
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
 }
 
 func Query(apiURL string, query, method, bodyJSON string) (result string, err error) {
-	return api.New(apiURL, true).Query(context.Background(), query, method, bodyJSON)
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
 }
 
 // формируем сепаратор для текущей ОС

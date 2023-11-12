@@ -1,17 +1,19 @@
+// api клиент к сервису
+// поддерживает CircuitBreaker
+// (при срабатывании отдает ошибку и блокирует дальнейшие попытки запросов на заданный интервал)
+
 package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/curl"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
+
+	"github.com/sony/gobreaker"
 )
 
 const headerRequestId = "X-Request-Id"
@@ -19,6 +21,7 @@ const headerRequestId = "X-Request-Id"
 type api struct {
 	url        string
 	observeLog bool
+	cb         *gobreaker.CircuitBreaker
 }
 
 type Api interface {
@@ -35,61 +38,40 @@ type Obj interface {
 }
 
 // Query результат выводим в объект как при вызове Curl
-func (o *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
-	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if o.observeLog {
-		defer o.observeLogger(ctx, time.Now(), "Query", err, query, method, bodyJSON)
-	}
-
-	urlc := o.url + "/query/" + query
-	urlc = strings.Replace(urlc, "//query", "/query", 1)
-
-	// если в запросе / - значит пробрасываем запрос сразу на апи
-	if strings.Contains(query, "/") {
-		urlc = o.url + "/" + query
-		urlc = strings.Replace(urlc, o.url+"//", o.url+"/", 1)
-	}
-
-	res, err := lib.Curl(method, urlc, bodyJSON, nil, handlers, nil)
+func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.query(ctx, query, method, bodyJSON)
+		return result, err
+	})
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, urlc)
-	}
-
-	return fmt.Sprint(res), err
-}
-
-func (o *api) ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
-	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if o.observeLog {
-		defer o.observeLogger(ctx, time.Now(), "ObjGet", err, uids)
-	}
-
-	urlc := o.url + "/objs/" + uids
-	urlc = strings.Replace(urlc, o.url+"//objs/", o.url+"/objs/", 1)
-
-	_, err = lib.Curl("GET", urlc, "", &result, handlers, nil)
-	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, urlc)
+		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return "", fmt.Errorf("error request Query (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
 }
 
-func (o *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
-	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if o.observeLog {
-		defer o.observeLogger(ctx, time.Now(), "LinkGet", err, tpl, obj, mode, short)
+func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.objGet(ctx, uids)
+		return result, err
+	})
+	if err != nil {
+		logger.Error(ctx, "error ObjGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request ObjGet (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
-	urlc := o.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short
-	urlc = strings.Replace(urlc, "//link", "/link", 1)
+	return result, err
+}
 
-	_, err = lib.Curl("GET", urlc, "", &result, handlers, nil)
+func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.linkGet(ctx, tpl, obj, mode, short)
+		return result, err
+	})
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, urlc)
+		logger.Error(ctx, "error LinkGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request LinkGet (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
@@ -97,26 +79,14 @@ func (o *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 
 // ObjAttrUpdate изменение значения аттрибута объекта
 func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
-	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if a.observeLog {
-		defer a.observeLogger(ctx, time.Now(), "ObjAttrUpdate", err, uid, name, value, src, editor)
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.objAttrUpdate(ctx, uid, name, value, src, editor)
+		return result, err
+	})
+	if err != nil {
+		logger.Error(ctx, "error ObjAttrUpdate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request ObjAttrUpdate (primary route). check apiCircuitBreaker. err: %s", err)
 	}
-
-	post := map[string]string{}
-	thisTime := fmt.Sprintf("%v", time.Now().UTC())
-
-	post["uid"] = uid
-	post["element"] = name
-	post["value"] = value
-	post["src"] = src
-	post["rev"] = thisTime
-	post["path"] = ""
-	post["token"] = ""
-	post["editor"] = editor
-
-	dataJ, _ := json.Marshal(post)
-	result, err = a.Element(ctx, "update", string(dataJ))
 
 	return result, err
 }
@@ -132,61 +102,62 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 // all (elements) - Получаем поля, по заданному в параметрах типу
 // "" - без действия - получаем все поля для объекта
 func (a *api) Element(ctx context.Context, action, body string) (result models.ResponseData, err error) {
-	var handlers = map[string]string{}
-	var urlc string
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if a.observeLog {
-		defer a.observeLogger(ctx, time.Now(), "Element", err, urlc, action, body)
-	}
-
-	// получаем поля шаблона
-	if action == "elements" || action == "all" {
-		_, err = lib.Curl("GET", a.url+"/element/"+body, "", &result, handlers, nil)
-		if err != nil {
-			err = fmt.Errorf("%s (url: %s)", err, a.url+"/element/"+body)
-		}
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.element(ctx, action, body)
 		return result, err
-	}
-
-	urlc = a.url + "/element/" + action + "?format=json"
-	_, err = curl.NewRequestDefault().Method("POST").Payload(body).MapToObj(&result).Headers(handlers).Url(urlc).Do(nil)
+	})
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, urlc)
+		logger.Error(ctx, "error Element primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request Element (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
 }
 
 func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
-	var handlers = map[string]string{}
-	var urlc string
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
-	if a.observeLog {
-		defer a.observeLogger(ctx, time.Now(), "ObjCreate", err, urlc, bodymap)
-	}
-
-	body, _ := json.Marshal(bodymap)
-	urlc = a.url + "/objs?format=json"
-	_, err = lib.Curl("POST", urlc, string(body), &result, map[string]string{}, nil)
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.objCreate(ctx, bodymap)
+		return result, err
+	})
 	if err != nil {
-		err = fmt.Errorf("%s (url: %s)", err, urlc)
+		logger.Error(ctx, "error ObjCreate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request ObjCreate (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
 }
 
-func (a *api) observeLogger(ctx context.Context, start time.Time, method string, err error, arguments ...interface{}) {
-	logger.Info(ctx, "timing api query",
-		zap.String("method", method),
-		zap.Float64("timing", time.Since(start).Seconds()),
-		zap.String("arguments", fmt.Sprint(arguments)),
-		zap.Error(err),
-	)
-}
+func New(ctx context.Context, url string, observeLog bool, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) Api {
+	var err error
+	if cbMaxRequests == 0 {
+		cbMaxRequests = 3
+	}
+	if cbTimeout == 0 {
+		cbTimeout = 5 * time.Second
+	}
+	if cbInterval == 0 {
+		cbInterval = 5 * time.Second
+	}
 
-func New(url string, observeLog bool) Api {
+	cb := gobreaker.NewCircuitBreaker(
+		gobreaker.Settings{
+			Name:        "apiCircuitBreaker",
+			MaxRequests: cbMaxRequests, // максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии
+			Timeout:     cbTimeout,     // период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние
+			Interval:    cbInterval,    // циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				logger.Error(ctx, "apiCircuitBreaker is ReadyToTrip", zap.Any("counts.ConsecutiveFailures", counts.ConsecutiveFailures), zap.Error(err))
+				return counts.ConsecutiveFailures > 2
+			},
+			OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+				logger.Error(ctx, "apiCircuitBreaker changed position", zap.Any("name", name), zap.Any("from", from), zap.Any("to", to), zap.Error(err))
+			},
+		},
+	)
+
 	return &api{
 		url,
 		observeLog,
+		cb,
 	}
 }

@@ -169,8 +169,12 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	msg := i18n.New()
 
 	api := api.New(
+		ctx,
 		cfg.UrlApi,
 		cfg.EnableObserverLogApi,
+		cfg.CbMaxRequests,
+		cfg.CbTimeout.Duration,
+		cfg.CbInterval.Duration,
 	)
 
 	fnc := function.New(

@@ -51,6 +51,11 @@ type Config struct {
 	UrlIam               string `envconfig:"URL_IAM" default:""`
 	UidService           string `envconfig:"UID_SERVICE" default:""`
 
+	// API-client CircuitBreaker
+	CbMaxRequests uint32   `envconfig:"CB_MAX_REQUESTS" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	CbTimeout     Duration `envconfig:"CB_TIMEOUT" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	CbInterval    Duration `envconfig:"CB_INTERVAL" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
+
 	PortInterval    string `envconfig:"PORT_INTERVAL" default:""`
 	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`
 	ProxyPointvalue string `envconfig:"PROXY_POINTVALUE" default:""`
