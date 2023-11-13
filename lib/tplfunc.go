@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/smtp"
 	"path/filepath"
@@ -38,7 +39,7 @@ var FuncMap = template.FuncMap{
 	"cut":                 cut,
 	"concatination":       concatination,
 	"join":                join,
-	"rand":                rand,
+	"rand":                randT,
 	"uuid":                UUID,
 	"refind":              refind,
 	"rereplace":           rereplace,
@@ -96,15 +97,16 @@ var FuncMap = template.FuncMap{
 	"parsebody":           parsebody,
 	"redirect":            redirect,
 	"groupbyfield":        groupbyfield,
+	"randstringslice":     randstringslice,
 
 	"objFromID": objFromID,
 }
 
-// mulfloat умножение с запятой
-func mulfloat(a float64, v ...float64) float64 {
-	for _, b := range v {
-		a = a * b
-	}
+// randomizer перемешивает полученный слайс
+func randstringslice(a []string) (res []string) {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(a),
+		func(i, j int) { a[i], a[j] = a[j], a[i] })
 
 	return a
 }
@@ -490,7 +492,7 @@ func UUID() string {
 	return stUUID.String()
 }
 
-func rand() string {
+func randT() string {
 	uuid := UUID()
 	return uuid[1:6]
 }
@@ -907,6 +909,15 @@ func toint(i interface{}) (res int) {
 	}
 
 	return res
+}
+
+// mulfloat умножение с запятой
+func mulfloat(a float64, v ...float64) float64 {
+	for _, b := range v {
+		a = a * b
+	}
+
+	return a
 }
 
 func tofloat(i interface{}) (res float64) {
