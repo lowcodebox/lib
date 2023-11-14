@@ -31,25 +31,25 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 
 	in, er := pageDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageDecodeRequest")
 		return
 	}
 
 	serviceResult, err := h.service.Page(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec service.Page")
+		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
 		return
 	}
 
 	response, er := pageEncodeResponse(r.Context(), &serviceResult)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, response)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec transportResponseHTTP")
+		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec transportResponseHTTP")
 		return
 	}
 

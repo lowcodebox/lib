@@ -27,25 +27,25 @@ func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
 
 	_, er := pingDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[Ping] error exec pingDecodeRequest")
 		return
 	}
 
 	serviceResult, er := h.service.Ping(r.Context())
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec service.Ping")
+		err = h.transportError(r.Context(), w, 500, er, "[Ping] error exec service.Ping")
 		return
 	}
 
 	response, er := pingEncodeResponse(r.Context(), serviceResult)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Ping] error exec pingEncodeResponse")
 		return
 	}
 
 	err = pingTransportResponse(r.Context(), w, response)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Ping] error exec pingTransportResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Ping] error exec pingTransportResponse")
 		return
 	}
 

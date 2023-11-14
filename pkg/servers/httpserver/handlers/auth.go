@@ -19,25 +19,25 @@ func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
 
 	in, er := h.changeroleDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[AuthChangeRole] error exec changeroleDecodeRequest")
 		return
 	}
 
 	serviceResult, er := h.service.AuthChangeRole(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec AuthChangeRole")
+		err = h.transportError(r.Context(), w, 500, er, "[AuthChangeRole] error exec AuthChangeRole")
 		return
 	}
 
 	out, er := h.changeroleEncodeResponse(r.Context(), serviceResult, in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[AuthChangeRole] error exec changeroleEncodeResponse")
 		return
 	}
 
 	err = h.changeroleTransportResponse(w, r, out)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[AuthChangeRole] error exec changeroleTransportResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[AuthChangeRole] error exec changeroleTransportResponse")
 		return
 	}
 

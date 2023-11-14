@@ -23,25 +23,25 @@ func (h *handlers) Cache(w http.ResponseWriter, r *http.Request) {
 
 	in, er := cacheDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec cacheDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[Cache] error exec cacheDecodeRequest")
 		return
 	}
 
 	serviceResult, err := h.service.Cache(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec service.Cache")
+		err = h.transportError(r.Context(), w, 500, er, "[Cache] error exec service.Cache")
 		return
 	}
 
 	response, _ := cacheEncodeResponse(r.Context(), serviceResult)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec cacheEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Cache] error exec cacheEncodeResponse")
 		return
 	}
 
 	err = h.transportResponse(w, response)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Cache] error exec transportResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Cache] error exec transportResponse")
 		return
 	}
 

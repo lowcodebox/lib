@@ -20,25 +20,25 @@ func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 
 	in, er := storageDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec storageDecodeRequest")
 		return
 	}
 
 	serviceResult, err := h.service.Storage(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec service.Storage")
+		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec service.Storage")
 		return
 	}
 
 	response, _ := storageEncodeResponse(r.Context(), serviceResult)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec storageEncodeResponse")
 		return
 	}
 
 	err = h.transportByte(w, response.MimeType, response.Body)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec transportByte")
+		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec transportByte")
 		return
 	}
 

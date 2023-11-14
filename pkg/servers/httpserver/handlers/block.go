@@ -29,25 +29,25 @@ func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 
 	in, er := blockDecodeRequest(r.Context(), r)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockDecodeRequest")
+		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockDecodeRequest")
 		return
 	}
 
 	serviceResult, er := h.service.Block(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec service.Block")
+		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec service.Block")
 		return
 	}
 
 	response, _ := blockEncodeResponse(r.Context(), &serviceResult)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockEncodeResponse")
+		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, string(response))
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec transportResponseHTTP")
+		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec transportResponseHTTP")
 		return
 	}
 
