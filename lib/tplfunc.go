@@ -56,6 +56,9 @@ var FuncMap = template.FuncMap{
 	"sliceset":            sliceset,
 	"sliceappend":         sliceappend,
 	"slicedelete":         slicedelete,
+	"slicestringset":      slicestringset,
+	"slicestringappend":   slicestringappend,
+	"slicestringdelete":   slicestringdelete,
 	"marshal":             marshal,
 	"value":               value,
 	"hash":                hash,
@@ -769,6 +772,12 @@ func dictstring(values ...string) (map[string]string, error) {
 	return dict, nil
 }
 
+// slicestringset - заменяем значение в переданном слайсе
+func slicestringset(d []string, index int, value string) []string {
+	d[index] = value
+	return d
+}
+
 // sliceset - заменяем значение в переданном слайсе
 func sliceset(d []interface{}, index int, value interface{}) []interface{} {
 	d[index] = value
@@ -780,8 +789,22 @@ func sliceappend(d []interface{}, value interface{}) []interface{} {
 	return append(d, value)
 }
 
+// sliceappend - добавляет значение в переданный слайс
+func slicestringappend(d []string, value string) []string {
+	return append(d, value)
+}
+
 // slicedelete - удаляет из слайса
 func slicedelete(d []interface{}, index int) []interface{} {
+	copy(d[index:], d[index+1:])
+	d[len(d)-1] = ""
+	d = d[:len(d)-1]
+
+	return d
+}
+
+// slicestringdelete - удаляет из слайса
+func slicestringdelete(d []string, index int) []string {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
 	d = d[:len(d)-1]
