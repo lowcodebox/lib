@@ -559,7 +559,7 @@ func (c *app) UserRole(r *http.Request, arg []string) (result string) {
 	return result
 }
 
-// Получение cookie
+// Cookie Получение cookie
 // параметры: 	1-й параметр - name (имя куки)
 //				2-й параметр - field (поле куки: VALUE, EXPIRES, MAXAGE, PATH, SECURE)
 func (c *app) Cookie(r *http.Request, arg []string) (result string) {

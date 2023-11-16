@@ -30,7 +30,9 @@ var FuncMapS = sprig.FuncMap()
 
 var FuncMap = template.FuncMap{
 	"separator":           separator,
-	"cookie":              cookie,
+	"cookie":              cookieGet,
+	"cookieget":           cookieGet,
+	"cookieset":           cookieSet,
 	"attr":                attr,
 	"addfloat":            addfloat,
 	"mulfloat":            mulfloat,
@@ -53,9 +55,11 @@ var FuncMap = template.FuncMap{
 	"set":                 set,
 	"get":                 get,
 	"delete":              deletekey,
+	"slicenew":            slicenew,
 	"sliceset":            sliceset,
 	"sliceappend":         sliceappend,
 	"slicedelete":         slicedelete,
+	"slicestringnew":      slicestringnew,
 	"slicestringset":      slicestringset,
 	"slicestringappend":   slicestringappend,
 	"slicestringdelete":   slicestringdelete,
@@ -447,7 +451,7 @@ func dogparse(p string, r *http.Request, queryData interface{}, values map[strin
 }
 
 // отдаем значение куки
-func cookie(name string, field string, r *http.Request) (result string) {
+func cookieGet(name string, field string, r *http.Request) (result string) {
 	c, err := r.Cookie(name)
 	if err != nil {
 		return fmt.Sprint(err)
@@ -470,10 +474,18 @@ func cookie(name string, field string, r *http.Request) (result string) {
 	return result
 }
 
+func cookieSet(name string, field string, r *http.Request) (err error) {
+	return nil
+}
+
 // получаем значение из переданного объекта
 func attr(name, element string, data interface{}) (result interface{}) {
 	var dt Data
-	json.Unmarshal([]byte(marshal(data)), &dt)
+	var err error
+	err = json.Unmarshal([]byte(marshal(data)), &dt)
+	if err != nil {
+		return fmt.Sprintf("error Unmarshal (func attr). err: %s", err)
+	}
 
 	dtl := &dt
 	result, _ = dtl.Attr(name, element)
@@ -657,8 +669,8 @@ func join(slice []string, sep string) (result string) {
 	return result
 }
 
-// разбиваем строку на массив
-func split(str, sep string) (result interface{}) {
+// split разбиваем строку на строковый слайс
+func split(str, sep string) (result []string) {
 	result = strings.Split(str, sep)
 
 	return result
@@ -776,6 +788,16 @@ func dictstring(values ...string) (map[string]string, error) {
 func slicestringset(d []string, index int, value string) []string {
 	d[index] = value
 	return d
+}
+
+// slicenew - создаем строковый слайс интерфейсов
+func slicenew() []interface{} {
+	return []interface{}{}
+}
+
+// slicestringnew - создаем строковый слайс
+func slicestringnew() []string {
+	return []string{}
 }
 
 // sliceset - заменяем значение в переданном слайсе
