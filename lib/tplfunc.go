@@ -104,7 +104,9 @@ var FuncMap = template.FuncMap{
 	"parsebody":           parsebody,
 	"redirect":            redirect,
 	"groupbyfield":        groupbyfield,
-	"randstringslice":     randstringslice,
+	"sortbyfield":         sortbyfield,
+
+	"randstringslice": randstringslice,
 
 	"objFromID": objFromID,
 }
@@ -136,7 +138,6 @@ func objFromID(dt []models.Data, id string) (result interface{}) {
 }
 
 // groupbyfield группируем полученные данные (объекты) формата models.ResponseData согласно шаблону
-// TODO сделать сортировку по полю
 func groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
 	var d models.ResponseData
 
@@ -173,6 +174,34 @@ func groupbyfield(queryData interface{}, groupField, groupPoint string, sortFiel
 	}
 
 	return resultSortedMap, nil
+}
+
+// sortbyfield сортирует (объекты) формата models.ResponseData согласно шаблону
+func sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+	var d models.ResponseData
+
+	b, _ := json.Marshal(queryData)
+	err = json.Unmarshal(b, &d)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshal queryData. err: %s, payload: %s", err, string(b))
+	}
+
+	// сортируем внутри каждого группы по заданному полю
+	m := d.Data
+	sort.Slice(m, func(i, j int) bool {
+		switch sortPoint {
+		case "src":
+			return m[i].Attributes[sortField].Src < m[j].Attributes[sortField].Src
+		case "rev":
+			return m[i].Attributes[sortField].Rev < m[j].Attributes[sortField].Rev
+		default:
+			return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
+		}
+	})
+
+	d.Data = m
+
+	return d, nil
 }
 
 // redirect

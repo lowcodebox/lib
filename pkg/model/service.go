@@ -1,10 +1,11 @@
 package model
 
 import (
-	"git.lowcodeplatform.net/fabric/models"
 	"html/template"
 	"net/http"
 	"net/url"
+
+	"git.lowcodeplatform.net/fabric/models"
 )
 
 type ServiceCacheIn struct {
@@ -54,6 +55,24 @@ type ServiceAuthOut struct {
 
 type ServiceAuthIn struct {
 	Profile    string `json:"profile"`
+	Expire     bool   `json:"expire"`
+	RequestURI string `json:"request_uri"`
+}
+
+type ServiceFilesOut struct {
+	Status string `json:"status"`
+	Path   string `json:"path"`
+	Error  error  `json:"error"`
+}
+
+type action string
+
+const FilesActionDelete action = "delete"
+const FilesActionLoad action = "load"
+const FilesActionSetDefault action = "set_default"
+
+type ServiceFilesIn struct {
+	Action     action `json:"action"`
 	Expire     bool   `json:"expire"`
 	RequestURI string `json:"request_uri"`
 }
