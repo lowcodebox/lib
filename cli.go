@@ -46,12 +46,18 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					Usage: "Версия, до которой обновляем",
 					Value: "latest",
 				},
+				cli.StringFlag{
+					Name:  "arch, a",
+					Usage: "386/amd64",
+					Value: "",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 				version := c.String("version")
+				arch := c.String("arch")
 
-				err = funcCLI("", "", "", "", service, "", "", "", "", "update", version)
+				err = funcCLI("", "", "", "", service, arch, "", "", "", "update", version)
 				return err
 			},
 		},
