@@ -280,7 +280,7 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 		sliceMake := strings.Split(maketFile, "/")
 		maketFile = strings.Join(sliceMake[3:], "/")
 
-		byteFile, _, err := s.vfs.Read(maketFile)
+		byteFile, _, err := s.vfs.Read(ctx, maketFile)
 		if err != nil {
 			logger.Error(ctx, fmt.Sprintf("error vfs.Read, maketFile: %s", maketFile), zap.Error(err))
 		}
@@ -376,7 +376,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 			if err != nil {
 				//fmt.Println("genr NULL:", time.Since(t1), block.Id, key, err, result)
 
-				result, err = s.updateCache(key, cacheParams, cacheInterval, in, block, page, values)
+				result, err = s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 			} else {
 				// 2 время закончилось (не обращаем внимание на статус "обновляется" потому, что при изменении статуса на "обновляем"
 				// мы увеличиваем время на предельно время проведения обновления
@@ -384,7 +384,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 				if flagExpired {
 					//fmt.Println("genr flagExpired:", time.Since(t1), block.Id, key, flagExpired)
 
-					go s.updateCache(key, cacheParams, cacheInterval, in, block, page, values)
+					go s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 				}
 			}
 
@@ -396,7 +396,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 			}
 
 		} else {
-			mResult, err := s.block.Generate(in, block, page, values)
+			mResult, err := s.block.Generate(ctx, in, block, page, values)
 			if err != nil {
 				moduleResult.Result = ""
 				moduleResult.Err = err
@@ -417,7 +417,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 
 // внутренняя фунция сервиса.
 // не вынесена в пакет Cache потому-что требуется генерировать блок
-func (s *service) updateCache(key, cacheParams string, cacheInterval int, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result string, err error) {
+func (s *service) updateCache(ctx context.Context, key, cacheParams string, cacheInterval int, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result string, err error) {
 	t1 := time.Now()
 
 	err = s.cache.SetStatus(key, "updated")
@@ -426,7 +426,7 @@ func (s *service) updateCache(key, cacheParams string, cacheInterval int, in mod
 		fmt.Println("err ", block.Id, err)
 	}
 
-	moduleResult, err := s.block.Generate(in, block, page, values)
+	moduleResult, err := s.block.Generate(ctx, in, block, page, values)
 	if err != nil {
 		result = fmt.Sprintf("Error [Generate] in updateCache from %s. Cache not saved. Time generate: %s. Error: %s", block.Id, time.Since(t1), err)
 		fmt.Println(result)

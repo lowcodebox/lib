@@ -240,7 +240,7 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 	return result, err
 }
 
-// ДЛЯ ПОСЛЕДОВАТЕЛЬНОЙ сборки блока
+// ModuleBuild ДЛЯ ПОСЛЕДОВАТЕЛЬНОЙ сборки блока
 // получаем объект модуля (отображения)
 // p 	- объект переданных в модуль данных блока (запрос/конфигураци)
 // r 	- значения реквеста
@@ -510,7 +510,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 		result.err = fmt.Errorf("Attribute module not found (value: %s)", uidModule)
 	}
 
-	blockBody, err := l.generateBlock(tplName, b, uidModule)
+	blockBody, err := l.generateBlock(r.Context(), tplName, b, uidModule)
 	if err != nil {
 		result.err = err
 	}
@@ -803,7 +803,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	//}
 
 	uidModule, _ := p.Attr("module", "src")
-	blockBody, err := l.generateBlock(tplName, b, uidModule)
+	blockBody, err := l.generateBlock(r.Context(), tplName, b, uidModule)
 	if err != nil {
 		l.ErrorModuleBuild(stat, buildChan, time.Since(t1), err)
 		// l.Logger.Error(errT, "Error generated module.")
@@ -842,7 +842,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 }
 
 // генерируем блок в зависимости от переданного пути (или из файла или из данных в объекте)
-func (l *app) generateBlock(tplName string, bl Block, uidModule string) (res string, err error) {
+func (l *app) generateBlock(ctx context.Context, tplName string, bl Block, uidModule string) (res string, err error) {
 	var c bytes.Buffer
 
 	// TODO удалить позже
@@ -855,7 +855,7 @@ func (l *app) generateBlock(tplName string, bl Block, uidModule string) (res str
 	// иначе берем значение из поля codetpl (новая версия), если пусто, то из поля _filecontent_url
 	// (для случаем, когда блок выбрали, но содержимое файла не перенесли в новое поле и оно хрантся в поле автосохранения файла)
 	if strings.Contains(tplName, sep) {
-		c, err = l.generateBlockFromFile(tplName, bl)
+		c, err = l.generateBlockFromFile(ctx, tplName, bl)
 		if err != nil {
 			err = fmt.Errorf("%s file:'%s' (%s)", "Error: Generate Module from file is failed!", tplName, err)
 			res = fmt.Sprint(err)
@@ -897,7 +897,7 @@ func (l *app) generateBlock(tplName string, bl Block, uidModule string) (res str
 }
 
 // generateBlockFromFile генерируем блок из файла (для совместимости со старыми модулями)
-func (b *app) generateBlockFromFile(tplName string, bl Block) (c bytes.Buffer, err error) {
+func (b *app) generateBlockFromFile(ctx context.Context, tplName string, bl Block) (c bytes.Buffer, err error) {
 	var tmpl *template.Template
 
 	sliceMake := strings.Split(tplName, "/")
@@ -909,7 +909,7 @@ func (b *app) generateBlockFromFile(tplName string, bl Block) (c bytes.Buffer, e
 	//tplName = strings.Join(sliceMake[3:], "/")
 	//tplName = b.config.payload["Workingdir"] + "/" + tplName
 
-	dataFile, _, err := b.vfs.Read(tplName)
+	dataFile, _, err := b.vfs.Read(ctx, tplName)
 
 	tmpl = template.New(tplName).Funcs(FuncMap)
 	t, err = tmpl.Parse(string(dataFile))

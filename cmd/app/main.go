@@ -64,7 +64,7 @@ func main() {
 
 	var err error
 
-	err = lib.RunServiceFuncCLI(Start)
+	err = lib.RunServiceFuncCLI(context.Background(), Start)
 	if err != nil {
 		fmt.Printf("%s (os.exit 1)", err)
 		os.ErrExist = err
@@ -75,7 +75,7 @@ func main() {
 }
 
 // Start стартуем сервис приложения
-func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourcedb, action, version string) error {
+func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, registry, fabric, sourcedb, action, version string) error {
 	var cfg model.Config
 	var initType string
 	var err error
@@ -83,7 +83,7 @@ func Start(configfile, dir, port, mode, proxy, loader, registry, fabric, sourced
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctxm)
 	defer func() {
 		cancel()
 	}()

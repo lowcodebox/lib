@@ -813,13 +813,13 @@ func (c *app) Sendmail(arg []string) (result string) {
 // path - путь к файлу
 // widht, height - ожидаемые размеры (если 0, то не меняем)
 // arg - задаем форматы обрезки/сжатия и тд
-func (c *app) ImgResize(path string, widht, height int, arg []string) (result string, err error) {
+func (c *app) ImgResize(ctx context.Context, path string, widht, height int, arg []string) (result string, err error) {
 	pathResized := strings.Split(path, ".")[0]
 
 	// сначала проверяем наличие файла нужного размера в хранилище
 	// если нет - ресайзим и сохраняем
 
-	data, _, err := c.vfs.Read(pathResized)
+	data, _, err := c.vfs.Read(ctx, pathResized)
 	if err != nil {
 		return "", fmt.Errorf("error ImgResize, err: %s", err)
 	}
@@ -827,7 +827,7 @@ func (c *app) ImgResize(path string, widht, height int, arg []string) (result st
 		return pathResized, nil
 	}
 
-	data, mime, err := c.vfs.Read(path)
+	data, mime, err := c.vfs.Read(ctx, path)
 	if err != nil {
 		return "", fmt.Errorf("error ImgResize, err: %s", err)
 	}

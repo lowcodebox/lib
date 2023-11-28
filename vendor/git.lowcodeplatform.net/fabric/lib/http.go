@@ -129,13 +129,16 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 
 	// возвращаем объект ответа, если передано - в какой объект класть результат
 	if response != nil {
-		json.Unmarshal([]byte(responseString), &response)
+		err = json.Unmarshal([]byte(responseString), &response)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
 	//json.Unmarshal([]byte(responseString), &result)
 	if resp.StatusCode != 200 {
-		err = fmt.Errorf("request is not success. request:%s, status: %s", urlc, resp.Status)
+		err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.Status, method, req, responseString)
 	}
 
 	return responseString, err

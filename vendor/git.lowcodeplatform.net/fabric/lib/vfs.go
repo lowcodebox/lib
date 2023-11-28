@@ -4,6 +4,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -39,12 +40,13 @@ type vfs struct {
 }
 
 type Vfs interface {
-	List(prefix string, pageSize int) (files []Item, err error)
-	Read(file string) (data []byte, mimeType string, err error)
-	ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error)
-	ReadCloser(file string) (reader io.ReadCloser, err error)
-	ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error)
-	Write(file string, data []byte) (err error)
+	List(ctx context.Context, prefix string, pageSize int) (files []Item, err error)
+	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
+	ReadFromBucket(ctx context.Context, file, bucket string) (data []byte, mimeType string, err error)
+	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
+	ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error)
+	Write(ctx context.Context, file string, data []byte) (err error)
+	Delete(ctx context.Context, file string) (err error)
 	Connect() (err error)
 	Close() (err error)
 }
@@ -128,31 +130,72 @@ func (v *vfs) Close() (err error) {
 }
 
 // Read чтение по указанному пути из бакета проекта
-func (v *vfs) Read(file string) (data []byte, mimeType string, err error) {
-	return v.ReadFromBucket(file, v.bucket)
+func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType string, err error) {
+	type result struct {
+		Data     []byte
+		MimeType string
+		Err      error
+	}
+
+	chResult := make(chan result)
+	exec := func(ctx context.Context, file string) (r result) {
+		r.Data, r.MimeType, r.Err = v.ReadFromBucket(ctx, file, v.bucket)
+		return r
+	}
+	go func() {
+		chResult <- exec(ctx, file)
+	}()
+
+	select {
+	case d := <-chResult:
+		return d.Data, d.MimeType, d.Err
+
+	case <-ctx.Done():
+		return data, mimeType, fmt.Errorf("exec Read dead for context")
+	}
 }
 
-// Read чтение по указанному пути из указанного бакета
-func (v *vfs) ReadFromBucket(file, bucket string) (data []byte, mimeType string, err error) {
-	var r io.ReadCloser
-
-	r, err = v.ReadCloserFromBucket(file, bucket)
-	if err != nil {
-		err = fmt.Errorf("error ReadCloserFromBucket, err: %s, file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
-		return
+// ReadFromBucket чтение по указанному пути из указанного бакета
+func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []byte, mimeType string, err error) {
+	type result struct {
+		Reader io.ReadCloser
+		Err    error
 	}
-	data, err = ioutil.ReadAll(r)
-	if err != nil {
-		err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
-		return
-	}
-	mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
 
-	return data, mimeType, err
+	chResult := make(chan result)
+	exec := func(ctx context.Context, file string) (r result) {
+		r.Reader, r.Err = v.ReadCloserFromBucket(ctx, file, bucket)
+		return r
+	}
+	go func() {
+		chResult <- exec(ctx, file)
+	}()
+
+	select {
+	case d := <-chResult:
+		if d.Err != nil {
+			return nil, "", err
+		}
+		data, err = ioutil.ReadAll(d.Reader)
+		if err != nil {
+			err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+			return nil, "", err
+		}
+		mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
+
+		return data, mimeType, err
+	case <-ctx.Done():
+		return data, mimeType, fmt.Errorf("exec ReadFromBucket dead for context")
+	}
 }
 
 // Write создаем объект в хранилище
-func (v *vfs) Write(file string, data []byte) (err error) {
+func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
+	type result struct {
+		I   Item
+		Err error
+	}
+
 	sdata := string(data)
 	r := strings.NewReader(sdata)
 	size := int64(len(sdata))
@@ -162,7 +205,32 @@ func (v *vfs) Write(file string, data []byte) (err error) {
 		file = strings.Replace(file, sep, v.comma, -1)
 	}
 
-	_, err = v.container.Put(file, r, size, nil)
+	chResult := make(chan result)
+	exec := func(ctx context.Context, name string, rr io.Reader, size int64, metadata map[string]interface{}) (r result) {
+		_, err = v.container.Put(file, rr, size, nil)
+		r.Err = err
+		return r
+	}
+	go func() {
+		chResult <- exec(ctx, file, r, size, nil)
+	}()
+
+	select {
+	case d := <-chResult:
+		return d.Err
+	case <-ctx.Done():
+		return fmt.Errorf("exec Write dead for context")
+	}
+}
+
+// Delete удаляем объект в хранилище
+func (v *vfs) Delete(ctx context.Context, file string) (err error) {
+	item, err := v.getItem(file, v.bucket)
+	if err != nil {
+		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
+	}
+
+	err = v.container.RemoveItem(item.ID())
 	if err != nil {
 		return err
 	}
@@ -170,7 +238,7 @@ func (v *vfs) Write(file string, data []byte) (err error) {
 }
 
 // List список файлов выбранного
-func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
+func (v *vfs) List(ctx context.Context, prefix string, pageSize int) (files []Item, err error) {
 	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
 		if err != nil {
 			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
@@ -183,11 +251,23 @@ func (v *vfs) List(prefix string, pageSize int) (files []Item, err error) {
 	return files, err
 }
 
-func (v *vfs) ReadCloser(file string) (reader io.ReadCloser, err error) {
-	return v.ReadCloserFromBucket(file, v.bucket)
+func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error) {
+	return v.ReadCloserFromBucket(ctx, file, v.bucket)
 }
 
-func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, err error) {
+func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
+
+	item, err := v.getItem(file, bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err = item.Open()
+
+	return reader, err
+}
+
+func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 	var urlPath url.URL
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
@@ -214,17 +294,15 @@ func (v *vfs) ReadCloserFromBucket(file, bucket string) (reader io.ReadCloser, e
 	urlPath.Host = bucket
 	urlPath.Path = file
 
-	item, err := v.location.ItemByURL(&urlPath)
+	item, err = v.location.ItemByURL(&urlPath)
 	if err != nil {
-		return reader, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
+		return nil, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
 	}
 	if item == nil {
-		return reader, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
+		return nil, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
 	}
 
-	reader, err = item.Open()
-
-	return reader, err
+	return item, err
 }
 
 func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacert string) Vfs {

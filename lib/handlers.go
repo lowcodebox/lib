@@ -436,7 +436,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 		sliceMake := strings.Split(maketFile, "/")
 		maketFile = strings.Join(sliceMake[3:], "/")
 
-		byteFile, _, err := l.vfs.Read(maketFile)
+		byteFile, _, err := l.vfs.Read(r.Context(), maketFile)
 		if err != nil {
 			return fmt.Sprintf("error vfs.Read, maketFile: %s, err: %s", maketFile, err)
 		}

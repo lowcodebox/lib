@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"os"
 
 	"github.com/urfave/cli"
@@ -9,7 +10,7 @@ import (
 const sep = string(os.PathSeparator)
 
 // RunServiceFuncCLI обраатываем параметры с консоли и вызываем переданую функцию
-func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string) error) error {
+func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string) error) error {
 	var err error
 
 	appCLI := cli.NewApp()
@@ -28,7 +29,7 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				port := c.String("port")
 
-				err = funcCLI("", "", port, "", "", "", "", "", "", "webinit", "")
+				err = funcCLI(ctx, "", "", port, "", "", "", "", "", "", "webinit", "")
 				return err
 			},
 		},
@@ -46,12 +47,18 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					Usage: "Версия, до которой обновляем",
 					Value: "latest",
 				},
+				cli.StringFlag{
+					Name:  "arch, a",
+					Usage: "386/amd64",
+					Value: "",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 				version := c.String("version")
+				arch := c.String("arch")
 
-				err = funcCLI("", "", "", "", service, "", "", "", "", "update", version)
+				err = funcCLI(ctx, "", "", "", "", service, arch, "", "", "", "update", version)
 				return err
 			},
 		},
@@ -68,7 +75,7 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 
-				err = funcCLI("", "", "", "", service, "", "", "", "", "stop", "")
+				err = funcCLI(ctx, "", "", "", "", service, "", "", "", "", "stop", "")
 				return err
 			},
 		},
@@ -115,7 +122,7 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				err = funcCLI(configfile, dir, port, mode, service, "", "", "", "", "start", "")
+				err = funcCLI(ctx, configfile, dir, port, mode, service, "", "", "", "", "start", "")
 				return err
 			},
 		},
@@ -172,7 +179,7 @@ func RunServiceFuncCLI(funcCLI func(configfile, dir, port, mode, service, param1
 					dir, err = RootDir()
 				}
 
-				err = funcCLI("", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
+				err = funcCLI(ctx, "", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
 				return err
 			},
 		},

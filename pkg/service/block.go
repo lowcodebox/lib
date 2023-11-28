@@ -17,7 +17,7 @@ func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.Serv
 	if len(objBlock.Data) == 0 {
 		return out, fmt.Errorf("%s", "Error. Lenght data from objBlock is 0.")
 	}
-	moduleResult, err := s.block.Generate(in, objBlock.Data[0], dataPage, nil)
+	moduleResult, err := s.block.Generate(ctx, in, objBlock.Data[0], dataPage, nil)
 	out.Result = moduleResult.Result
 
 	return

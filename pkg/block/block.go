@@ -35,17 +35,16 @@ type block struct {
 }
 
 type Block interface {
-	Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error)
-	ErrorModuleBuild(stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error)
-	QueryWorker(queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{}
-	ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request)
-	ModuleError(err interface{}) template.HTML
-	GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) models.Response
+	Generate(ctx context.Context, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error)
+	ErrorModuleBuild(ctx context.Context, stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error)
+	QueryWorker(ctx context.Context, queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{}
+	ErrorPage(ctx context.Context, err interface{}, w http.ResponseWriter, r *http.Request)
+	ModuleError(ctx context.Context, err interface{}) template.HTML
+	GUIQuery(ctx context.Context, tquery, token, queryRaw, method string, postForm url.Values) models.Response
 }
 
-func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
+func (b *block) Generate(ctx context.Context, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
 	var c bytes.Buffer
-	ctx := context.Background()
 	result.Id = block.Id
 
 	// обработка всех странных ошибок
@@ -155,7 +154,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	dogParseConfiguration, err := b.function.Exec(tconfiguration, dv, bl.Value, in, block.Id)
 	if err != nil {
 		mes := "[Generate] Error DogParse configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
-		result.Result = b.ModuleError(mes)
+		result.Result = b.ModuleError(ctx, mes)
 		result.Err = err
 		logger.Error(ctx, mes, zap.Error(err))
 
@@ -171,7 +170,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	}
 	if err != nil {
 		mes := "[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration
-		result.Result = b.ModuleError("[Generate] Error Unmarshal configuration: (" + fmt.Sprint(err) + ") " + tconfiguration)
+		result.Result = b.ModuleError(ctx, "[Generate] Error Unmarshal configuration: ("+fmt.Sprint(err)+") "+tconfiguration)
 		result.Err = err
 		logger.Error(ctx, mes, zap.Error(err))
 
@@ -185,7 +184,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	}
 	if err != nil {
 		mes := "[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration
-		result.Result = b.ModuleError("[Generate] Error json-format configurations: (" + fmt.Sprint(err) + ") " + dogParseConfiguration)
+		result.Result = b.ModuleError(ctx, "[Generate] Error json-format configurations: ("+fmt.Sprint(err)+") "+dogParseConfiguration)
 		result.Err = err
 		logger.Error(ctx, mes, zap.Error(err))
 
@@ -202,7 +201,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 			stat["status"] = "error"
 			stat["description"] = fmt.Sprint(err)
 
-			result.Result = b.ModuleError(err)
+			result.Result = b.ModuleError(ctx, err)
 			result.Err = err
 			result.Stat = stat
 			mes := "[Generate] Error generate datasets."
@@ -233,7 +232,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 			}
 
 			//fmt.Println(queryUID, dataname, source, in.Token, blockQuery.Encode(), in.Method, in.PostForm)
-			ress := b.QueryWorker(queryUID, dataname, source, in.Token, blockQuery.Encode(), in.Method, in.PostForm) //in.QueryRaw
+			ress := b.QueryWorker(ctx, queryUID, dataname, source, in.Token, blockQuery.Encode(), in.Method, in.PostForm) //in.QueryRaw
 			//fmt.Println(ress)
 
 			dataSet[dataname] = ress
@@ -255,7 +254,7 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 	if strings.Contains(tplName, sep) {
 		//tplName = b.cfg.Workingdir + "/" + tplName
 
-		c, err = b.GenerateBlockFromFile(tplName, bl)
+		c, err = b.GenerateBlockFromFile(ctx, tplName, bl)
 		if err != nil {
 			err = fmt.Errorf("%s file:'%s' (%s)", "Error: Generate Module from file is failed!", tplName, err)
 			result.Result = template.HTML(fmt.Sprint(err))
@@ -319,10 +318,10 @@ func (b *block) Generate(in model.ServiceIn, block models.Data, page models.Data
 }
 
 // GenerateBlockFromFile генерируем блок из файла (для совместимости со старыми модулями)
-func (b *block) GenerateBlockFromFile(tplName string, bl model.Block) (c bytes.Buffer, err error) {
+func (b *block) GenerateBlockFromFile(ctx context.Context, tplName string, bl model.Block) (c bytes.Buffer, err error) {
 	var tmpl *template.Template
 
-	dataFile, _, err := b.vfs.Read(b.clearPath(tplName))
+	dataFile, _, err := b.vfs.Read(ctx, b.clearPath(tplName))
 	if err != nil {
 		err = fmt.Errorf("%s", "error read file from vfs. path: %s", b.clearPath(tplName))
 		return
@@ -361,7 +360,7 @@ func (b *block) GenerateBlockFromField(value string, bl model.Block) (c bytes.Bu
 }
 
 // вываливаем ошибку при генерации модуля
-func (b *block) ErrorModuleBuild(stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error) {
+func (b *block) ErrorModuleBuild(ctx context.Context, stat map[string]interface{}, buildChan chan model.ModuleResult, timerRun interface{}, errT error) {
 	var result model.ModuleResult
 
 	stat["cache"] = "false"
@@ -376,10 +375,10 @@ func (b *block) ErrorModuleBuild(stat map[string]interface{}, buildChan chan mod
 }
 
 // queryUID - ид-запроса
-func (b *block) QueryWorker(queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{} {
+func (b *block) QueryWorker(ctx context.Context, queryUID, dataname string, source []map[string]string, token, queryRaw, metod string, postForm url.Values) interface{} {
 	//var resp Response
 
-	resp := b.GUIQuery(queryUID, token, queryRaw, metod, postForm)
+	resp := b.GUIQuery(ctx, queryUID, token, queryRaw, metod, postForm)
 
 	//switch x := resp1.(type) {
 	//case Response:
@@ -452,8 +451,7 @@ func (b *block) QueryWorker(queryUID, dataname string, source []map[string]strin
 }
 
 // ErrorPage вывод ошибки выполнения блока
-func (b *block) ErrorPage(err interface{}, w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+func (b *block) ErrorPage(ctx context.Context, err interface{}, w http.ResponseWriter, r *http.Request) {
 	p := model.ErrorForm{
 		Err: err,
 		R:   *r,
@@ -468,9 +466,8 @@ func (b *block) ErrorPage(err interface{}, w http.ResponseWriter, r *http.Reques
 }
 
 // ModuleError вывод ошибки выполнения блока
-func (l *block) ModuleError(err interface{}) template.HTML {
+func (l *block) ModuleError(ctx context.Context, err interface{}) template.HTML {
 	var c bytes.Buffer
-	ctx := context.Background()
 
 	p := model.ErrorForm{
 		Err: err,
@@ -490,10 +487,9 @@ func (l *block) ModuleError(err interface{}) template.HTML {
 
 // GUIQuery отправка запроса на получения данных из интерфейса GUI
 // параметры переданные в строке (r.URL) отправляем в теле запроса
-func (b *block) GUIQuery(tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response) {
+func (b *block) GUIQuery(ctx context.Context, tquery, token, queryRaw, method string, postForm url.Values) (returnResp models.Response) {
 	var err error
 	bodyJSON, _ := json.Marshal(postForm)
-	ctx := context.Background()
 
 	// добавляем к пути в запросе переданные в блок параметры ULR-а (возможно там есть параметры для фильтров)
 	filters := queryRaw
