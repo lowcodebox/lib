@@ -9,7 +9,7 @@ import (
 
 // Alive ...
 func (s *service) Alive(ctx context.Context) (out model.AliveOut, err error) {
-	out.Cache = s.cache.Active()
+	//out.Cache = s.cache.Active()
 
 	temp := s.cfg
 	temp.VfsCertCA = lib.HideExceptFirstAndLast(temp.VfsCertCA)
@@ -27,7 +27,7 @@ func (s *service) Alive(ctx context.Context) (out model.AliveOut, err error) {
 
 	out.Config = temp
 
-	out.Session = s.session.List()
+	//out.Session = s.session.List()
 
 	return
 }
