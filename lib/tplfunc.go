@@ -263,7 +263,7 @@ func parseform(r *http.Request) map[string][]string {
 
 // отправка запроса (повторяет интерфейс lib.Curl)
 // при передаче в куку времени протухани используется формат "2006-01-02T15:04:05Z07:00"
-func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}, err error) {
+func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}) {
 	var cookies []*http.Cookie
 	var responseData models.ResponseData
 
@@ -297,10 +297,13 @@ func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incooki
 
 	raw, err := lib.Curl(method, urlc, bodyJSON, responseData, h, cookies)
 	if len(responseData.Data) == 0 {
-		return raw, err
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+		return raw
 	}
 
-	return responseData, err
+	return responseData
 }
 
 // ObjGet операции с объектами через клиента API
