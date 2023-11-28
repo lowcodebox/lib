@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,25 +13,28 @@ import (
 
 func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var in model.StorageIn
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Storage] Error response execution",
+				zap.String("in", fmt.Sprintf("%+v", in)),
+				zap.Error(err))
 		}
 	}()
 
-	in, er := storageDecodeRequest(r.Context(), r)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec storageDecodeRequest")
+	in, err = storageDecodeRequest(r.Context(), r)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageDecodeRequest")
 		return
 	}
 
-	serviceResult, err := h.service.Storage(r.Context(), in)
+	serviceResult, er := h.service.Storage(r.Context(), in)
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec service.Storage")
 		return
 	}
 
-	response, _ := storageEncodeResponse(r.Context(), serviceResult)
+	response, er := storageEncodeResponse(r.Context(), serviceResult)
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec storageEncodeResponse")
 		return
