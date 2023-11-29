@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -83,12 +84,15 @@ func (i *item) URL() *url.URL {
 // and path of the file within the container. This response includes the body of
 // resource which is returned along with an error.
 func (i *item) Open() (io.ReadCloser, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.container.getTimeOut)
+	defer cancel()
+
 	params := &s3.GetObjectInput{
 		Bucket: aws.String(i.container.Name()),
 		Key:    aws.String(i.ID()),
 	}
 
-	response, err := i.client.GetObject(params)
+	response, err := i.client.GetObjectWithContext(ctx, params)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open, getting the object")
 	}
@@ -160,13 +164,16 @@ func (i *item) getInfo() (stow.Item, error) {
 
 // Tags returns a map of tags on an Item
 func (i *item) Tags() (map[string]interface{}, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.container.getTimeOut)
+	defer cancel()
+
 	i.tagsOnce.Do(func() {
 		params := &s3.GetObjectTaggingInput{
 			Bucket: aws.String(i.container.name),
 			Key:    aws.String(i.ID()),
 		}
 
-		res, err := i.client.GetObjectTagging(params)
+		res, err := i.client.GetObjectTaggingWithContext(ctx, params)
 		if err != nil {
 			if strings.Contains(err.Error(), "NoSuchKey") {
 				i.tagsErr = stow.ErrNotFound
@@ -188,13 +195,16 @@ func (i *item) Tags() (map[string]interface{}, error) {
 // OpenRange opens the item for reading starting at byte start and ending
 // at byte end.
 func (i *item) OpenRange(start, end uint64) (io.ReadCloser, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.container.getTimeOut)
+	defer cancel()
+
 	params := &s3.GetObjectInput{
 		Bucket: aws.String(i.container.Name()),
 		Key:    aws.String(i.ID()),
 		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", start, end)),
 	}
 
-	response, err := i.client.GetObject(params)
+	response, err := i.client.GetObjectWithContext(ctx, params)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open, getting the object")
 	}

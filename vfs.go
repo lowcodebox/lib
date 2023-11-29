@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"strings"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/lib/pkg/s3"
 	"github.com/graymeta/stow"
@@ -37,6 +38,8 @@ type vfs struct {
 	container                                      stow.Container
 	comma                                          string
 	cacert                                         string
+
+	getTimeout, putTimeout, removeTimeout time.Duration
 }
 
 type Vfs interface {
@@ -66,11 +69,14 @@ func (v *vfs) Connect() (err error) {
 	switch v.kind {
 	case "s3":
 		config = stow.ConfigMap{
-			s3.ConfigEndpoint:    v.endpoint,
-			s3.ConfigAccessKeyID: v.accessKeyID,
-			s3.ConfigSecretKey:   v.secretKey,
-			s3.ConfigRegion:      v.region,
-			s3.ConfigCaCert:      v.cacert,
+			s3.ConfigEndpoint:      v.endpoint,
+			s3.ConfigAccessKeyID:   v.accessKeyID,
+			s3.ConfigSecretKey:     v.secretKey,
+			s3.ConfigRegion:        v.region,
+			s3.ConfigCaCert:        v.cacert,
+			s3.ConfigGetTimeout:    fmt.Sprint(v.getTimeout),
+			s3.ConfigPutTimeout:    fmt.Sprint(v.putTimeout),
+			s3.ConfigRemoveTimeout: fmt.Sprint(v.removeTimeout),
 		}
 	case "azure":
 		config = stow.ConfigMap{
@@ -225,7 +231,7 @@ func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
 
 // Delete удаляем объект в хранилище
 func (v *vfs) Delete(ctx context.Context, file string) (err error) {
-	item, err := v.getItem(file, v.bucket)
+	item, err := v.getItem(ctx, file, v.bucket)
 	if err != nil {
 		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
 	}
@@ -257,17 +263,18 @@ func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser
 
 func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
 
-	item, err := v.getItem(file, bucket)
+	item, err := v.getItem(ctx, file, bucket)
 	if err != nil {
 		return nil, err
 	}
+	item.Open()
 
 	reader, err = item.Open()
 
 	return reader, err
 }
 
-func (v *vfs) getItem(file, bucket string) (item Item, err error) {
+func (v *vfs) getItem(ctx context.Context, file, bucket string) (item Item, err error) {
 	var urlPath url.URL
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
@@ -289,8 +296,6 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 		file = strings.Replace(file, sep+sep, sep, -1)
 	}
 
-	//fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
-
 	urlPath.Host = bucket
 	urlPath.Path = file
 
@@ -305,7 +310,7 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 	return item, err
 }
 
-func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacert string) Vfs {
+func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacert string, s3GetTimeout, s3PutTimeout, s3RemoveTimeout time.Duration) Vfs {
 	return &vfs{
 		kind:        kind,
 		endpoint:    endpoint,
@@ -315,5 +320,9 @@ func NewVfs(kind, endpoint, accessKeyID, secretKey, region, bucket, comma, cacer
 		bucket:      bucket,
 		comma:       comma,
 		cacert:      cacert,
+
+		getTimeout:    s3GetTimeout,
+		putTimeout:    s3PutTimeout,
+		removeTimeout: s3RemoveTimeout,
 	}
 }

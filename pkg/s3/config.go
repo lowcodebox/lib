@@ -53,7 +53,11 @@ const (
 	// This feature is useful for s3-compatible blob stores -- ie minio.
 	ConfigV2Signing = "v2_signing"
 
-	ConfigCaCert = "ca_cert"
+	// Customs параметры конфигурации
+	ConfigCaCert        = "ca_cert"
+	ConfigGetTimeout    = "get_timeout"
+	ConfigPutTimeout    = "put_timeout"
+	ConfigRemoveTimeout = "remove_timeout"
 )
 
 func init() {

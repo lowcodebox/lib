@@ -1,8 +1,10 @@
 package s3
 
 import (
+	"context"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -14,6 +16,10 @@ import (
 
 // Amazon S3 bucket contains a creation date and a name.
 type container struct {
+	getTimeOut    time.Duration
+	putTimeOut    time.Duration
+	removeTimeOut time.Duration
+
 	// name is needed to retrieve items.
 	name string
 	// client is responsible for performing the requests.
@@ -43,6 +49,9 @@ func (c *container) Item(id string) (stow.Item, error) {
 // Items sends a request to retrieve a list of items that are prepended with
 // the prefix argument. The 'cursor' variable facilitates pagination.
 func (c *container) Items(prefix, cursor string, count int) ([]stow.Item, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.getTimeOut)
+	defer cancel()
+
 	itemLimit := int64(count)
 
 	params := &s3.ListObjectsV2Input{
@@ -52,7 +61,7 @@ func (c *container) Items(prefix, cursor string, count int) ([]stow.Item, string
 		Prefix:     &prefix,
 	}
 
-	response, err := c.client.ListObjectsV2(params)
+	response, err := c.client.ListObjectsV2WithContext(ctx, params)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "Items, listing objects")
 	}
@@ -92,12 +101,15 @@ func (c *container) Items(prefix, cursor string, count int) ([]stow.Item, string
 }
 
 func (c *container) RemoveItem(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.removeTimeOut)
+	defer cancel()
+
 	params := &s3.DeleteObjectInput{
 		Bucket: aws.String(c.Name()),
 		Key:    aws.String(id),
 	}
 
-	_, err := c.client.DeleteObject(params)
+	_, err := c.client.DeleteObjectWithContext(ctx, params)
 	if err != nil {
 		return errors.Wrapf(err, "RemoveItem, deleting object %+v", params)
 	}
@@ -109,6 +121,9 @@ func (c *container) RemoveItem(id string) error {
 // content, and the size of the file. Many more attributes can be given to the
 // file, including metadata. Keeping it simple for now.
 func (c *container) Put(name string, r io.Reader, size int64, metadata map[string]interface{}) (stow.Item, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.putTimeOut)
+	defer cancel()
+
 	// Convert map[string]interface{} to map[string]*string
 	mdPrepped, err := prepMetadata(metadata)
 	if err != nil {
@@ -126,7 +141,7 @@ func (c *container) Put(name string, r io.Reader, size int64, metadata map[strin
 	if err != nil {
 		return nil, errors.Wrap(err, "PutObject, putting object")
 	}
-	i, err := c.client.HeadObject(&s3.HeadObjectInput{
+	i, err := c.client.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
 		Key:    aws.String(name),
 		Bucket: aws.String(c.name),
 	})
@@ -169,12 +184,14 @@ func (c *container) Region() string {
 // May be simpler to just stick it in PUT and and do a request every time, please vouch
 // for this if so.
 func (c *container) getItem(id string) (*item, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.getTimeOut)
+	defer cancel()
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(c.name),
 		Key:    aws.String(id),
 	}
 
-	res, err := c.client.HeadObject(params)
+	res, err := c.client.HeadObjectWithContext(ctx, params)
 	if err != nil {
 		// stow needs ErrNotFound to pass the test but amazon returns an opaque error
 		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {

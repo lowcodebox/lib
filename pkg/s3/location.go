@@ -14,6 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const getTimeOut = "get_timeout"
+const putTimeOut = "put_timeout"
+const removeTimeOut = "remove_timeout"
+
 // A location contains a client + the configurations used to create the client.
 type location struct {
 	config         stow.Config
@@ -42,6 +46,14 @@ func (l *location) CreateContainer(containerName string) (stow.Container, error)
 		region:         region,
 		customEndpoint: l.customEndpoint,
 	}
+
+	durationGetTimeOut, _ := l.config.Config(getTimeOut)
+	durationPutTimeOut, _ := l.config.Config(putTimeOut)
+	durationRemoveTimeOut, _ := l.config.Config(removeTimeOut)
+
+	newContainer.getTimeOut, _ = time.ParseDuration(durationGetTimeOut)
+	newContainer.putTimeOut, _ = time.ParseDuration(durationPutTimeOut)
+	newContainer.removeTimeOut, _ = time.ParseDuration(durationRemoveTimeOut)
 
 	return newContainer, nil
 }
