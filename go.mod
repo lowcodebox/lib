@@ -5,7 +5,7 @@ go 1.18
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.1.15
 	git.lowcodeplatform.net/fabric/iam-client v0.1.3
-	git.lowcodeplatform.net/fabric/lib v0.1.65
+	git.lowcodeplatform.net/fabric/lib v0.1.67
 	git.lowcodeplatform.net/fabric/models v0.1.16
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
