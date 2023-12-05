@@ -164,7 +164,33 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 
 	chResult := make(chan result)
 	exec := func(ctx context.Context, file string) (r result) {
-		r.Reader, r.Err = v.ReadCloserFromBucket(ctx, file, bucket)
+		readerInc, errInc := v.ReadCloserFromBucket(ctx, file, bucket)
+		if errInc != nil {
+			if readerInc != nil {
+				errR := readerInc.Close()
+				if errR != nil {
+					r.Reader = nil
+					r.Err = fmt.Errorf("error close reader in ReadCloserFromBucket. err read, err: %s, closer: %s", errInc, errR)
+					return r
+				}
+			}
+			r.Reader = nil
+			r.Err = fmt.Errorf("error ReadCloserFromBucket. err: %s", errInc)
+			return r
+		}
+
+		// проверка на закрытие по таймауту в момент завершения функции
+		// прибиваем внутри ридер, если до завершения словили контекс и тело уже не нужно
+		select {
+		case <-ctx.Done():
+			err = r.Reader.Close()
+			r.Reader = nil
+			r.Err = fmt.Errorf("exit (ReadCloserFromBucket) with context deadline. err closed: %s", err)
+			return r
+		default:
+		}
+
+		r.Reader, r.Err = readerInc, errInc
 		return r
 	}
 	go func() {
@@ -173,6 +199,7 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 
 	select {
 	case d := <-chResult:
+		defer d.Reader.Close()
 		if d.Err != nil {
 			return nil, "", err
 		}
@@ -263,6 +290,14 @@ func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (re
 	}
 
 	reader, err = item.Open()
+	if err != nil {
+		er := reader.Close()
+		if er != nil {
+			err = fmt.Errorf("error close reader (ReadCloserFromBucket) where failed item.Open() whith error: %s, err close: %s", err, er)
+			return nil, err
+		}
+		return nil, err
+	}
 
 	return reader, err
 }
