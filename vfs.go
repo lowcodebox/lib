@@ -7,14 +7,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
-	"git.lowcodeplatform.net/fabric/lib/pkg/s3"
 	"github.com/graymeta/stow"
 	"github.com/graymeta/stow/azure"
 	"github.com/graymeta/stow/local"
+
+	"git.lowcodeplatform.net/fabric/lib/pkg/s3"
 
 	// support Azure storage
 	_ "github.com/graymeta/stow/azure"
@@ -164,18 +164,10 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 
 	chResult := make(chan result)
 	exec := func(ctx context.Context, file string) (r result) {
-		readerInc, errInc := v.ReadCloserFromBucket(ctx, file, bucket)
-		if errInc != nil {
-			if readerInc != nil {
-				errR := readerInc.Close()
-				if errR != nil {
-					r.Reader = nil
-					r.Err = fmt.Errorf("error close reader in ReadCloserFromBucket. err read, err: %s, closer: %s", errInc, errR)
-					return r
-				}
-			}
-			r.Reader = nil
-			r.Err = fmt.Errorf("error ReadCloserFromBucket. err: %s", errInc)
+		r.Reader, r.Err = v.ReadCloserFromBucket(ctx, file, bucket)
+		if r.Err != nil {
+			r.Err = fmt.Errorf("error ReadCloserFromBucket. err: %s", r.Err)
+
 			return r
 		}
 
@@ -183,34 +175,41 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 		// прибиваем внутри ридер, если до завершения словили контекс и тело уже не нужно
 		select {
 		case <-ctx.Done():
-			err = r.Reader.Close()
+			r.Err = r.Reader.Close()
 			r.Reader = nil
-			r.Err = fmt.Errorf("exit (ReadCloserFromBucket) with context deadline. err closed: %s", err)
+			r.Err = fmt.Errorf("exit (ReadCloserFromBucket) with context deadline. err closed: %s", r.Err)
+
 			return r
+
 		default:
 		}
 
-		r.Reader, r.Err = readerInc, errInc
 		return r
 	}
+
 	go func() {
 		chResult <- exec(ctx, file)
 	}()
 
 	select {
 	case d := <-chResult:
-		defer d.Reader.Close()
 		if d.Err != nil {
 			return nil, "", err
 		}
-		data, err = ioutil.ReadAll(d.Reader)
+
+		defer d.Reader.Close()
+
+		data, err = io.ReadAll(d.Reader)
 		if err != nil {
-			err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v\n", err, file, bucket, v.container)
+			err = fmt.Errorf("error ReadAll. err: %s. file: %s, bucket: %s, v.container: %+v", err, file, bucket, v.container)
+
 			return nil, "", err
 		}
+
 		mimeType = detectMIME(data, file) // - определяем MimeType отдаваемого файла
 
 		return data, mimeType, err
+
 	case <-ctx.Done():
 		return data, mimeType, fmt.Errorf("exec ReadFromBucket dead for context")
 	}
@@ -238,6 +237,7 @@ func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
 		r.Err = err
 		return r
 	}
+
 	go func() {
 		chResult <- exec(ctx, file, r, size, nil)
 	}()
@@ -261,6 +261,7 @@ func (v *vfs) Delete(ctx context.Context, file string) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return err
 }
 
@@ -269,9 +270,12 @@ func (v *vfs) List(ctx context.Context, prefix string, pageSize int) (files []It
 	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
 		if err != nil {
 			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
+
 			return err
 		}
+
 		files = append(files, item)
+
 		return nil
 	})
 
@@ -283,7 +287,6 @@ func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser
 }
 
 func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
-
 	item, err := v.getItem(file, bucket)
 	if err != nil {
 		return nil, err
@@ -291,11 +294,6 @@ func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (re
 
 	reader, err = item.Open()
 	if err != nil {
-		er := reader.Close()
-		if er != nil {
-			err = fmt.Errorf("error close reader (ReadCloserFromBucket) where failed item.Open() whith error: %s, err close: %s", err, er)
-			return nil, err
-		}
 		return nil, err
 	}
 
@@ -333,6 +331,7 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
 	}
+
 	if item == nil {
 		return nil, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
 	}
