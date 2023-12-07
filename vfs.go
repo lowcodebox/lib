@@ -61,8 +61,9 @@ func (v *vfs) Connect() (err error) {
 	var flagBucketExist bool
 
 	if v.region == "" {
-		v.region = "eu-west-1"
+		v.region = "ru-central-1"
 	}
+
 	switch v.kind {
 	case "s3":
 		config = stow.ConfigMap{
@@ -95,10 +96,13 @@ func (v *vfs) Connect() (err error) {
 		if err != nil {
 			return err
 		}
+
 		if c.Name() == v.bucket {
 			flagBucketExist = true
+
 			return nil
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -142,6 +146,7 @@ func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType stri
 		r.Data, r.MimeType, r.Err = v.ReadFromBucket(ctx, file, v.bucket)
 		return r
 	}
+
 	go func() {
 		chResult <- exec(ctx, file)
 	}()
