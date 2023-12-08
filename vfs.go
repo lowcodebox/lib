@@ -229,6 +229,12 @@ func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
 		Err error
 	}
 
+	err = v.Connect()
+	if err != nil {
+		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, v.kind, v.endpoint, v.bucket)
+	}
+	defer v.Close()
+
 	sdata := string(data)
 	r := strings.NewReader(sdata)
 	size := int64(len(sdata))
@@ -258,6 +264,12 @@ func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
 
 // Delete удаляем объект в хранилище
 func (v *vfs) Delete(ctx context.Context, file string) (err error) {
+	err = v.Connect()
+	if err != nil {
+		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, v.kind, v.endpoint, v.bucket)
+	}
+	defer v.Close()
+
 	item, err := v.getItem(file, v.bucket)
 	if err != nil {
 		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
@@ -272,6 +284,12 @@ func (v *vfs) Delete(ctx context.Context, file string) (err error) {
 
 // List список файлов выбранного
 func (v *vfs) List(ctx context.Context, prefix string, pageSize int) (files []Item, err error) {
+	err = v.Connect()
+	if err != nil {
+		return files, fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, v.kind, v.endpoint, v.bucket)
+	}
+	defer v.Close()
+
 	err = stow.Walk(v.container, prefix, pageSize, func(item stow.Item, err error) error {
 		if err != nil {
 			fmt.Printf("error Walk from list vfs. connect:%+v, prefix: %s, err: %s\n", v, prefix, err)
