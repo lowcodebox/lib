@@ -162,6 +162,12 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 		Err    error
 	}
 
+	err = v.Connect()
+	if err != nil {
+		return []byte{}, "", fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, v.kind, v.endpoint, v.bucket)
+	}
+	defer v.Close()
+
 	chResult := make(chan result)
 	exec := func(ctx context.Context, file string) (r result) {
 		readerInc, errInc := v.ReadCloserFromBucket(ctx, file, bucket)
