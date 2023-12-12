@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -49,6 +50,7 @@ type Vfs interface {
 	Delete(ctx context.Context, file string) (err error)
 	Connect() (err error)
 	Close() (err error)
+	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
 
 type Item interface {
@@ -186,7 +188,9 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 		// прибиваем внутри ридер, если до завершения словили контекс и тело уже не нужно
 		select {
 		case <-ctx.Done():
-			r.Err = r.Reader.Close()
+			if r.Reader != nil {
+				r.Err = r.Reader.Close()
+			}
 			r.Reader = nil
 			r.Err = fmt.Errorf("exit (ReadCloserFromBucket) with context deadline. err closed: %s", r.Err)
 
@@ -208,7 +212,14 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 			return nil, "", err
 		}
 
-		defer d.Reader.Close()
+		defer func() {
+			if d.Reader != nil {
+				err = d.Reader.Close()
+				if err != nil {
+					d.Err = err
+				}
+			}
+		}()
 
 		data, err = io.ReadAll(d.Reader)
 		if err != nil {

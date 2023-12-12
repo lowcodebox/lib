@@ -236,6 +236,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		src,
 		iam,
 		ses,
+		vfs,
 		serviceVersion,
 		hashCommit,
 	)
