@@ -11,6 +11,11 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/api-client"
+	iam "git.lowcodeplatform.net/fabric/iam-client"
+	"github.com/labstack/gommon/color"
+	"github.com/labstack/gommon/log"
+	"go.uber.org/zap"
+
 	"git.lowcodeplatform.net/fabric/app/pkg/cache"
 	"git.lowcodeplatform.net/fabric/app/pkg/function"
 	"git.lowcodeplatform.net/fabric/app/pkg/i18n"
@@ -19,10 +24,6 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
 	"git.lowcodeplatform.net/fabric/app/pkg/session"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"github.com/labstack/gommon/color"
-	"github.com/labstack/gommon/log"
-	"go.uber.org/zap"
 
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/packages/logger"
@@ -132,11 +133,6 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
-	err = vfs.Connect()
-	if err != nil {
-		logger.Error(ctx, "Error connect to filestorage", zap.String("configfile", configfile), zap.Error(err))
-		return fmt.Errorf("%s Error connect to filestorage. err: %s\n cfg: VfsKind: %s, VfsEndpoint: %s, VfsAccessKeyId: %s, VfsSecretKey: %s, VfsRegion: %s, VfsBucket: %s, VfsComma: %s", fail, err, cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma)
-	}
 
 	fmt.Printf("%s Enabled logs (type: %s). Level:%s, Dir:%s\n", done, initType, cfg.LogsLevelPointsrc, cfg.LogsDir)
 	logger.Info(ctx, "Запускаем app-сервис: ", zap.String("domain", cfg.Domain))
