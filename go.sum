@@ -52,6 +52,10 @@ git.lowcodeplatform.net/fabric/api-client v0.1.14 h1:r2a8jOekc63LPPb3ME7ssxxBsCx
 git.lowcodeplatform.net/fabric/api-client v0.1.14/go.mod h1:RxuI8FFvCH/wEk5L5tEsB2N88/+W+W+TAdxfDTtIMhg=
 git.lowcodeplatform.net/fabric/api-client v0.1.15 h1:XfjT+ZwEfI8soofnbbnJ/glfpAFEBuIiV3tiNraq5mI=
 git.lowcodeplatform.net/fabric/api-client v0.1.15/go.mod h1:6OPETp+X832t0hsTxdrzmvmdFtvN0qsbtaa29MDej2w=
+git.lowcodeplatform.net/fabric/api-client v0.1.17 h1:nxdxXOxcxeQWkVnsfqkSEUPNgKndojSdITqJyoZnE9A=
+git.lowcodeplatform.net/fabric/api-client v0.1.17/go.mod h1:47P1Kmc0FKhN51m6r9Y6rjdpZLxdfyyWTspr4VFACr8=
+git.lowcodeplatform.net/fabric/api-client v0.1.18 h1:s8qe29boqknwfzJV8fS72NKnETwX2/ONLh9BtTW131A=
+git.lowcodeplatform.net/fabric/api-client v0.1.18/go.mod h1:47P1Kmc0FKhN51m6r9Y6rjdpZLxdfyyWTspr4VFACr8=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.0.0-20221023080507-84fb9ed9a65d h1:a0XndOdemHQsqrcVuBAriUbSJ2xp1xie3snpQQ5JLnY=
@@ -70,6 +74,8 @@ git.lowcodeplatform.net/fabric/lib v0.1.67 h1:UMlPtMkhTK2ccXYL7ErxxOsyPkCWxy/SPy
 git.lowcodeplatform.net/fabric/lib v0.1.67/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
 git.lowcodeplatform.net/fabric/lib v0.2.0 h1:EK1gZ8HFBnSVte+ijD+0YIAbQYbNJRZTr5KEEi8o9kg=
 git.lowcodeplatform.net/fabric/lib v0.2.0/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
+git.lowcodeplatform.net/fabric/lib v0.2.2 h1:Y4DuzQwr+O+vFq3uNOVwfo6Gs6pW8jK771q5v7JL6F4=
+git.lowcodeplatform.net/fabric/lib v0.2.2/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
 git.lowcodeplatform.net/fabric/logbox v0.1.3 h1:2dcC3OSO+g9cTPWSNcXVPOmPw0FaQotzz/xz9imkdD0=
 git.lowcodeplatform.net/fabric/logbox v0.1.3/go.mod h1:krjPWdYdwm0D9BqFy67FDJH9/j54UiJTKr8pmVuz938=
 git.lowcodeplatform.net/fabric/logbox-client v0.1.6 h1:xSf6DcvT8tOi+vPD0zbIwwAKVF4ayfpRmm2mtEgLFjs=

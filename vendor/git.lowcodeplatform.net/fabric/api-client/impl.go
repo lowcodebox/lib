@@ -155,6 +155,23 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 	return result, err
 }
 
+func (a *api) objDelete(ctx context.Context, uids string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	var urlc string
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "objDelete", err, urlc, uids)
+	}
+
+	urlc = a.url + "/objs/delete?ids=" + uids
+	_, err = lib.Curl("POST", urlc, "", &result, map[string]string{}, nil)
+	if err != nil {
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
+	}
+
+	return result, err
+}
+
 func (a *api) observeLogger(ctx context.Context, start time.Time, method string, err error, arguments ...interface{}) {
 	logger.Info(ctx, "timing api query",
 		zap.String("method", method),

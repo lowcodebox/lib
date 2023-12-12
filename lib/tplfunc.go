@@ -97,6 +97,7 @@ var FuncMap = template.FuncMap{
 	"apiobjget":           ObjGet,
 	"apiobjcreate":        ObjCreate,
 	"apiobjattrupdate":    ObjAttrUpdate,
+	"apiobjdelete":        ObjDelete,
 	"apilinkget":          LinkGet,
 	"apiquery":            Query,
 	"curl":                curl,
@@ -315,6 +316,11 @@ func ObjGet(apiURL string, uids string) (result models.ResponseData, err error) 
 func ObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
+}
+
+func ObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
+	ctx := context.Background()
+	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
 }
 
 func ObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
