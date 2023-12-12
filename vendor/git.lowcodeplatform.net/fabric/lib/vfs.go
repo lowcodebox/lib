@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -49,6 +50,7 @@ type Vfs interface {
 	Delete(ctx context.Context, file string) (err error)
 	Connect() (err error)
 	Close() (err error)
+	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
 
 type Item interface {

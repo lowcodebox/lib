@@ -7,7 +7,6 @@ import (
 	"net/http/pprof"
 	"strings"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
 	"git.lowcodeplatform.net/packages/cache"
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
@@ -15,6 +14,8 @@ import (
 	"github.com/prometheus/common/version"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
 )
 
 type Result struct {
@@ -43,12 +44,19 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
+	proxy, err := h.vfs.Proxy("/media", "/"+h.cfg.VfsBucket)
+	if err != nil {
+		logger.Panic(h.ctx, "unable init media proxy", zap.Error(err))
+	}
+
+	router.Handle("/media/{params:.+}", proxy).Methods(http.MethodGet)
+
 	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 
 	pr := prometheusReader{}
-	err := cache.Cache().Register("prometheus", &pr, h.cfg.MetricIntervalCached.Value)
+	err = cache.Cache().Register("prometheus", &pr, h.cfg.MetricIntervalCached.Value)
 	if err != nil {
 		logger.Panic(h.ctx, "cache collection is not init", zap.Error(err))
 	}

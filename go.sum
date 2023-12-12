@@ -50,6 +50,10 @@ git.lowcodeplatform.net/fabric/iam-client v0.1.3 h1:F6PZrYZn+pwMvW8XAeb+xR30bxB6
 git.lowcodeplatform.net/fabric/iam-client v0.1.3/go.mod h1:zO2bdVaPlj+y97nyM1cTBb7r/CtVlu7bAFktpZjBJss=
 git.lowcodeplatform.net/fabric/lib v0.2.2 h1:Y4DuzQwr+O+vFq3uNOVwfo6Gs6pW8jK771q5v7JL6F4=
 git.lowcodeplatform.net/fabric/lib v0.2.2/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
+git.lowcodeplatform.net/fabric/lib v0.2.3-0.20231212165936-d8a66e2914ba h1:yvSWsp+PdyRXQ89c23qT1Zv0wC1punPRr+tg5BOGqFc=
+git.lowcodeplatform.net/fabric/lib v0.2.3-0.20231212165936-d8a66e2914ba/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
+git.lowcodeplatform.net/fabric/lib v0.2.3 h1:W9C9dOp6u8dND/PDjzZJx0YnkJP0Hy5wHu5NtuQ9LpA=
+git.lowcodeplatform.net/fabric/lib v0.2.3/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
 git.lowcodeplatform.net/fabric/logbox v0.1.3 h1:2dcC3OSO+g9cTPWSNcXVPOmPw0FaQotzz/xz9imkdD0=
 git.lowcodeplatform.net/fabric/logbox v0.1.3/go.mod h1:krjPWdYdwm0D9BqFy67FDJH9/j54UiJTKr8pmVuz938=
 git.lowcodeplatform.net/fabric/logbox-client v0.1.12 h1:2puA8kgTQJvgeqeP0r3OSeir31TrcC5SCtQys1DezwU=
@@ -104,6 +108,8 @@ github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3Q
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/sprig v2.22.0+incompatible h1:z4yfnGrZ7netVz+0EDJ0Wi+5VZCSYp4Z0m2dk6cEM60=
 github.com/Masterminds/sprig v2.22.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
+github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
+github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/ReneKroon/ttlcache v1.7.0 h1:8BkjFfrzVFXyrqnMtezAaJ6AHPSsVV10m6w28N/Fgkk=
 github.com/ReneKroon/ttlcache v1.7.0/go.mod h1:8BGGzdumrIjWxdRx8zpK6L3oGMWvIXdvB2GD1cfvd+I=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
@@ -148,6 +154,7 @@ github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/gabriel-vasile/mimetype v1.4.1 h1:TRWk7se+TOjCYgRth7+1/OYLNiRNIotknkFtf/dnN7Q=
 github.com/gabriel-vasile/mimetype v1.4.1/go.mod h1:05Vi0w3Y9c/lNvJOdmIwvrrAhX3rYhfQQCaf9VJcv7M=
+github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -468,6 +475,7 @@ golang.org/x/lint v0.0.0-20190930215403-16217165b5de/go.mod h1:6SW0HCj/g11FgYtHl
 golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f/go.mod h1:5qLYkcX4OjUUV8bRuDixDT3tpyyb+LUpUlRWLxfhWrs=
 golang.org/x/lint v0.0.0-20200130185559-910be7a94367/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
 golang.org/x/lint v0.0.0-20200302205851-738671d3881b/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
+golang.org/x/lint v0.0.0-20210508222113-6edffad5e616/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
 golang.org/x/mobile v0.0.0-20190312151609-d3739f865fa6/go.mod h1:z+o9i4GpDbdi3rU15maQ/Ox0txvL9dWGYEHz965HBQE=
 golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028/go.mod h1:E/iHnbuqvinMTCcRqshq8CkpyQDoeVncDDYHnLhea+o=
 golang.org/x/mod v0.0.0-20190513183733-4bf6d317e70e/go.mod h1:mXi4GBBbnImb6dmsKGUJ2LatrhH/nqhxcFungHvyanc=
