@@ -14,6 +14,7 @@ import (
 func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var in model.StorageIn
+
 	defer func() {
 		if err != nil {
 			logger.Error(h.ctx, "[Storage] Error response execution",
@@ -30,7 +31,7 @@ func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 
 	serviceResult, er := h.service.Storage(r.Context(), in)
 	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec service.Storage")
+		err = h.transportError(r.Context(), w, 404, er, "[Storage] error exec service.Storage")
 		return
 	}
 

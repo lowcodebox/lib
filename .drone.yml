@@ -3,26 +3,26 @@ type: docker
 name: app
 
 steps:
-  #  - name: linux amd64
-  #    failure: ignore
-  #    image: tetafro/golang-gcc:1.17-alpine
-  #    commands:
-  #      - cd /drone/src
-  #      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_amd64 cmd/app/main.go
-  #      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_amd64_${DRONE_TAG}
-  #    volumes:
-  #      - name: releases
-  #        path: /opt/releases
-  #    when:
-  #      event:
-  #        - tag
+  - name: linux amd64
+    failure: ignore
+    image: golang:1.19.9-alpine
+    commands:
+      - cd /drone/src
+      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_linux_amd64 cmd/app/main.go
+      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_amd64_${DRONE_TAG}
+    volumes:
+      - name: releases
+        path: /opt/releases
+    when:
+      event:
+        - tag
 
   - name: linux 386
     failure: ignore
-    image: tetafro/golang-gcc:1.17-alpine
+    image: golang:1.19.9-alpine
     commands:
       - cd /drone/src
-      - GOOS=linux GOARCH=386 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_linux_386 cmd/app/main.go
+      - GOOS=linux GOARCH=386 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_linux_386 cmd/app/main.go
       - cp /opt/releases/app_linux_386 /opt/releases/app_linux_386_${DRONE_TAG}
     volumes:
       - name: releases
@@ -47,7 +47,7 @@ steps:
 
   - name: darwin arm64
     failure: ignore
-    image: tetafro/golang-gcc:1.17-alpine
+    image: golang:1.19.9-alpine
     commands:
       - cd /drone/src
       - GOOS=darwin GOARCH=arm64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_arm64 cmd/app/main.go

@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
@@ -79,6 +81,44 @@ func (h *handlers) transportByte(w http.ResponseWriter, mimeType string, respons
 	}
 
 	return err
+}
+
+func (h *handlers) transportReader(w http.ResponseWriter, mimeType string, reader io.ReadCloser) (err error) {
+	if mimeType != "" {
+		w.Header().Set("content-type", mimeType)
+		w.Header().Set("accept-ranges", "bytes")
+	}
+	w.WriteHeader(200)
+	if err != nil {
+		w.WriteHeader(403)
+	}
+
+	var ch chan []byte
+	go func() {
+		d := bufio.NewReader(reader)
+		var buf = make([]byte, 1024)
+		for {
+			_, err = d.Read(buf)
+			if err != nil {
+				close(ch)
+				return
+			}
+			ch <- buf
+		}
+	}()
+
+	for {
+		select {
+		case d, ok := <-ch:
+			_, err = w.Write(d)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return err
+			}
+		}
+	}
 }
 
 func (h *handlers) transportResponseHTTP(w http.ResponseWriter, response string) (err error) {
