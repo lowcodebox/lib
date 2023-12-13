@@ -52,6 +52,7 @@ var FuncMap = template.FuncMap{
 	"dictstring":          dictstring,
 	"sum":                 sum,
 	"split":               split,
+	"splittostring":       splittostring,
 	"set":                 set,
 	"get":                 get,
 	"delete":              deletekey,
@@ -708,7 +709,14 @@ func join(slice []string, sep string) (result string) {
 }
 
 // split разбиваем строку на строковый слайс
-func split(str, sep string) (result []string) {
+func split(str, sep string) (result interface{}) {
+	result = strings.Split(str, sep)
+
+	return result
+}
+
+// split разбиваем строку на строковый слайс
+func splittostring(str, sep string) (result []string) {
 	result = strings.Split(str, sep)
 
 	return result
