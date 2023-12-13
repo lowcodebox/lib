@@ -44,12 +44,12 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
-	proxy, err := h.vfs.Proxy("/media", "/"+h.cfg.VfsBucket)
+	proxy, err := h.vfs.Proxy("/upload", "/"+h.cfg.VfsBucket)
 	if err != nil {
-		logger.Panic(h.ctx, "unable init media proxy", zap.Error(err))
+		logger.Panic(h.ctx, "unable init s3 proxy", zap.Error(err))
 	}
 
-	router.Handle("/media/{params:.+}", proxy).Methods(http.MethodGet)
+	router.Handle("/upload/{params:.+}", proxy).Methods(http.MethodGet)
 
 	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
 	version.Version = h.serviceVersion
@@ -73,7 +73,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},
 
-		Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
+		//Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
 		Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
 		Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
 
