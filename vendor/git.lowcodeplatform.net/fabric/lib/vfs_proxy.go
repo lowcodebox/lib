@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -11,25 +12,55 @@ import (
 	"strings"
 )
 
+var ErrPath = errors.New("invalid path")
+
 type BasicAuthTransport struct {
 	Kind       string
 	Username   string
 	Password   string
 	TrimPrefix string
 	NewPrefix  string
+	URL        string
+	Region     string
+	DisableSSL bool
 
 	http.Transport
 }
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, "../") {
+		return nil, ErrPath
+	}
+
 	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
 
 	if t.Username != "" {
 		switch t.Kind {
 		case "s3":
 			// todo make sign for s3
-			//	signer := v4.NewSigner()
-			//	s3.Sign()
+			//signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
+			//_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
+			//if err != nil {
+			//	return nil, err
+			//}
+			//
+			//fmt.Println(req.Header)
+
+			//awsReq := request.Request{
+			//	Config: aws.Config{
+			//		CredentialsChainVerboseErrors: nil,
+			//		Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
+			//		Endpoint:                      aws.String(t.URL),
+			//		Region:                        aws.String(t.Region),
+			//		DisableSSL:                    aws.Bool(t.DisableSSL),
+			//		S3ForcePathStyle:              aws.Bool(true),
+			//	},
+			//	Time:        time.Now(),
+			//	HTTPRequest: req,
+			//}
+			//
+			//s3.Sign(&awsReq)
+			//fmt.Println(awsReq.HTTPRequest.Header)
 
 		default:
 			req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
@@ -60,6 +91,9 @@ func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		Password:   v.secretKey,
 		TrimPrefix: trimPrefix,
 		NewPrefix:  newPrefix,
+		URL:        v.endpoint,
+		Region:     v.region,
+		DisableSSL: v.cacert == "",
 	}
 
 	if v.cacert != "" {
