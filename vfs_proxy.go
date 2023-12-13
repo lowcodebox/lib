@@ -4,12 +4,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 )
+
+var ErrPath = errors.New("invalid path")
 
 type BasicAuthTransport struct {
 	Kind       string
@@ -25,6 +28,10 @@ type BasicAuthTransport struct {
 }
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, "../") {
+		return nil, ErrPath
+	}
+
 	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
 
 	if t.Username != "" {
