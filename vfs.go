@@ -259,6 +259,10 @@ func (v *vfs) Write(ctx context.Context, file string, data []byte) (err error) {
 		file = strings.Replace(file, sep, v.comma, -1)
 	}
 
+	if strings.Contains(file, "../") {
+		return fmt.Errorf("path file not valid")
+	}
+
 	chResult := make(chan result)
 	exec := func(ctx context.Context, name string, rr io.Reader, size int64, metadata map[string]interface{}) (r result) {
 		_, err = v.container.Put(file, rr, size, nil)
