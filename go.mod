@@ -5,7 +5,7 @@ go 1.20
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.1.18
 	git.lowcodeplatform.net/fabric/iam-client v0.1.3
-	git.lowcodeplatform.net/fabric/lib v0.2.3
+	git.lowcodeplatform.net/fabric/lib v0.2.5
 	git.lowcodeplatform.net/fabric/models v0.1.16
 	git.lowcodeplatform.net/packages/cache v0.0.0-20230603080834-b3c659c259f1
 	git.lowcodeplatform.net/packages/logger v0.1.16
