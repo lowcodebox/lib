@@ -1,11 +1,14 @@
 package app_lib
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -139,7 +142,7 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"randstringslice": funcs.randstringslice,
 
 		"readfile":      funcs.readfile,
-		"csvtoslivemap": funcs.csvtoslivemap,
+		"csvtosliсemap": funcs.csvtosliсemap,
 
 		"objFromID": funcs.objFromID,
 	}
@@ -165,10 +168,37 @@ func (t *funcMap) readfile(file string) (res []byte) {
 	return data
 }
 
-// csvtoslivemap преобразуем []byte в мап, если там csv данные
-func (t *funcMap) csvtoslivemap(in []byte) (res []map[string]interface{}) {
+// csvtosliсemap преобразуем []byte в мап, если там csv данные
+func (t *funcMap) csvtosliсemap(in []byte) (res []map[string]string, err error) {
+	var headers = []string{}
 
-	return res
+	reader := csv.NewReader(bytes.NewBuffer(in))
+	header, err := reader.Read() // skip first line
+	if err != nil {
+		if err != io.EOF {
+			return nil, err
+		}
+	}
+	for _, v := range header {
+		headers = append(headers, v)
+	}
+
+	for {
+		line, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				return res, nil
+			}
+		}
+		values := map[string]string{}
+		for i, v := range line {
+			values[header[i]] = v
+		}
+
+		res = append(res, values)
+	}
+
+	return res, err
 }
 
 // objFromID получить объект из массива объектов по id

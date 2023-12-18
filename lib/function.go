@@ -914,7 +914,7 @@ func (b *app) generateBlockFromFile(ctx context.Context, tplName string, bl Bloc
 	tmpl = template.New(tplName).Funcs(FuncMap)
 	t, err = tmpl.Parse(string(dataFile))
 	if err != nil {
-		err = fmt.Errorf("%s", "Error: Getting path.Base failed! tplName: %s", tplName)
+		err = fmt.Errorf("error. getting path.Base failed! tplName: %s", tplName)
 	}
 
 	if &bl != nil && &c != nil {
