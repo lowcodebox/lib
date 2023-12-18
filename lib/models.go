@@ -14,7 +14,7 @@ type app struct {
 	urlORM         string `json:"url_orm"`
 	urlAPI         string `json:"url_api"`
 	urlGUI         string `json:"url_gui"`
-	db             *reindexer.Reindexer
+	cache          *reindexer.Reindexer
 	pageSize       int
 	status         string
 	count          string
@@ -33,8 +33,7 @@ var debugMode = true
 var FlagParallel = true // флаг генерации блоков в параллельном режиме
 var Metric template.HTML
 
-var Domain, Title, UidAPP, ClientPath, UidPrecess, LogsDir, LogsLevel string
-var UrlAPI, UrlORM string
+var Domain, Title, ClientPath string
 var ReplicasService int
 
 // тип ответа, который сервис отдает прокси при периодическом опросе (ping-е)
@@ -333,7 +332,7 @@ func (p *Block) CSSPath() {
 	return
 }
 
-func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, db *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs) App {
+func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, cache *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs) App {
 
 	// добавляем карту функций FuncMap функциями из библиотеки github.com/Masterminds/sprig
 	// только те, которые не описаны в FuncMap самостоятельно
@@ -351,7 +350,7 @@ func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, db *reindexer.
 		urlAPI:         urlAPI,
 		urlORM:         urlORM,
 		urlGUI:         urlGUI,
-		db:             db,
+		cache:          cache,
 		status:         status,
 		count:          count,
 		config:         conf,

@@ -1,24 +1,23 @@
 package app_lib
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/restream/reindexer"
-	"net/http"
-	"time"
-	"strconv"
-	"encoding/json"
 )
 
-
 // формируем ключ кеша
-func (l *app) SetCahceKey(r *http.Request, p Data) (key, keyParam string)  {
+func (l *app) SetCahceKey(r *http.Request, p Data) (key, keyParam string) {
 	key2 := ""
 	key3 := ""
 
 	// формируем сложный ключ-хеш
 	key1, _ := json.Marshal(p.Uid)
-	key2 = r.URL.Path // переводим в текст параметры пути запроса (/nedra/user)
+	key2 = r.URL.Path                       // переводим в текст параметры пути запроса (/nedra/user)
 	key3 = fmt.Sprintf("%v", r.URL.Query()) // переводим в текст параметры строки запроса (?sdf=df&df=df)
 
 	cache_nokey2, _ := p.Attr("cache_nokey2", "value")
@@ -44,40 +43,39 @@ func (l *app) SetCahceKey(r *http.Request, p Data) (key, keyParam string)  {
 		key = l.hash(string(key1)) + "_" + "_"
 	}
 
-	return key, "url:"+key2+"; params:"+key3
+	return key, "url:" + key2 + "; params:" + key3
 }
 
 // key - ключ, который будет указан в кеше
 // option - объект блока (запроса и тд) то, где хранится время кеширования
-func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string) (string, bool)  {
+func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string) (string, bool) {
 	var res string
 	var rows *reindexer.Iterator
 
-	rows = l.db.Query(l.ConfigGet("namespace")).
+	rows = l.cache.Query(l.ConfigGet("namespace")).
 		Where("Uid", reindexer.EQ, key).
 		ReqTotal().
 		Exec()
-
 
 	// если есть значение, то обязательно отдаем его, но поменяем
 	for rows.Next() {
 		elem := rows.Object().(*ValueCache)
 		res = elem.Value
 
-		flagFresh := Timefresh(elem.Deadtime);
+		flagFresh := funcs.Timefresh(elem.Deadtime)
 
 		if flagFresh == "true" {
 
 			// блокируем запись, чтобы другие процессы не стали ее обновлять также
 			if elem.Status != "updating" {
 
-				if 	f := l.refreshTime(block); f == 0 {
+				if f := l.refreshTime(block); f == 0 {
 					return "", false
 				}
 
 				// меняем статус
 				elem.Status = "updating"
-				l.db.Upsert(l.ConfigGet("namespace"), elem)
+				l.cache.Upsert(l.ConfigGet("namespace"), elem)
 
 				// запускаем обновение кеша фоном
 				go l.cacheUpdate(key, block, r, page, values, url)
@@ -93,7 +91,6 @@ func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, valu
 
 	return "", false
 }
-
 
 // key - ключ, который будет указан в кеше
 // option - объект блока (запроса и тд) то, где хранится время кеширования
@@ -127,7 +124,7 @@ func (l *app) CacheSet(key string, block Data, page Data, value, url string) boo
 	valueCache.Deadtime = dt.String()
 	valueCache.Status = ""
 
-	err := l.db.Upsert(l.ConfigGet("namespace"), valueCache)
+	err := l.cache.Upsert(l.ConfigGet("namespace"), valueCache)
 	if err != nil {
 		//l.Logger.Error(err, "Error! Created cache from is failed! ")
 		fmt.Println(err, "Error! Created cache from is failed! ")
@@ -135,7 +132,6 @@ func (l *app) CacheSet(key string, block Data, page Data, value, url string) boo
 	}
 
 	//fmt.Println("Пишем в кеш")
-
 
 	return true
 }

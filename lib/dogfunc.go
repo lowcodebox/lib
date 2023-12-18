@@ -150,7 +150,7 @@ func (p *Formula) Calculate() {
 		case "IMGRESIZE":
 			p.Inserts[k].Result = p.App.Sendmail(v.Functions.Arguments)
 		case "RAND":
-			uuid := UUID()
+			uuid := funcs.UUID()
 			p.Inserts[k].Result = uuid[1:6]
 		case "SENDMAIL":
 			p.Inserts[k].Result = p.App.Sendmail(v.Functions.Arguments)
@@ -282,10 +282,10 @@ func (c *app) SplitIndex(arg []string) (result string) {
 
 	if len(arg) > 0 {
 
-		str := Replace(arg[0], "'", "", -1)
-		sep := Replace(arg[1], "'", "", -1)
-		index := Replace(arg[2], "'", "", -1)
-		defaultV := Replace(arg[3], "'", "", -1)
+		str := funcs.Replace(arg[0], "'", "", -1)
+		sep := funcs.Replace(arg[1], "'", "", -1)
+		index := funcs.Replace(arg[2], "'", "", -1)
+		defaultV := funcs.Replace(arg[3], "'", "", -1)
 
 		in, err := strconv.Atoi(index)
 		if err != nil {
@@ -349,7 +349,7 @@ func (c *app) TimeFormat(arg []string) (result string) {
 			mask = "2006-01-02 15:04:05"
 		}
 
-		result = timeformat(ss, mask, format)
+		result = funcs.timeformat(ss, mask, format)
 	}
 	if result == "" {
 		result = valueDefault
@@ -457,7 +457,7 @@ func (c *app) UserObj(r *http.Request, arg []string) (result string) {
 
 		var uu ProfileData
 
-		json.Unmarshal([]byte(marshal(ctxUser)), &uu)
+		json.Unmarshal([]byte(funcs.marshal(ctxUser)), &uu)
 
 		if &uu != nil {
 			switch param {
@@ -561,7 +561,8 @@ func (c *app) UserRole(r *http.Request, arg []string) (result string) {
 
 // Cookie Получение cookie
 // параметры: 	1-й параметр - name (имя куки)
-//				2-й параметр - field (поле куки: VALUE, EXPIRES, MAXAGE, PATH, SECURE)
+//
+//	2-й параметр - field (поле куки: VALUE, EXPIRES, MAXAGE, PATH, SECURE)
 func (c *app) Cookie(r *http.Request, arg []string) (result string) {
 	if len(arg) > 0 {
 
@@ -628,7 +629,7 @@ func (c *app) Obj(data []Data, arg []string) (result string) {
 		}
 		res = append(res, r)
 	}
-	result = join(res, separator)
+	result = funcs.join(res, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -663,7 +664,7 @@ func (c *app) FieldValue(data []Data, arg []string) (result string) {
 			resSlice = append(resSlice, strings.Trim(val, " "))
 		}
 	}
-	result = join(resSlice, separator)
+	result = funcs.join(resSlice, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -696,7 +697,7 @@ func (c *app) FieldSrc(data []Data, arg []string) (result string) {
 			resSlice = append(resSlice, strings.Trim(val, " "))
 		}
 	}
-	result = join(resSlice, separator)
+	result = funcs.join(resSlice, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -757,7 +758,7 @@ func (c *app) FieldSplit(data []Data, arg []string) (result string) {
 		resSlice = append(resSlice, r)
 	}
 
-	result = join(resSlice, ",")
+	result = funcs.join(resSlice, ",")
 
 	return result
 }
@@ -804,7 +805,7 @@ func (c *app) Sendmail(arg []string) (result string) {
 	if len(arg) < 9 {
 		return "Error! Count params must have min 9 (server, port, user, pass, from, to, subject, message, turbo: string)"
 	}
-	result = Sendmail(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8])
+	result = funcs.sendmail(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8])
 
 	return result
 }
@@ -841,9 +842,10 @@ func (c *app) ImgResize(ctx context.Context, path string, widht, height int, arg
 // аргументы:
 // queryName - первый параметр - имя запрсоа
 // mode - тип ответа
-// 		id (по-умолчанию) 	- список UID-ов
-// 		data 				- []Data
-//		response			- полный ответ формате Response
+//
+//	id (по-умолчанию) 	- список UID-ов
+//	data 				- []Data
+//	response			- полный ответ формате Response
 func (c *app) Query(r *http.Request, arg []string) (result interface{}, err error) {
 	valueDefault := "id"
 	if len(arg) == 0 {
@@ -883,7 +885,7 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}, err erro
 			resUIDs = append(resUIDs, v.Uid)
 		}
 
-		res := join(resUIDs, ",")
+		res := funcs.join(resUIDs, ",")
 		logger.Debug(context.Background(), "Query", zap.String("res", res))
 
 		return res, err
@@ -892,7 +894,7 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}, err erro
 	return "", err
 }
 
-// Собачья-обработка (поиск в строке @функций и их обработка)
+// DogParse Собачья-обработка (поиск в строке @функций и их обработка)
 func (c *app) DogParse(p string, r *http.Request, queryData *[]Data, values map[string]interface{}) (result string) {
 	s1 := Formula{
 		App: c,

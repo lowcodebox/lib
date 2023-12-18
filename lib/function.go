@@ -347,7 +347,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	for k, v := range m {
 		q = r.URL.Query() // Get a copy of the query values.
 		if _, found := q[k]; !found {
-			q.Add(k, join(v, ",")) // Add a new value to the set. Переводим обратно в строку из массива
+			q.Add(k, funcs.join(v, ",")) // Add a new value to the set. Переводим обратно в строку из массива
 		}
 	}
 	if len(m) != 0 {
@@ -359,7 +359,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	tconfiguration, _ := block.Attr("configuration", "value")
 	tconfiguration = strings.Replace(tconfiguration, "  ", "", -1)
 
-	uuid := UUID()
+	uuid := funcs.UUID()
 	if values != nil && len(values) != 0 {
 		for k, v := range values {
 			if _, found := b.Value[k]; !found {
@@ -405,7 +405,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	}
 
 	if err != nil {
-		result.result = l.ModuleError("Error json-format configurations: "+marshal(tconfiguration), r)
+		result.result = l.ModuleError("Error json-format configurations: "+funcs.marshal(tconfiguration), r)
 		result.err = err
 		return result
 	}
@@ -413,7 +413,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	// сформировал структуру полученных описаний датасетов
 	var source []map[string]string
 	if d, found := conf["datasets"]; found {
-		err := json.Unmarshal([]byte(marshal(d.Source)), &source)
+		err := json.Unmarshal([]byte(funcs.marshal(d.Source)), &source)
 		if err != nil {
 			stat["status"] = "error"
 			stat["description"] = fmt.Sprint(err)
@@ -664,8 +664,8 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	// добавляем в URL переданное значение из настроек модуля
 	var q url.Values
 	for k, v := range m {
-		q = r.URL.Query()      // Get a copy of the query values.
-		q.Add(k, join(v, ",")) // Add a new value to the set. Переводим обратно в строку из массива
+		q = r.URL.Query()            // Get a copy of the query values.
+		q.Add(k, funcs.join(v, ",")) // Add a new value to the set. Переводим обратно в строку из массива
 	}
 	if len(m) != 0 {
 		r.URL.RawQuery = q.Encode() // Encode and assign back to the original query.
@@ -676,7 +676,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	tconfiguration, _ := p.Attr("configuration", "value")
 	tconfiguration = strings.Replace(tconfiguration, "  ", "", -1)
 
-	uuid := UUID()
+	uuid := funcs.UUID()
 
 	if values != nil && len(values) != 0 {
 		for k, v := range values {
@@ -723,7 +723,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	}
 
 	if err != nil {
-		result.result = l.ModuleError("Error json-format configurations: "+marshal(tconfiguration), r)
+		result.result = l.ModuleError("Error json-format configurations: "+funcs.marshal(tconfiguration), r)
 		result.err = err
 		buildChan <- result
 
@@ -734,7 +734,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	// сформировал структуру полученных описаний датасетов
 	var source []map[string]string
 	if d, found := conf["datasets"]; found {
-		err := json.Unmarshal([]byte(marshal(d.Source)), &source)
+		err := json.Unmarshal([]byte(funcs.marshal(d.Source)), &source)
 		if err != nil {
 			result.result = l.ModuleError(err, r)
 			buildChan <- result
@@ -1194,10 +1194,11 @@ func (p *ResponseData) RemoveData(i int) bool {
 	return true
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-/////////////// ФУНКЦИИ ДЛЯ ВЛОЖЕНИЯ ОБЪЕКТОВ Data В ФОРМАТ ДЕРЕВА /////////////////////
-////////////////////////////////////////////////////////////////////////////////////////
-// формируем вложенную структуру объектов
+// //////////////////////////////////////////////////////////////////////////////////////
+// ///////////// ФУНКЦИИ ДЛЯ ВЛОЖЕНИЯ ОБЪЕКТОВ Data В ФОРМАТ ДЕРЕВА /////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////
+
+// DataToIncl формируем вложенную структуру объектов
 func DataToIncl(objData []Data) []*DataTree {
 
 	// переводим slice в map, чтобы можно было удалять объект и обращаться по ключу при формировании подуровней навигатора
@@ -1251,7 +1252,7 @@ func DataToIncl(objData []Data) []*DataTree {
 	return sliceNavigator
 }
 
-// метод типа Items (перемещаем структуры в карте, исходя из заявленной вложенности элементов)
+// ScanSub метод типа Items (перемещаем структуры в карте, исходя из заявленной вложенности элементов)
 // (переделать дубль фукнции)
 func (p *DataTree) ScanSub(maps *map[string]*DataTree) {
 	if p.Sub != nil && len(p.Sub) != 0 {
@@ -1268,7 +1269,7 @@ func (p *DataTree) ScanSub(maps *map[string]*DataTree) {
 	}
 }
 
-// сортируем в слейсе полигонов по полю sort
+// SortItems сортируем в слейсе полигонов по полю sort
 // typesort - тип сортировки (string/int) - если int то преобразуем в число перед сортировкой
 // fieldsort - поле для сортировки
 func SortItems(p []*DataTree, fieldsort string, typesort string) {
@@ -1318,7 +1319,7 @@ func SortItems(p []*DataTree, fieldsort string, typesort string) {
 	}
 }
 
-// вспомогательная фукнция выбирает только часть дерево от заданного лидера
+// TreeShowIncl вспомогательная фукнция выбирает только часть дерево от заданного лидера
 func TreeShowIncl(in []*DataTree, obj string) (out []*DataTree) {
 	if obj == "" {
 		return in

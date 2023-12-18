@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/api-client"
+	applib "git.lowcodeplatform.net/fabric/app/lib"
 	iam "git.lowcodeplatform.net/fabric/iam-client"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
@@ -175,6 +176,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		cfg.CbTimeout.Duration,
 		cfg.CbInterval.Duration,
 	)
+
+	// инициализация FuncMap
+	applib.NewFuncMap(vfs, api)
 
 	fnc := function.New(
 		cfg,

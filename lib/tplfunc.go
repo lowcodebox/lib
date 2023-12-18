@@ -19,102 +19,136 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/api-client"
+	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
 	"github.com/satori/go.uuid"
-
-	"git.lowcodeplatform.net/fabric/lib"
 )
+
+var funcs funcMap
+var FuncMap template.FuncMap
+
+type Vfs interface {
+	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
+}
+
+type Api interface {
+	ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error)
+	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
+	ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error)
+	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
+	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
+	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
+}
+
+type funcMap struct {
+	vfs Vfs
+	api Api
+}
+
+type FuncMaper interface {
+}
+
+func NewFuncMap(vfs Vfs, api Api) {
+	funcs = funcMap{
+		vfs,
+		api,
+	}
+
+	FuncMap = template.FuncMap{
+		"separator":           funcs.separator,
+		"cookie":              funcs.cookieGet,
+		"cookieget":           funcs.cookieGet,
+		"cookieset":           funcs.cookieSet,
+		"attr":                funcs.attr,
+		"addfloat":            funcs.addfloat,
+		"mulfloat":            funcs.mulfloat,
+		"datetotext":          funcs.datetotext,
+		"output":              funcs.output,
+		"cut":                 funcs.cut,
+		"concatination":       funcs.concatination,
+		"join":                funcs.join,
+		"rand":                funcs.randT,
+		"uuid":                funcs.UUID,
+		"refind":              funcs.refind,
+		"rereplace":           funcs.rereplace,
+		"replace":             funcs.Replace,
+		"contains":            funcs.contains,
+		"contains1":           funcs.contains1,
+		"dict":                funcs.dict,
+		"dictstring":          funcs.dictstring,
+		"sum":                 funcs.sum,
+		"split":               funcs.split,
+		"splittostring":       funcs.splittostring,
+		"set":                 funcs.set,
+		"get":                 funcs.get,
+		"delete":              funcs.deletekey,
+		"slicenew":            funcs.slicenew,
+		"sliceset":            funcs.sliceset,
+		"sliceappend":         funcs.sliceappend,
+		"slicedelete":         funcs.slicedelete,
+		"slicestringnew":      funcs.slicestringnew,
+		"slicestringset":      funcs.slicestringset,
+		"slicestringappend":   funcs.slicestringappend,
+		"slicestringdelete":   funcs.slicestringdelete,
+		"marshal":             funcs.marshal,
+		"value":               funcs.value,
+		"hash":                funcs.hash,
+		"unmarshal":           funcs.unmarshal,
+		"compare":             funcs.compare,
+		"totree":              funcs.totree,
+		"tostring":            funcs.tostring,
+		"toint":               funcs.toint,
+		"tofloat":             funcs.tofloat,
+		"tointerface":         funcs.tointerface,
+		"tohtml":              funcs.tohtml,
+		"timefresh":           funcs.Timefresh,
+		"timenow":             funcs.timenow,
+		"timeformat":          funcs.timeformat,
+		"timetostring":        funcs.timetostring,
+		"timeyear":            funcs.timeyear,
+		"timemount":           funcs.timemount,
+		"timeday":             funcs.timeday,
+		"timeparse":           funcs.timeparse,
+		"tomoney":             funcs.tomoney,
+		"invert":              funcs.invert,
+		"substring":           funcs.substring,
+		"dogparse":            funcs.dogparse,
+		"confparse":           funcs.confparse,
+		"varparse":            funcs.parseparam,
+		"parseparam":          funcs.parseparam,
+		"parseformsep":        funcs.parseformsep,
+		"divfloat":            funcs.divfloat,
+		"sendmail":            funcs.sendmail,
+		"jsonescape":          funcs.jsonEscape,
+		"jsonescapeunlessamp": funcs.jsonEscapeUnlessAmp,
+		"apiobjget":           funcs.apiObjGet,
+		"apiobjcreate":        funcs.apiObjCreate,
+		"apiobjattrupdate":    funcs.apiObjAttrUpdate,
+		"apiobjdelete":        funcs.apiObjDelete,
+		"apilinkget":          funcs.apiLinkGet,
+		"apiquery":            funcs.apiQuery,
+		"curl":                funcs.curl,
+		"parseform":           funcs.parseform,
+		"parsebody":           funcs.parsebody,
+		"redirect":            funcs.redirect,
+		"groupbyfield":        funcs.groupbyfield,
+		"sortbyfield":         funcs.sortbyfield,
+
+		"randstringslice": funcs.randstringslice,
+
+		"readfile":      funcs.readfile,
+		"csvtoslivemap": funcs.csvtoslivemap,
+
+		"objFromID": funcs.objFromID,
+	}
+}
 
 var FuncMapS = sprig.FuncMap()
 
-var FuncMap = template.FuncMap{
-	"separator":           separator,
-	"cookie":              cookieGet,
-	"cookieget":           cookieGet,
-	"cookieset":           cookieSet,
-	"attr":                attr,
-	"addfloat":            addfloat,
-	"mulfloat":            mulfloat,
-	"datetotext":          datetotext,
-	"output":              output,
-	"cut":                 cut,
-	"concatination":       concatination,
-	"join":                join,
-	"rand":                randT,
-	"uuid":                UUID,
-	"refind":              refind,
-	"rereplace":           rereplace,
-	"replace":             Replace,
-	"contains":            contains,
-	"contains1":           contains1,
-	"dict":                dict,
-	"dictstring":          dictstring,
-	"sum":                 sum,
-	"split":               split,
-	"splittostring":       splittostring,
-	"set":                 set,
-	"get":                 get,
-	"delete":              deletekey,
-	"slicenew":            slicenew,
-	"sliceset":            sliceset,
-	"sliceappend":         sliceappend,
-	"slicedelete":         slicedelete,
-	"slicestringnew":      slicestringnew,
-	"slicestringset":      slicestringset,
-	"slicestringappend":   slicestringappend,
-	"slicestringdelete":   slicestringdelete,
-	"marshal":             marshal,
-	"value":               value,
-	"hash":                hash,
-	"unmarshal":           unmarshal,
-	"compare":             compare,
-	"totree":              totree,
-	"tostring":            tostring,
-	"toint":               toint,
-	"tofloat":             tofloat,
-	"tointerface":         tointerface,
-	"tohtml":              tohtml,
-	"timefresh":           Timefresh,
-	"timenow":             timenow,
-	"timeformat":          timeformat,
-	"timetostring":        timetostring,
-	"timeyear":            timeyear,
-	"timemount":           timemount,
-	"timeday":             timeday,
-	"timeparse":           timeparse,
-	"tomoney":             tomoney,
-	"invert":              invert,
-	"substring":           substring,
-	"dogparse":            dogparse,
-	"confparse":           confparse,
-	"varparse":            parseparam,
-	"parseparam":          parseparam,
-	"parseformsep":        parseformsep,
-	"divfloat":            divfloat,
-	"sendmail":            Sendmail,
-	"jsonescape":          jsonEscape,
-	"jsonescapeunlessamp": jsonEscapeUnlessAmp,
-	"apiobjget":           ObjGet,
-	"apiobjcreate":        ObjCreate,
-	"apiobjattrupdate":    ObjAttrUpdate,
-	"apiobjdelete":        ObjDelete,
-	"apilinkget":          LinkGet,
-	"apiquery":            Query,
-	"curl":                curl,
-	"parseform":           parseform,
-	"parsebody":           parsebody,
-	"redirect":            redirect,
-	"groupbyfield":        groupbyfield,
-	"sortbyfield":         sortbyfield,
-
-	"randstringslice": randstringslice,
-
-	"objFromID": objFromID,
-}
-
 // randomizer перемешивает полученный слайс
-func randstringslice(a []string) (res []string) {
+func (t *funcMap) randstringslice(a []string) (res []string) {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(a),
 		func(i, j int) { a[i], a[j] = a[j], a[i] })
@@ -122,8 +156,23 @@ func randstringslice(a []string) (res []string) {
 	return a
 }
 
+// readfile чтение файла из текущего (подключенного) s3-хранилища
+func (t *funcMap) readfile(file string) (res []byte) {
+	data, _, err := t.vfs.Read(context.Background(), file)
+	if err != nil {
+		return []byte(err.Error())
+	}
+	return data
+}
+
+// csvtoslivemap преобразуем []byte в мап, если там csv данные
+func (t *funcMap) csvtoslivemap(in []byte) (res []map[string]interface{}) {
+
+	return res
+}
+
 // objFromID получить объект из массива объектов по id
-func objFromID(dt []models.Data, id string) (result interface{}) {
+func (t *funcMap) objFromID(dt []models.Data, id string) (result interface{}) {
 	//var dt []models.Data
 
 	//err := json.Unmarshal([]byte(fmt.Sprint(data)), &dt)
@@ -140,7 +189,7 @@ func objFromID(dt []models.Data, id string) (result interface{}) {
 }
 
 // groupbyfield группируем полученные данные (объекты) формата models.ResponseData согласно шаблону
-func groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+func (t *funcMap) groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
 	var d models.ResponseData
 
 	b, _ := json.Marshal(queryData)
@@ -179,7 +228,7 @@ func groupbyfield(queryData interface{}, groupField, groupPoint string, sortFiel
 }
 
 // sortbyfield сортирует (объекты) формата models.ResponseData согласно шаблону
-func sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+func (t *funcMap) sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) (result interface{}, err error) {
 	var d models.ResponseData
 
 	b, _ := json.Marshal(queryData)
@@ -207,7 +256,7 @@ func sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) 
 }
 
 // redirect
-func redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int) (result interface{}, err error) {
+func (t *funcMap) redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int) (result interface{}, err error) {
 	http.Redirect(w, r, url, statusCode)
 
 	return
@@ -215,7 +264,7 @@ func redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int
 
 // parsebody
 // json - преобразованный, по-умолчанию raw (строка)
-func parsebody(r *http.Request, format string) (result interface{}, err error) {
+func (t *funcMap) parsebody(r *http.Request, format string) (result interface{}, err error) {
 	responseData, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return "", err
@@ -236,7 +285,7 @@ func parsebody(r *http.Request, format string) (result interface{}, err error) {
 }
 
 // parseform парсит полученные в запросе значения в мапку
-func parseformsep(r *http.Request, separator string) map[string]string {
+func (t *funcMap) parseformsep(r *http.Request, separator string) map[string]string {
 	if separator == "" {
 		separator = ","
 	}
@@ -251,7 +300,7 @@ func parseformsep(r *http.Request, separator string) map[string]string {
 	return data
 }
 
-func parseform(r *http.Request) map[string][]string {
+func (t *funcMap) parseform(r *http.Request) map[string][]string {
 	err := r.ParseForm()
 	if err != nil {
 		return nil
@@ -265,7 +314,7 @@ func parseform(r *http.Request) map[string][]string {
 
 // отправка запроса (повторяет интерфейс lib.Curl)
 // при передаче в куку времени протухани используется формат "2006-01-02T15:04:05Z07:00"
-func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}) {
+func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}) {
 	var cookies []*http.Cookie
 	var responseData models.ResponseData
 
@@ -309,38 +358,62 @@ func curl(method, urlc, bodyJSON string, headers map[string]interface{}, incooki
 }
 
 // ObjGet операции с объектами через клиента API
-func ObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
+	}
+
+	return t.api.ObjGet(ctx, uids)
 }
 
-func ObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
+	}
+
+	return t.api.ObjCreate(ctx, bodymap)
 }
 
-func ObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
+	}
+
+	return t.api.ObjDelete(ctx, uids)
 }
 
-func ObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+	}
+
+	return t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
 }
 
-func LinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
+	}
+
+	return t.api.LinkGet(ctx, tpl, obj, mode, short)
 }
 
-func Query(apiURL string, query, method, bodyJSON string) (result string, err error) {
+func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err error) {
 	ctx := context.Background()
-	return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
+	if apiURL == "" {
+		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
+	}
+
+	return t.api.Query(ctx, query, method, bodyJSON)
 }
 
 // формируем сепаратор для текущей ОС
-func separator() string {
+func (t *funcMap) separator() string {
 	return string(filepath.Separator)
 }
 
@@ -353,7 +426,7 @@ func separator() string {
 // pass - пароль пользователя
 // message - сообщение
 // turbo - режим отправки в отдельной горутине
-func Sendmail(server, port, user, pass, from, to, subject, message, turbo string) (result string) {
+func (t *funcMap) sendmail(server, port, user, pass, from, to, subject, message, turbo string) (result string) {
 	var resMessage interface{}
 	var fromFull, toFull, subjectFull string
 	result = "true"
@@ -363,10 +436,10 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 		auth := smtp.PlainAuth("", user, pass, server)
 
 		// приводим к одному виду чтобы можно было использвоать и <> и []
-		from = Replace(from, ">", "]", -1)
-		from = Replace(from, "<", "[", -1)
-		to = Replace(to, ">", "]", -1)
-		to = Replace(to, "<", "[", -1)
+		from = t.Replace(from, ">", "]", -1)
+		from = t.Replace(from, "<", "[", -1)
+		to = t.Replace(to, ">", "]", -1)
+		to = t.Replace(to, "<", "[", -1)
 
 		slFrom := strings.Split(from, ",")
 		slTo := strings.Split(to, ",")
@@ -395,10 +468,10 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 			addrTo = append(addrTo, addr)
 		}
 
-		from = Replace(from, "]", ">", -1)
-		from = Replace(from, "[", "<", -1)
-		to = Replace(to, "]", ">", -1)
-		to = Replace(to, "[", "<", -1)
+		from = t.Replace(from, "]", ">", -1)
+		from = t.Replace(from, "[", "<", -1)
+		to = t.Replace(to, "]", ">", -1)
+		to = t.Replace(to, "[", "<", -1)
 		mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 		fromFull = "From: " + from + "\n"
 		toFull = "To: " + to + "\n"
@@ -419,7 +492,7 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 
 		sendMes := subjectFull + fromFull + toFull + mime + fmt.Sprint(resMessage)
 		fmt.Println(sendMes)
-		if err := smtp.SendMail(server+":"+port, auth, join(addrFrom, ","), addrTo, []byte(sendMes)); err != nil {
+		if err := smtp.SendMail(server+":"+port, auth, t.join(addrFrom, ","), addrTo, []byte(sendMes)); err != nil {
 			result = fmt.Sprintln(err)
 		}
 	}
@@ -435,7 +508,7 @@ func Sendmail(server, port, user, pass, from, to, subject, message, turbo string
 	return result
 }
 
-func divfloat(a, b interface{}) interface{} {
+func (t *funcMap) divfloat(a, b interface{}) interface{} {
 	aF := fmt.Sprint(a)
 	bF := fmt.Sprint(b)
 	fa, err := strconv.ParseFloat(aF, 64)
@@ -449,7 +522,7 @@ func divfloat(a, b interface{}) interface{} {
 }
 
 // обработка @-функций внутри конфигурации (в шаблонизаторе)
-func confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
+func (t *funcMap) confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
 	var d Data
 	var lb app
 
@@ -476,7 +549,7 @@ func confparse(configuration string, r *http.Request, queryData interface{}) (re
 }
 
 // обработка @-функций внутри шаблонизатора
-func dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
+func (t *funcMap) dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
 	var d Data
 	var lb app
 
@@ -490,7 +563,7 @@ func dogparse(p string, r *http.Request, queryData interface{}, values map[strin
 }
 
 // отдаем значение куки
-func cookieGet(name string, field string, r *http.Request) (result string) {
+func (t *funcMap) cookieGet(name string, field string, r *http.Request) (result string) {
 	c, err := r.Cookie(name)
 	if err != nil {
 		return fmt.Sprint(err)
@@ -513,15 +586,15 @@ func cookieGet(name string, field string, r *http.Request) (result string) {
 	return result
 }
 
-func cookieSet(name string, field string, r *http.Request) (err error) {
+func (t *funcMap) cookieSet(name string, field string, r *http.Request) (err error) {
 	return nil
 }
 
 // получаем значение из переданного объекта
-func attr(name, element string, data interface{}) (result interface{}) {
+func (t *funcMap) attr(name, element string, data interface{}) (result interface{}) {
 	var dt Data
 	var err error
-	err = json.Unmarshal([]byte(marshal(data)), &dt)
+	err = json.Unmarshal([]byte(t.marshal(data)), &dt)
 	if err != nil {
 		return fmt.Sprintf("error Unmarshal (func attr). err: %s", err)
 	}
@@ -533,33 +606,33 @@ func attr(name, element string, data interface{}) (result interface{}) {
 }
 
 // получаем значение из переданного объекта
-func addfloat(i ...interface{}) (result float64) {
+func (t *funcMap) addfloat(i ...interface{}) (result float64) {
 	var a float64 = 0.0
 	for _, b := range i {
-		a += tofloat(b)
+		a += t.tofloat(b)
 	}
 	return a
 }
 
-func UUID() string {
+func (t *funcMap) UUID() string {
 	stUUID := uuid.NewV4()
 	return stUUID.String()
 }
 
-func randT() string {
-	uuid := UUID()
+func (t *funcMap) randT() string {
+	uuid := t.UUID()
 	return uuid[1:6]
 }
 
-func timenow() time.Time {
+func (t *funcMap) timenow() time.Time {
 	return time.Now().UTC()
 }
 
 // преобразуем текст в дату (если ошибка - возвращаем false), а потом обратно в строку нужного формата
-func timeformat(str interface{}, mask, format string) string {
+func (t *funcMap) timeformat(str interface{}, mask, format string) string {
 	ss := fmt.Sprintf("%v", str)
 
-	timeFormat, err := timeparse(ss, mask)
+	timeFormat, err := t.timeparse(ss, mask)
 	if err != nil {
 		return fmt.Sprint(err)
 	}
@@ -569,28 +642,28 @@ func timeformat(str interface{}, mask, format string) string {
 }
 
 // преобразуем текст в дату (если ошибка - возвращаем false), а потом обратно в строку нужного формата
-func timetostring(time time.Time, format string) string {
+func (t *funcMap) timetostring(time time.Time, format string) string {
 	res := time.Format(format)
 
 	return res
 }
 
-func timeyear(t time.Time) string {
-	ss := fmt.Sprintf("%v", t.Year())
+func (t *funcMap) timeyear(tm time.Time) string {
+	ss := fmt.Sprintf("%v", tm.Year())
 	return ss
 }
 
-func timemount(t time.Time) string {
-	ss := fmt.Sprintf("%v", t.Month())
+func (t *funcMap) timemount(tm time.Time) string {
+	ss := fmt.Sprintf("%v", tm.Month())
 	return ss
 }
 
-func timeday(t time.Time) string {
-	ss := fmt.Sprintf("%v", t.Day())
+func (t *funcMap) timeday(tm time.Time) string {
+	ss := fmt.Sprintf("%v", tm.Day())
 	return ss
 }
 
-func timeparse(str, mask string) (res time.Time, err error) {
+func (t *funcMap) timeparse(str, mask string) (res time.Time, err error) {
 	mask = strings.ToUpper(mask)
 
 	time.Now().UTC()
@@ -634,7 +707,7 @@ func timeparse(str, mask string) (res time.Time, err error) {
 	return res, err
 }
 
-func refind(mask, str string, n int) (res [][]string) {
+func (t *funcMap) refind(mask, str string, n int) (res [][]string) {
 	if n == 0 {
 		n = -1
 	}
@@ -644,14 +717,14 @@ func refind(mask, str string, n int) (res [][]string) {
 	return
 }
 
-func rereplace(str, mask, new string) (res string) {
+func (t *funcMap) rereplace(str, mask, new string) (res string) {
 	re := regexp.MustCompile(mask)
 	res = re.ReplaceAllString(str, new)
 
 	return
 }
 
-func parseparam(str string, configuration, data interface{}, resulttype string) (result interface{}) {
+func (t *funcMap) parseparam(str string, configuration, data interface{}, resulttype string) (result interface{}) {
 
 	// разбиваем строку на слайс для замкены и склейки
 	sl := strings.Split(str, "%")
@@ -660,7 +733,7 @@ func parseparam(str string, configuration, data interface{}, resulttype string) 
 		for k, v := range sl {
 			// нечетные значения - это выделенные переменные
 			if k == 1 || k == 3 || k == 5 || k == 7 || k == 9 || k == 11 || k == 13 || k == 15 || k == 17 || k == 19 || k == 21 || k == 23 {
-				resfunc := output(v, configuration, data, resulttype)
+				resfunc := t.output(v, configuration, data, resulttype)
 				sl[k] = fmt.Sprint(resfunc)
 			}
 		}
@@ -677,7 +750,7 @@ func parseparam(str string, configuration, data interface{}, resulttype string) 
 }
 
 // функция указывает переданная дата до или после текущего времени
-func Timefresh(str interface{}) string {
+func (t *funcMap) Timefresh(str interface{}) string {
 
 	ss := fmt.Sprintf("%v", str)
 	start := time.Now().UTC()
@@ -693,7 +766,7 @@ func Timefresh(str interface{}) string {
 }
 
 // инвертируем строку
-func invert(str string) string {
+func (t *funcMap) invert(str string) string {
 	var result string
 	for i := len(str); i > 0; i-- {
 		result = result + string(str[i-1])
@@ -702,30 +775,30 @@ func invert(str string) string {
 }
 
 // переводим массив в строку
-func join(slice []string, sep string) (result string) {
+func (t *funcMap) join(slice []string, sep string) (result string) {
 	result = strings.Join(slice, sep)
 
 	return result
 }
 
 // split разбиваем строку на строковый слайс
-func split(str, sep string) (result interface{}) {
+func (t *funcMap) split(str, sep string) (result interface{}) {
 	result = strings.Split(str, sep)
 
 	return result
 }
 
 // split разбиваем строку на строковый слайс
-func splittostring(str, sep string) (result []string) {
+func (t *funcMap) splittostring(str, sep string) (result []string) {
 	result = strings.Split(str, sep)
 
 	return result
 }
 
 // переводим в денежное отображение строки - 12.344.342
-func tomoney(str, dec string) (res string) {
+func (t *funcMap) tomoney(str, dec string) (res string) {
 
-	for i, v1 := range invert(str) {
+	for i, v1 := range t.invert(str) {
 		if (i == 3) || (i == 6) || (i == 9) {
 			if (string(v1) != " ") && (string(v1) != "+") && (string(v1) != "-") {
 				res = res + dec
@@ -733,10 +806,10 @@ func tomoney(str, dec string) (res string) {
 		}
 		res = res + string(v1)
 	}
-	return invert(res)
+	return t.invert(res)
 }
 
-func contains1(message, str, substr string) string {
+func (t *funcMap) contains1(message, str, substr string) string {
 	sl1 := strings.Split(substr, "|")
 	for _, v := range sl1 {
 		if strings.Contains(str, v) {
@@ -746,7 +819,7 @@ func contains1(message, str, substr string) string {
 	return ""
 }
 
-func contains(str, substr, message, messageelse string) string {
+func (t *funcMap) contains(str, substr, message, messageelse string) string {
 	sl1 := strings.Split(substr, "|")
 	for _, v := range sl1 {
 		if strings.Contains(str, v) {
@@ -757,7 +830,7 @@ func contains(str, substr, message, messageelse string) string {
 }
 
 // преобразую дату из 2013-12-24 в 24 января 2013
-func datetotext(str string) (result string) {
+func (t *funcMap) datetotext(str string) (result string) {
 	mapMount := map[string]string{"01": "января", "02": "февраля", "03": "марта", "04": "апреля", "05": "мая", "06": "июня", "07": "июля", "08": "августа", "09": "сентября", "10": "октября", "11": "ноября", "12": "декабря"}
 	spd := strings.Split(str, "-")
 	if len(spd) == 3 {
@@ -770,13 +843,13 @@ func datetotext(str string) (result string) {
 }
 
 // заменяем
-func Replace(str, old, new string, n int) (message string) {
+func (t *funcMap) Replace(str, old, new string, n int) (message string) {
 	message = strings.Replace(str, old, new, n)
 	return message
 }
 
 // сравнивает два значения и вы	водит текст, если они равны
-func compare(var1, var2, message string) string {
+func (t *funcMap) compare(var1, var2, message string) string {
 	if var1 == var2 {
 		return message
 	}
@@ -785,7 +858,7 @@ func compare(var1, var2, message string) string {
 
 // фукнцкия мультитпликсирования передаваемых параметров при передаче в шаблонах нескольких параметров
 // {{template "sub-template" dict "Data" . "Values" $.Values}}
-func dict(values ...interface{}) (map[string]interface{}, error) {
+func (t *funcMap) dict(values ...interface{}) (map[string]interface{}, error) {
 	if len(values) == 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -815,7 +888,7 @@ func dict(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
-func dictstring(values ...string) (map[string]string, error) {
+func (t *funcMap) dictstring(values ...string) (map[string]string, error) {
 	if len(values) == 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -831,39 +904,39 @@ func dictstring(values ...string) (map[string]string, error) {
 }
 
 // slicestringset - заменяем значение в переданном слайсе
-func slicestringset(d []string, index int, value string) []string {
+func (t *funcMap) slicestringset(d []string, index int, value string) []string {
 	d[index] = value
 	return d
 }
 
 // slicenew - создаем строковый слайс интерфейсов
-func slicenew() []interface{} {
+func (t *funcMap) slicenew() []interface{} {
 	return []interface{}{}
 }
 
 // slicestringnew - создаем строковый слайс
-func slicestringnew() []string {
+func (t *funcMap) slicestringnew() []string {
 	return []string{}
 }
 
 // sliceset - заменяем значение в переданном слайсе
-func sliceset(d []interface{}, index int, value interface{}) []interface{} {
+func (t *funcMap) sliceset(d []interface{}, index int, value interface{}) []interface{} {
 	d[index] = value
 	return d
 }
 
 // sliceappend - добавляет значение в переданный слайс
-func sliceappend(d []interface{}, value interface{}) []interface{} {
+func (t *funcMap) sliceappend(d []interface{}, value interface{}) []interface{} {
 	return append(d, value)
 }
 
 // sliceappend - добавляет значение в переданный слайс
-func slicestringappend(d []string, value string) []string {
+func (t *funcMap) slicestringappend(d []string, value string) []string {
 	return append(d, value)
 }
 
 // slicedelete - удаляет из слайса
-func slicedelete(d []interface{}, index int) []interface{} {
+func (t *funcMap) slicedelete(d []interface{}, index int) []interface{} {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
 	d = d[:len(d)-1]
@@ -872,7 +945,7 @@ func slicedelete(d []interface{}, index int) []interface{} {
 }
 
 // slicestringdelete - удаляет из слайса
-func slicestringdelete(d []string, index int) []string {
+func (t *funcMap) slicestringdelete(d []string, index int) []string {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
 	d = d[:len(d)-1]
@@ -880,12 +953,12 @@ func slicestringdelete(d []string, index int) []string {
 	return d
 }
 
-func set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
+func (t *funcMap) set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
 	d[key] = value
 	return d
 }
 
-func get(d map[string]interface{}, key string) (value interface{}) {
+func (t *funcMap) get(d map[string]interface{}, key string) (value interface{}) {
 	value, found := d[key]
 	if !found {
 		value = ""
@@ -893,19 +966,19 @@ func get(d map[string]interface{}, key string) (value interface{}) {
 	return value
 }
 
-func deletekey(d map[string]interface{}, key string) (value string) {
+func (t *funcMap) deletekey(d map[string]interface{}, key string) (value string) {
 	delete(d, key)
 	return "true"
 }
 
 // суммируем
-func sum(res, i int) int {
+func (t *funcMap) sum(res, i int) int {
 	res = res + i
 	return res
 }
 
 // образаем по заданному кол-ву символов
-func cut(res string, i int, sep string) string {
+func (t *funcMap) cut(res string, i int, sep string) string {
 	res = strings.Trim(res, " ")
 	if i <= len([]rune(res)) {
 		res = string([]rune(res)[:i]) + sep
@@ -915,7 +988,7 @@ func cut(res string, i int, sep string) string {
 
 // обрезаем строку (строка, откуда, [сколько])
 // если откуда отрицательно, то обрезаем с конца
-func substring(str string, args ...int) string {
+func (t *funcMap) substring(str string, args ...int) string {
 	str = strings.Trim(str, " ")
 	lenstr := len([]rune(str))
 	from := 0
@@ -949,13 +1022,13 @@ func substring(str string, args ...int) string {
 	return string([]rune(str)[from:to]) // вырежем диапазон
 }
 
-func tostring(i interface{}) (res string) {
+func (t *funcMap) tostring(i interface{}) (res string) {
 	res = fmt.Sprint(i)
 	return res
 }
 
 // функция преобразует переданные данные в формат типа Items с вложенными подпукнтами
-func totree(i interface{}, objstart string) (res interface{}) {
+func (t *funcMap) totree(i interface{}, objstart string) (res interface{}) {
 	var objD []Data
 	var objRes []interface{}
 	var objTree []DataTreeOut
@@ -986,12 +1059,12 @@ func totree(i interface{}, objstart string) (res interface{}) {
 	return objTree
 }
 
-func tohtml(i interface{}) template.HTML {
+func (t *funcMap) tohtml(i interface{}) template.HTML {
 
 	return template.HTML(i.(string))
 }
 
-func toint(i interface{}) (res int) {
+func (t *funcMap) toint(i interface{}) (res int) {
 	str := fmt.Sprint(i)
 	i = strings.Trim(str, " ")
 	res, err := strconv.Atoi(str)
@@ -1003,7 +1076,7 @@ func toint(i interface{}) (res int) {
 }
 
 // mulfloat умножение с запятой
-func mulfloat(a float64, v ...float64) float64 {
+func (t *funcMap) mulfloat(a float64, v ...float64) float64 {
 	for _, b := range v {
 		a = a * b
 	}
@@ -1011,7 +1084,7 @@ func mulfloat(a float64, v ...float64) float64 {
 	return a
 }
 
-func tofloat(i interface{}) (res float64) {
+func (t *funcMap) tofloat(i interface{}) (res float64) {
 	str := fmt.Sprint(i)
 	str = strings.Trim(str, " ")
 	str = strings.ReplaceAll(str, ",", ".")
@@ -1023,7 +1096,7 @@ func tofloat(i interface{}) (res float64) {
 	return res
 }
 
-func tointerface(input interface{}) (res interface{}) {
+func (t *funcMap) tointerface(input interface{}) (res interface{}) {
 	b3, _ := json.Marshal(input)
 	err := json.Unmarshal(b3, &res)
 	if err != nil {
@@ -1032,17 +1105,17 @@ func tointerface(input interface{}) (res interface{}) {
 	return
 }
 
-func concatination(values ...string) (res string) {
+func (t *funcMap) concatination(values ...string) (res string) {
 	res = strings.Join(values, "")
 	return res
 }
 
-func marshal(i interface{}) (res string) {
+func (t *funcMap) marshal(i interface{}) (res string) {
 	b3, _ := json.Marshal(&i)
 	return string(b3)
 }
 
-func unmarshal(i string) (res interface{}) {
+func (t *funcMap) unmarshal(i string) (res interface{}) {
 	var conf interface{}
 	i = strings.Trim(i, "  ")
 
@@ -1056,12 +1129,12 @@ func unmarshal(i string) (res interface{}) {
 // СТАРОЕ! ДЛЯ РАБОТЫ В ШАБЛОНАХ ГУЯ СТАРЫХ (ПЕРЕДЕЛАТЬ И УБРАТЬ)
 // получаем значение из массива данных по имени элемента
 // ПЕРЕДЕЛАТЬ! приходится постоянно сериализовать данные
-func value(element string, configuration, data interface{}) (result interface{}) {
+func (t *funcMap) value(element string, configuration, data interface{}) (result interface{}) {
 	var conf map[string]Element
-	json.Unmarshal([]byte(marshal(configuration)), &conf)
+	json.Unmarshal([]byte(t.marshal(configuration)), &conf)
 
 	var dt Data
-	json.Unmarshal([]byte(marshal(data)), &dt)
+	json.Unmarshal([]byte(t.marshal(data)), &dt)
 
 	if element == "" {
 		return
@@ -1080,7 +1153,7 @@ func value(element string, configuration, data interface{}) (result interface{})
 			if v.Type == "element" {
 				var source map[string]string
 
-				json.Unmarshal([]byte(marshal(v.Source)), &source)
+				json.Unmarshal([]byte(t.marshal(v.Source)), &source)
 				field := ""
 				point := ""
 				if _, found := source["field"]; found {
@@ -1105,16 +1178,16 @@ func value(element string, configuration, data interface{}) (result interface{})
 
 // получаем значение из массива данных по имени элемента
 // ПЕРЕДЕЛАТЬ! приходится постоянно сериализовать данные
-func output(element string, configuration, data interface{}, resulttype string) (result interface{}) {
+func (t *funcMap) output(element string, configuration, data interface{}, resulttype string) (result interface{}) {
 	var conf map[string]Element
-	json.Unmarshal([]byte(marshal(configuration)), &conf)
+	json.Unmarshal([]byte(t.marshal(configuration)), &conf)
 
 	if resulttype == "" {
 		resulttype = "text"
 	}
 
 	var dt Data
-	json.Unmarshal([]byte(marshal(data)), &dt)
+	json.Unmarshal([]byte(t.marshal(data)), &dt)
 
 	if element == "" {
 		return ""
@@ -1137,7 +1210,7 @@ func output(element string, configuration, data interface{}, resulttype string) 
 			if v.Type == "element" {
 				var source map[string]string
 
-				json.Unmarshal([]byte(marshal(v.Source)), &source)
+				json.Unmarshal([]byte(t.marshal(v.Source)), &source)
 				field := ""
 				point := ""
 				if _, found := source["field"]; found {
@@ -1170,7 +1243,7 @@ func output(element string, configuration, data interface{}, resulttype string) 
 // экранируем "
 // fmt.Println(jsonEscape(`dog "fish" cat`))
 // output: dog \"fish\" cat
-func jsonEscape(i string) (result string) {
+func (t *funcMap) jsonEscape(i string) (result string) {
 	b, err := json.Marshal(i)
 	if err != nil {
 		panic(err)
@@ -1181,13 +1254,13 @@ func jsonEscape(i string) (result string) {
 }
 
 // экранируем кроме аперсанда (&)
-func jsonEscapeUnlessAmp(s string) (result string) {
-	result = jsonEscape(s)
+func (t *funcMap) jsonEscapeUnlessAmp(s string) (result string) {
+	result = t.jsonEscape(s)
 	result = strings.Replace(result, `\u0026`, "&", -1)
 	return result
 }
 
-func hash(str string) string {
+func (t *funcMap) hash(str string) string {
 	var lb *app
 
 	return lb.hash(str)

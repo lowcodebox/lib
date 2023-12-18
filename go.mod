@@ -1,6 +1,6 @@
 module git.lowcodeplatform.net/fabric/app
 
-go 1.19
+go 1.20
 
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.1.18

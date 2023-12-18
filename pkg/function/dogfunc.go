@@ -298,9 +298,10 @@ func NewFormula(cfg model.Config, dogfunc DogFunc) Formula {
 // аргументы:
 // queryName - первый параметр - имя запрсоа;
 // mode - тип ответа
-// 		id (по-умолчанию) 	- список UID-ов
-// 		data 				- []Data
-//		response			- полный ответ формате Response
+//
+//	id (по-умолчанию) 	- список UID-ов
+//	data 				- []Data
+//	response			- полный ответ формате Response
 func (d *dogfunc) Query(r *http.Request, arg []string) (result interface{}, err error) {
 	var objs models.Response
 	var mode = "id"
@@ -499,7 +500,8 @@ func (d *dogfunc) FuncURL(r model.ServiceIn, arg []string) (result string, err e
 
 // Получение cookie
 // параметры: 	1-й параметр - name (имя куки)
-//				2-й параметр - field (поле куки: VALUE, EXPIRES, MAXAGE, PATH, SECURE)
+//
+//	2-й параметр - field (поле куки: VALUE, EXPIRES, MAXAGE, PATH, SECURE)
 func (d *dogfunc) Cookie(r model.ServiceIn, arg []string) (result string, err error) {
 	if len(arg) > 0 {
 
@@ -895,7 +897,7 @@ func (d *dogfunc) DateModify(arg []string) (result string, err error) {
 	return fmt.Sprint(date.Add(p)), err
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 // Отправляем почтового сообщения
 func (d *dogfunc) DogSendmail(arg []string) (result string, err error) {
 	if len(arg) < 9 {
@@ -915,9 +917,9 @@ func NewDogFunc(cfg model.Config, tplfunc TplFunc, api api.Api) DogFunc {
 	}
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 // Собачья-обработка (поиск в строке @функций и их обработка)
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 func (d *function) Exec(p string, queryData []models.Data, values map[string]interface{}, request model.ServiceIn, blockname string) (result string, err error) {
 
 	var fml = NewFormula(d.cfg, d.dogfunc)
@@ -953,6 +955,8 @@ func (d *function) TplFunc() TplFunc {
 
 func New(cfg model.Config, api api.Api) Function {
 	tplfunc := NewTplFunc(cfg, api)
+
+	//tplfunc := applib.NewFuncMap(cfg, api)
 	dogfunc := NewDogFunc(cfg, tplfunc, api)
 	formula := NewFormula(cfg, dogfunc)
 
