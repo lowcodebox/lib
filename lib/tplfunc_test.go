@@ -8,7 +8,7 @@ func Test_csvtosliсemap(t *testing.T) {
 	in := "field1,field2\n2,3"
 
 	NewFuncMap(nil, nil)
-	res, err := funcs.csvtosliсemap([]byte(in))
+	res, err := Funcs.csvtosliсemap([]byte(in))
 	if err != nil {
 		t.Errorf("Should not produce an error")
 	}

@@ -62,7 +62,7 @@ func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, valu
 		elem := rows.Object().(*ValueCache)
 		res = elem.Value
 
-		flagFresh := funcs.Timefresh(elem.Deadtime)
+		flagFresh := Funcs.Timefresh(elem.Deadtime)
 
 		if flagFresh == "true" {
 

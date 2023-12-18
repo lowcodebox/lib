@@ -150,7 +150,7 @@ func (p *Formula) Calculate() {
 		case "IMGRESIZE":
 			p.Inserts[k].Result = p.App.Sendmail(v.Functions.Arguments)
 		case "RAND":
-			uuid := funcs.UUID()
+			uuid := Funcs.UUID()
 			p.Inserts[k].Result = uuid[1:6]
 		case "SENDMAIL":
 			p.Inserts[k].Result = p.App.Sendmail(v.Functions.Arguments)
@@ -282,10 +282,10 @@ func (c *app) SplitIndex(arg []string) (result string) {
 
 	if len(arg) > 0 {
 
-		str := funcs.Replace(arg[0], "'", "", -1)
-		sep := funcs.Replace(arg[1], "'", "", -1)
-		index := funcs.Replace(arg[2], "'", "", -1)
-		defaultV := funcs.Replace(arg[3], "'", "", -1)
+		str := Funcs.Replace(arg[0], "'", "", -1)
+		sep := Funcs.Replace(arg[1], "'", "", -1)
+		index := Funcs.Replace(arg[2], "'", "", -1)
+		defaultV := Funcs.Replace(arg[3], "'", "", -1)
 
 		in, err := strconv.Atoi(index)
 		if err != nil {
@@ -349,7 +349,7 @@ func (c *app) TimeFormat(arg []string) (result string) {
 			mask = "2006-01-02 15:04:05"
 		}
 
-		result = funcs.timeformat(ss, mask, format)
+		result = Funcs.timeformat(ss, mask, format)
 	}
 	if result == "" {
 		result = valueDefault
@@ -457,7 +457,7 @@ func (c *app) UserObj(r *http.Request, arg []string) (result string) {
 
 		var uu ProfileData
 
-		json.Unmarshal([]byte(funcs.marshal(ctxUser)), &uu)
+		json.Unmarshal([]byte(Funcs.marshal(ctxUser)), &uu)
 
 		if &uu != nil {
 			switch param {
@@ -629,7 +629,7 @@ func (c *app) Obj(data []Data, arg []string) (result string) {
 		}
 		res = append(res, r)
 	}
-	result = funcs.join(res, separator)
+	result = Funcs.join(res, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -664,7 +664,7 @@ func (c *app) FieldValue(data []Data, arg []string) (result string) {
 			resSlice = append(resSlice, strings.Trim(val, " "))
 		}
 	}
-	result = funcs.join(resSlice, separator)
+	result = Funcs.join(resSlice, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -697,7 +697,7 @@ func (c *app) FieldSrc(data []Data, arg []string) (result string) {
 			resSlice = append(resSlice, strings.Trim(val, " "))
 		}
 	}
-	result = funcs.join(resSlice, separator)
+	result = Funcs.join(resSlice, separator)
 
 	if result == "" {
 		result = valueDefault
@@ -758,7 +758,7 @@ func (c *app) FieldSplit(data []Data, arg []string) (result string) {
 		resSlice = append(resSlice, r)
 	}
 
-	result = funcs.join(resSlice, ",")
+	result = Funcs.join(resSlice, ",")
 
 	return result
 }
@@ -805,7 +805,7 @@ func (c *app) Sendmail(arg []string) (result string) {
 	if len(arg) < 9 {
 		return "Error! Count params must have min 9 (server, port, user, pass, from, to, subject, message, turbo: string)"
 	}
-	result = funcs.sendmail(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8])
+	result = Funcs.sendmail(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8])
 
 	return result
 }
@@ -885,7 +885,7 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}, err erro
 			resUIDs = append(resUIDs, v.Uid)
 		}
 
-		res := funcs.join(resUIDs, ",")
+		res := Funcs.join(resUIDs, ",")
 		logger.Debug(context.Background(), "Query", zap.String("res", res))
 
 		return res, err
