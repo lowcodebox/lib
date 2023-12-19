@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/labstack/gommon/log"
+	"go.uber.org/zap"
 )
 
 const sep = string(os.PathSeparator)
@@ -848,6 +850,7 @@ func (l *app) generateBlock(ctx context.Context, tplName string, bl Block, uidMo
 	// TODO удалить позже
 	// очищаем доп.путей, которые были при использовании файловой структуры
 	tplName = strings.Replace(tplName, sep+Domain+sep+"gui", "", 1)
+	tplName = strings.Replace(tplName, sep+Domain+sep, "", 1)
 
 	//fmt.Println("generateBlock:", tplName)
 
@@ -911,6 +914,10 @@ func (b *app) generateBlockFromFile(ctx context.Context, tplName string, bl Bloc
 
 	dataFile, _, err := b.vfs.Read(ctx, tplName)
 
+	if len(FuncMap) == 0 {
+		logger.Error(ctx, "empty FuncMap")
+	}
+
 	tmpl = template.New(tplName).Funcs(FuncMap)
 	t, err = tmpl.Parse(string(dataFile))
 	if err != nil {
@@ -945,6 +952,10 @@ func (b *app) generateBlockFromFile(ctx context.Context, tplName string, bl Bloc
 
 // генерируем блок из переданного текста
 func (b *app) generateBlockFromField(value string, bl Block) (c bytes.Buffer, err error) {
+	if len(FuncMap) == 0 {
+		logger.Error(context.Background(), "empty FuncMap", zap.String("block", fmt.Sprintf("%+v", bl)))
+	}
+
 	tmpl, err := template.New("name").Funcs(FuncMap).Parse(value)
 	if err != nil {
 		return

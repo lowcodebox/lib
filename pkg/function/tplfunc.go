@@ -1,6 +1,7 @@
 package function
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -22,9 +23,11 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/tree"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/Masterminds/sprig"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 )
 
 var FuncMapS = sprig.FuncMap()
@@ -98,6 +101,11 @@ type TplFunc interface {
 func (t *tplfunc) GetFuncMap() template.FuncMap {
 
 	funcMap := applib.FuncMap
+
+	if len(funcMap) == 0 {
+		logger.Error(context.Background(), "empty FuncMap", zap.String("place", "GetFuncMap"))
+	}
+
 	// добавляем карту функций FuncMap функциями из библиотеки github.com/Masterminds/sprig
 	// только те, которые не описаны в FuncMap самостоятельно
 	for k, v := range FuncMapS {
@@ -141,14 +149,14 @@ func (t *tplfunc) AddFloat(i ...interface{}) (result float64) {
 	return result
 }
 
-// формируем сепаратор для текущей ОС
+// Separator формируем сепаратор для текущей ОС
 func (t *tplfunc) Separator() string {
 	fm := t.GetFuncMap()
 	template.New("name").Funcs(fm).ParseFiles("tplName")
 	return string(filepath.Separator)
 }
 
-// отправка email-сообщения
+// Sendmail отправка email-сообщения
 // from - от кого отправляется <petrov@mail.ru> или [petrov@mail.ru] или Петров [petrov@mail.ru] или Петров <petrov@mail.ru>
 // to - кому (можно несколько через запятую)
 // server - почтовый сервер
