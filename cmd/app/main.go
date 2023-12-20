@@ -102,6 +102,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.ConfigName = cfg.DataUid
 	cfg.HashRun = lib.UUID()
 	cfg.Name, cfg.ServiceType = lib.ValidateNameVersion("", cfg.ServiceType, cfg.Domain)
+	cfg.Namespace = cfg.Name + "_" + cfg.ServiceType
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
