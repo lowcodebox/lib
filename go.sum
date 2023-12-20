@@ -44,6 +44,8 @@ cloud.google.com/go/storage v1.28.1/go.mod h1:Qnisd4CqDdo6BGs2AD5LLnEsmSQ80wQ5og
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.lowcodeplatform.net/fabric/api-client v0.1.18 h1:s8qe29boqknwfzJV8fS72NKnETwX2/ONLh9BtTW131A=
 git.lowcodeplatform.net/fabric/api-client v0.1.18/go.mod h1:47P1Kmc0FKhN51m6r9Y6rjdpZLxdfyyWTspr4VFACr8=
+git.lowcodeplatform.net/fabric/api-client v0.1.19 h1:x1jDbp0cAqZhawt9PRZV+phtJ3ErmiVfc+rU/H8jvwc=
+git.lowcodeplatform.net/fabric/api-client v0.1.19/go.mod h1:47P1Kmc0FKhN51m6r9Y6rjdpZLxdfyyWTspr4VFACr8=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.1.3 h1:F6PZrYZn+pwMvW8XAeb+xR30bxB6xbpJXVuSB+/ZC00=

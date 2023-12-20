@@ -121,7 +121,10 @@ func (a *api) element(ctx context.Context, action, body string) (result models.R
 
 	// получаем поля шаблона
 	if action == "elements" || action == "all" {
-		_, err = lib.Curl("GET", a.url+"/element/"+body, "", &result, handlers, nil)
+		urlc = a.url + "/element/" + body
+		urlc = strings.Replace(urlc, "//element", "/element", 1)
+
+		_, err = lib.Curl("GET", urlc, "", &result, handlers, nil)
 		if err != nil {
 			err = fmt.Errorf("%s (url: %s)", err, a.url+"/element/"+body)
 		}
@@ -129,6 +132,8 @@ func (a *api) element(ctx context.Context, action, body string) (result models.R
 	}
 
 	urlc = a.url + "/element/" + action + "?format=json"
+	urlc = strings.Replace(urlc, "//element", "/element", 1)
+
 	_, err = curl.NewRequestDefault().Method("POST").Payload(body).MapToObj(&result).Headers(handlers).Url(urlc).Do(nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
@@ -147,6 +152,8 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 
 	body, _ := json.Marshal(bodymap)
 	urlc = a.url + "/objs?format=json"
+	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
+
 	_, err = lib.Curl("POST", urlc, string(body), &result, map[string]string{}, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
@@ -164,6 +171,8 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 	}
 
 	urlc = a.url + "/objs/delete?ids=" + uids
+	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
+
 	_, err = lib.Curl("POST", urlc, "", &result, map[string]string{}, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
