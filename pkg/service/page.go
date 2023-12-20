@@ -86,10 +86,9 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 }
 
 // Собираем страницу
-func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models.ResponseData, values map[string]interface{}) (result string, err error) {
+func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.ResponseData, values map[string]interface{}) (result string, err error) {
 	var objMaket, objBlocks models.ResponseData
 	var t *template.Template
-	ctx := context.Background()
 
 	moduleResult := model.ModuleResult{}
 	//statModule := map[string]interface{}{}
@@ -121,10 +120,10 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 	// ДОДЕЛАТЬ СРОЧНО!!!
 
 	// 2 запрос на объекты блоков страницы
-	objBlocks, err = s.api.LinkGet(ctxp, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
+	objBlocks, err = s.api.LinkGet(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
 
 	// 3 запрос на объект макета
-	objMaket, err = s.api.ObjGet(ctxp, maketUID)
+	objMaket, err = s.api.ObjGet(ctx, maketUID)
 	//s.tree.Curl("GET", "_objs/"+maketUID, "", &objMaket, map[string]string{})
 
 	if len(objMaket.Data) == 0 {
@@ -197,7 +196,7 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 
 				// ПРОВЕРА ПРАВ ПУБЛИКАЦИИ
 				// получаем значение профиля из контекста
-				profile, ok := ctxp.Value("profile").(models.ProfileData)
+				profile, ok := ctx.Value("profile").(models.ProfileData)
 				if ok {
 					if !strings.Contains(publishRoles, profile.CurrentRole.Uid) {
 						continue
@@ -247,7 +246,7 @@ func (s *service) BPage(ctxp context.Context, in model.ServiceIn, objPage models
 	} else {
 		// ПОСЛЕДОВАТЕЛЬНО
 		for _, v := range objBlocks.Data {
-			moduleResult, err = s.GetBlock(in, v, page, shemaJSON, values)
+			moduleResult, err = s.GetBlock(ctx, in, v, page, shemaJSON, values)
 			if err != nil {
 				logger.Error(ctx, fmt.Sprintf("[BPage] Error generate page, title: %s, id: %s", page.Title, page.Id), zap.Error(err))
 			}
@@ -326,7 +325,7 @@ func (s *service) GetBlockToChannel(ctx context.Context, in model.ServiceIn, blo
 	default:
 	}
 
-	moduleResult, err := s.GetBlock(in, block, page, shemaJSON, values)
+	moduleResult, err := s.GetBlock(ctx, in, block, page, shemaJSON, values)
 	if err != nil {
 		moduleResult.Err = err
 		moduleResult.Result = template.HTML(fmt.Sprint(err))
@@ -336,11 +335,10 @@ func (s *service) GetBlockToChannel(ctx context.Context, in model.ServiceIn, blo
 	return
 }
 
-// получение содержимого блока (с учетом операций с кешем)
-func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSON string, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
+// GetBlock получение содержимого блока (с учетом операций с кешем)
+func (s *service) GetBlock(ctx context.Context, in model.ServiceIn, block, page models.Data, shemaJSON string, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
 	var addСonditionPath bool
 	var addСonditionURL bool
-	ctx := context.Background()
 
 	cacheInt, _ := block.Attr("cache", "value") // включен ли режим кеширования
 	cache_nokey2, _ := block.Attr("cache_keyAddPath", "value")
@@ -353,7 +351,7 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 		addСonditionURL = true
 	}
 
-	//t1 := time.Now()
+	t1 := time.Now()
 
 	if strings.Contains(shemaJSON, block.Id) { // наличие этого блока в схеме
 
@@ -370,11 +368,13 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 			key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addСonditionPath, addСonditionURL)
 			result, _, flagExpired, err := s.cache.Read(key)
 
-			//fmt.Println("read:", time.Since(t1), block.Id, key)
+			logger.Info(ctx, "GetBlock", zap.String("step", "read from cache"),
+				zap.String("block.Id", block.Id), zap.String("key", key))
 
 			// 1 кеша нет (срабатывает только при первом формировании)
 			if err != nil {
-				//fmt.Println("genr NULL:", time.Since(t1), block.Id, key, err, result)
+				logger.Info(ctx, "GetBlock", zap.String("step", "err get cache"),
+					zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 
 				result, err = s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 			} else {
@@ -382,7 +382,8 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 				// мы увеличиваем время на предельно время проведения обновления
 				// требуется обновить фоном (отдали текущие данные из кеша)
 				if flagExpired {
-					//fmt.Println("genr flagExpired:", time.Since(t1), block.Id, key, flagExpired)
+					logger.Info(ctx, "GetBlock", zap.String("step", "update cache"),
+						zap.Bool("flagExpired", flagExpired), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 
 					go s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 				}
@@ -409,6 +410,10 @@ func (s *service) GetBlock(in model.ServiceIn, block, page models.Data, shemaJSO
 	} else {
 		logger.Error(ctx, fmt.Sprintf("error. block is not used, block: %s, page id: %s", block.Id, page.Id), zap.Error(err))
 	}
+
+	logger.Info(ctx, "GetBlock", zap.String("step", "finish"),
+		zap.Float64("timing", time.Since(t1).Seconds()),
+		zap.Bool("cache Active", s.cache.Active()), zap.String("block.Id", block.Id), zap.Error(err))
 
 	//fmt.Println("Time:", time.Since(t1), "Cache:", s.cache.Active(), "Block:", block.Id)
 

@@ -34,7 +34,7 @@ type Cache interface {
 	Clear(links string) (count int, err error)
 }
 
-// проверяем статус соединения с базой
+// Active проверяем статус соединения с базой
 func (c *cache) Active() bool {
 	if c.active {
 		return true
@@ -42,7 +42,7 @@ func (c *cache) Active() bool {
 	return false
 }
 
-// формируем ключ кеша
+// GenKey формируем ключ кеша
 // addСonditionPath, addСonditionURL - признаки добавления хеша пути и/или запроса в ключе (указываются в кеше блока)
 func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСonditionURL bool) (key, cacheParams string) {
 	key2 := ""
