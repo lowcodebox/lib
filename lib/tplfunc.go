@@ -173,6 +173,7 @@ func (t *funcMap) csvtosliсemap(in []byte) (res []map[string]string, err error)
 	var headers = []string{}
 
 	reader := csv.NewReader(bytes.NewBuffer(in))
+	reader.Comma = ';'
 	header, err := reader.Read() // skip first line
 	if err != nil {
 		if err != io.EOF {

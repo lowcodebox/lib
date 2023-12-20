@@ -5,7 +5,7 @@ import (
 )
 
 func Test_csvtosliсemap(t *testing.T) {
-	in := "field1,field2\n2,3"
+	in := "field1;field2\n2;3"
 
 	NewFuncMap(nil, nil)
 	res, err := Funcs.csvtosliсemap([]byte(in))
