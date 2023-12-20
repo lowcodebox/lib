@@ -123,7 +123,7 @@ type RestStatus struct {
 	Description string `json:"description"`
 	Status      int    `json:"status"`
 	Code        string `json:"code"`
-	Error       error  `json:"error"`
+	Error       string `json:"error"`
 }
 
 type ResponseData struct {
