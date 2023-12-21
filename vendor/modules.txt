@@ -20,7 +20,7 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/api-client v0.1.19
+# git.lowcodeplatform.net/fabric/api-client v0.1.20
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/api-client
 # git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe

@@ -170,10 +170,15 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 		defer a.observeLogger(ctx, time.Now(), "objDelete", err, urlc, uids)
 	}
 
+	payload := map[string]string{
+		"data-uid": uids,
+	}
+	payloadJson, err := json.Marshal(payload)
+
 	urlc = a.url + "/objs/delete?ids=" + uids
 	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
 
-	_, err = lib.Curl("POST", urlc, "", &result, map[string]string{}, nil)
+	_, err = lib.Curl("JSONTOPOST", urlc, string(payloadJson), &result, map[string]string{}, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
