@@ -16,7 +16,6 @@ import (
 
 // Get получение содержимого блока (с учетом операций с кешем)
 func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.Data, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
-	fmt.Println("GetBlock")
 
 	var addСonditionPath bool
 	var addСonditionURL bool
@@ -36,6 +35,9 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 	t1 := time.Now()
 
 	// если интервал не задан, то не кешируем
+	if cacheInt == "" {
+		cacheInt = "0"
+	}
 	cacheInterval, err = strconv.Atoi(cacheInt)
 	if err != nil {
 		cacheInterval = 0
@@ -48,17 +50,16 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 		key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addСonditionPath, addСonditionURL)
 		result, _, flagExpired, err := s.cache.Read(key)
 
-		logger.Info(ctx, "GetBlock", zap.String("step", "read from cache"),
-			zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
-
 		// 1 кеша нет (срабатывает только при первом формировании)
 		if err != nil {
-			logger.Info(ctx, "GetBlock", zap.String("step", "err get cache"),
+			logger.Error(ctx, "err get cache (GetBlock)", zap.String("step", "err get cache"),
+				zap.Float64("timing", time.Since(t1).Seconds()),
 				zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 
 			result, err = s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 			if err != nil {
-				logger.Info(ctx, "GetBlock", zap.String("step", "err update cache"),
+				logger.Info(ctx, "err update cache (GetBlock)", zap.String("step", "err update cache"),
+					zap.Float64("timing", time.Since(t1).Seconds()),
 					zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 			}
 		} else {
@@ -66,9 +67,6 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 			// мы увеличиваем время на предельно время проведения обновления
 			// требуется обновить фоном (отдали текущие данные из кеша)
 			if flagExpired {
-				logger.Info(ctx, "GetBlock", zap.String("step", "update cache"),
-					zap.Bool("flagExpired", flagExpired), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
-
 				go s.updateCache(ctx, key, cacheParams, cacheInterval, in, block, page, values)
 			}
 		}
@@ -90,10 +88,6 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 
 		moduleResult = mResult
 	}
-
-	logger.Info(ctx, "GetBlock", zap.String("step", "finish"),
-		zap.Float64("timing", time.Since(t1).Seconds()),
-		zap.Bool("cache Active", s.cache.Active()), zap.String("block.Id", block.Id), zap.Error(err))
 
 	return
 }
@@ -118,4 +112,3 @@ func (b *block) GetToChannel(ctx context.Context, in model.ServiceIn, block, pag
 
 	return
 }
-

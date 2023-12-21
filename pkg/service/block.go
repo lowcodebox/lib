@@ -10,8 +10,8 @@ import (
 
 func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error) {
 	var objBlock models.ResponseData
-	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 
+	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 	objBlock, err = s.api.ObjGet(ctx, in.Block)
 
 	if len(objBlock.Data) == 0 {

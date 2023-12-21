@@ -47,7 +47,6 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 
 	// запрос объекта страницы
 	objPage, err = s.api.ObjGet(ctx, in.Page)
-	//_, err = s.tree.Curl("GET", "_objs/"+in.Page, "", &objPage, map[string]string{})
 	if err != nil {
 		err = fmt.Errorf("%s (%s)", "Error: Fail GET-request!", err)
 		return out, err
