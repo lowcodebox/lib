@@ -77,7 +77,7 @@ func New(
 
 	var tplfunc = function.NewTplFunc(cfg, api)
 	var function = function.New(cfg, api)
-	var blocks = block.New(cfg, function, tplfunc, api, vfs)
+	var blocks = block.New(cfg, function, tplfunc, api, vfs, cache)
 
 	// асинхронно обновляем список публичный страниц/блоков
 	go dps.reloadPublicPages(ctx, api, 10*time.Second)
