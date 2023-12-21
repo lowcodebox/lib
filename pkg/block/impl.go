@@ -41,6 +41,7 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 	cacheInterval, err = strconv.Atoi(cacheInt)
 	if err != nil {
 		cacheInterval = 0
+		err = nil
 	}
 
 	// если включен кеш и есть интервал кеширования
