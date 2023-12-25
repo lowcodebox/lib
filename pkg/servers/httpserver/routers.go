@@ -74,6 +74,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},
 
 		//Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
+		Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
 		Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
 		Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
 
