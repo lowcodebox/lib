@@ -1,6 +1,7 @@
 package app_lib
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/csv"
@@ -33,6 +34,7 @@ var FuncMap template.FuncMap
 
 type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
+	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
 }
 
 type Api interface {
@@ -51,6 +53,33 @@ type funcMap struct {
 }
 
 type FuncMaper interface {
+}
+
+type readerAt struct {
+	ctx  context.Context
+	v    Vfs
+	file string
+	s    []byte
+}
+
+func (r *readerAt) ReadAt(p []byte, off int64) (n int, err error) {
+	ff := bytes.NewReader(r.s)
+	n, err = ff.ReadAt(p, 0)
+
+	fmt.Println("----", len(p))
+
+	return len(r.s), err
+}
+
+func (r *readerAt) Len() (n int) {
+	p, _, err := r.v.Read(r.ctx, r.file)
+	if err != nil {
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			return n
+		}
+		return 0
+	}
+	return len(p)
 }
 
 func NewFuncMap(vfs Vfs, api Api) {
@@ -145,10 +174,44 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"csvtosliсemap": Funcs.csvtosliсemap,
 
 		"objFromID": Funcs.objFromID,
+		"unzip":     Funcs.unzip,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// unzip распаковываем файл в текущем хранилище приложения
+// destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
+func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
+	var err error
+
+	r := readerAt{
+		context.Background(),
+		t.vfs,
+		zipFilename,
+		[]byte{},
+	}
+
+	s, _, err := r.v.Read(r.ctx, r.file)
+	if err != nil {
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			return "fail"
+		}
+		return "fail"
+	}
+
+	r.s = s
+	res, err := zip.NewReader(&r, int64(r.Len()))
+	if err != nil {
+		return fmt.Sprintf("error zip.NewReader. %v, %s", res, err)
+	}
+
+	for _, file := range res.File {
+		fmt.Println("-", file)
+	}
+
+	return status
+}
 
 // randomizer перемешивает полученный слайс
 func (t *funcMap) randstringslice(a []string) (res []string) {

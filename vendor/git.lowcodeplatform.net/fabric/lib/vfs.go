@@ -366,10 +366,14 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 		file = strings.Replace(file, sep+sep, sep, -1)
 	}
 
-	//fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
+	fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
 
 	urlPath.Host = bucket
 	urlPath.Path = file
+
+	if v.location == nil {
+		return nil, fmt.Errorf("error. location is empty. bucket: %s, file: %s, endpoint: %s", urlPath.Host, urlPath.Path, v.endpoint)
+	}
 
 	item, err = v.location.ItemByURL(&urlPath)
 	if err != nil {
