@@ -1,6 +1,6 @@
 module git.lowcodeplatform.net/fabric/lib
 
-go 1.17
+go 1.18
 
 require (
 	git.lowcodeplatform.net/fabric/logbox-client v0.1.3
