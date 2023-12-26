@@ -35,7 +35,7 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceResult, err := h.service.Page(r.Context(), in)
+	serviceResult, er := h.service.Page(r.Context(), in)
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
 		return

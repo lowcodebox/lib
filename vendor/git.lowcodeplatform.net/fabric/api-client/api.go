@@ -63,7 +63,6 @@ func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 // QueryWithCache результат выводим в объект как при вызове Curl
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
-	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 	if a.observeLog {
@@ -81,7 +80,7 @@ func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string
 		}, a.cacheTTL)
 
 		value, err = cache.Cache().Get(key)
-		if !ok {
+		if err != nil {
 			err = fmt.Errorf("get value is fail. err: %s", err)
 		}
 
@@ -126,7 +125,7 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.R
 		}, a.cacheTTL)
 
 		value, err = cache.Cache().Get(key)
-		if !ok {
+		if err != nil {
 			err = fmt.Errorf("get value is fail. err: %s", err)
 		}
 
@@ -181,7 +180,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 		}, a.cacheTTL)
 
 		value, err = cache.Cache().Get(key)
-		if !ok {
+		if err != nil {
 			err = fmt.Errorf("get value is fail. err: %s", err)
 		}
 
@@ -267,7 +266,7 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 		}, a.cacheTTL)
 
 		value, err = cache.Cache().Get(key)
-		if !ok {
+		if err != nil {
 			err = fmt.Errorf("get value is fail. err: %s", err)
 		}
 
