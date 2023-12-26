@@ -12,6 +12,11 @@ import (
 
 const cacheKeyPrefix = "cache."
 
+var ErrorCacheNotInit = errors.New("cache is not inited")
+var ErrorCachePersistentNotInit = errors.New("persistent cache is not inited")
+var ErrorKeyNotFound = errors.New("key is not found")
+var ErrorItemExpired = errors.New("item expired")
+
 var (
 	cacheCollection cache
 )
@@ -19,19 +24,17 @@ var (
 type cache struct {
 	items map[string]*cacheItem
 	mx    sync.RWMutex
+	ttl   time.Duration // интервал удаление записи из кеша
 }
 
 type cacheItem struct {
 	// Getter определяет механизм получения данных от любого источника к/р поддерживает интерфейс
-	reader          Reader
+	reader          func() (res interface{}, err error)
 	cache           *ttlcache.Cache
 	persistentCache *ttlcache.Cache
 	locks           locks
-	cacheTTL        time.Duration
-}
-
-type Reader interface {
-	ReadSource() (res []byte, err error)
+	cacheTTL        time.Duration // интервал протухания/обновления кеша
+	expired         time.Time     // время удаляения записи из кеша
 }
 
 func Cache() *cache {
@@ -42,28 +45,46 @@ func Cache() *cache {
 	return &cacheCollection
 }
 
-// Register регистрируем новый кеш (указываем фукнцию, кр будет возвращать нужное значение)
-func (c *cache) Register(key string, source Reader, ttl time.Duration) (err error) {
+// Upsert регистрируем новый/обновляем кеш (указываем фукнцию, кр будет возвращать нужное значение)
+func (c *cache) Upsert(key string, source func() (res interface{}, err error), ttl time.Duration) (err error) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
-	c.items = map[string]*cacheItem{}
+
+	if c.items == nil {
+		c.items = map[string]*cacheItem{}
+	}
+
+	item, found := c.items[key]
+	if found {
+		item.reader = source
+		item.cacheTTL = ttl
+		_, err = c.updateCacheValue(key, item)
+		return err
+	}
 
 	cache := ttlcache.NewCache()
 	cache.SkipTtlExtensionOnHit(true)
 
+	expiredTime := time.Now().Add(c.ttl)
+	if c.ttl == 0 {
+		expiredTime = time.UnixMicro(0)
+	}
 	ci := cacheItem{
 		cache:           cache,
 		persistentCache: ttlcache.NewCache(),
 		locks:           locks{keys: map[string]bool{}},
 		reader:          source,
 		cacheTTL:        ttl,
+		expired:         expiredTime,
 	}
+
 	c.items[key] = &ci
+
 	return err
 }
 
-// Unregister
-func (c *cache) Unregister(key string) (err error) {
+// Delete удаляем значение из кеша
+func (c *cache) Delete(key string) (err error) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -79,15 +100,23 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 
 	item, found = c.items[key]
 	if !found {
-		return nil, fmt.Errorf("error. key is not found")
+		return nil, ErrorKeyNotFound
 	}
 
 	if item.cache == nil {
-		return nil, fmt.Errorf("cache is not inited")
+		return nil, ErrorCacheNotInit
 	}
 
 	if item.persistentCache == nil {
-		return nil, fmt.Errorf("persistent cache is not inited")
+		return nil, ErrorCachePersistentNotInit
+	}
+
+	if item.expired != time.UnixMicro(0) && !item.expired.After(time.Now()) {
+		err = c.Delete(key)
+		if err != nil {
+			return nil, fmt.Errorf("error deleted item (expired time). err: %s", err)
+		}
+		return nil, ErrorItemExpired
 	}
 
 	if cachedValue, ok := item.cache.Get(cacheKeyPrefix + key); ok {
@@ -100,24 +129,26 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 		return c.tryToGetOldValue(key)
 	}
 
-	// Значение не найдено. Первый из запросов блокирует за собой обновление (на самом деле
-	// может возникнуть ситуация когда несколько запросов поставят блокировку и начнут
-	// обновлять кеш - пока считаем это некритичным).
+	return c.updateCacheValue(key, item)
+}
+
+// updateCacheValue обновление значений в кеше
+// вариант 1 - значение не найдено. Первый из запросов блокирует за собой обновление (на самом деле
+// может возникнуть ситуация когда несколько запросов поставят блокировку и начнут
+// обновлять кеш - пока считаем это некритичным).
+func (c *cache) updateCacheValue(key string, item *cacheItem) (result interface{}, err error) {
 	item.locks.Set(key, true)
 	defer item.locks.Set(key, false)
 
-	var values []byte
-	values, err = item.reader.ReadSource()
+	result, err = item.reader()
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get value from getter")
 	}
 
-	value = values
+	item.cache.SetWithTTL(cacheKeyPrefix+key, result, item.cacheTTL)
+	item.persistentCache.Set(cacheKeyPrefix+key, result)
 
-	item.cache.SetWithTTL(cacheKeyPrefix+key, value, item.cacheTTL)
-	item.persistentCache.Set(cacheKeyPrefix+key, value)
-
-	return value, nil
+	return result, nil
 }
 
 // tryToGetOldValue пытается получить старое значение, если в момент запроса на актуальном стоит блокировка.
@@ -152,11 +183,12 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 }
 
 // CacheInit инициализировали глобальную переменную defaultCache
-// source - источник, откуда мы получаем значения для кеширования
-func CacheRegister() {
+// ttl - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
+func CacheInit(ttl time.Duration) {
 	d := cache{
 		items: map[string]*cacheItem{},
 		mx:    sync.RWMutex{},
+		ttl:   ttl,
 	}
 	cacheCollection = d
 }

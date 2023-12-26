@@ -190,7 +190,7 @@ func (a *api) observeLogger(ctx context.Context, start time.Time, method string,
 	logger.Info(ctx, "timing api query",
 		zap.String("method", method),
 		zap.Float64("timing", time.Since(start).Seconds()),
-		zap.String("arguments", fmt.Sprint(arguments)),
+		//zap.String("arguments", fmt.Sprint(arguments)),
 		zap.Error(err),
 	)
 }
