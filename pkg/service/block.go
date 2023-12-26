@@ -12,7 +12,7 @@ func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.Serv
 	var objBlock models.ResponseData
 
 	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
-	objBlock, err = s.api.ObjGet(ctx, in.Block)
+	objBlock, err = s.api.ObjGetWithCache(ctx, in.Block)
 
 	if len(objBlock.Data) == 0 {
 		return out, fmt.Errorf("%s", "Error. Lenght data from objBlock is 0.")

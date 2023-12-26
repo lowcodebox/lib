@@ -64,6 +64,11 @@ func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
 	var ok bool
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "QueryWithCache", err, query, method, bodyJSON)
+	}
 	key := lib.Hash(fmt.Sprintf("%s%s%s", query, method, bodyJSON))
 
 	cacheValue, err := cache.Cache().Get(key)
@@ -104,6 +109,11 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 
 func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.ResponseData, err error) {
 	var ok bool
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "ObjGetWithCache", err, uids)
+	}
 	key := lib.Hash(uids)
 
 	cacheValue, err := cache.Cache().Get(key)
@@ -154,6 +164,11 @@ func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	var ok bool
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "LinkGetWithCache", err, tpl, obj, mode, short)
+	}
 	key := lib.Hash(fmt.Sprintf("%s%s%s%s", tpl, obj, mode, short))
 
 	cacheValue, err := cache.Cache().Get(key)
@@ -231,6 +246,11 @@ func (a *api) Element(ctx context.Context, action, body string) (result models.R
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) ElementWithCache(ctx context.Context, action, body string) (result models.ResponseData, err error) {
 	var ok bool
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "ElementWithCache", err, action, body)
+	}
 	key := lib.Hash(fmt.Sprintf("%s%s", action, body))
 
 	if action != "elements" && action != "all" {

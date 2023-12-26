@@ -32,6 +32,8 @@ import (
 var Funcs funcMap
 var FuncMap template.FuncMap
 
+const ttlCache = 5 * time.Minute
+
 type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
 	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
@@ -455,7 +457,7 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
 	}
 
 	return t.api.ObjGet(ctx, uids)
@@ -464,7 +466,7 @@ func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseD
 func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
 	}
 
 	return t.api.ObjCreate(ctx, bodymap)
@@ -473,7 +475,7 @@ func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result
 func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
 	}
 
 	return t.api.ObjDelete(ctx, uids)
@@ -482,7 +484,7 @@ func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.Respon
 func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
 	}
 
 	return t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
@@ -491,7 +493,7 @@ func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor 
 func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
 	}
 
 	return t.api.LinkGet(ctx, tpl, obj, mode, short)
@@ -500,7 +502,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (resul
 func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
 	}
 
 	return t.api.Query(ctx, query, method, bodyJSON)

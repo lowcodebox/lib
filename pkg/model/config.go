@@ -55,6 +55,7 @@ type Config struct {
 	CbMaxRequests uint32   `envconfig:"CB_MAX_REQUESTS" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
 	CbTimeout     Duration `envconfig:"CB_TIMEOUT" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
 	CbInterval    Duration `envconfig:"CB_INTERVAL" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
+	ApiCacheTTL   Duration `envconfig:"URL_API" default:"2m"`
 
 	PortInterval    string `envconfig:"PORT_INTERVAL" default:""`
 	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`

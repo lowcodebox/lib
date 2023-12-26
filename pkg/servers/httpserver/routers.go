@@ -31,9 +31,6 @@ type Route struct {
 }
 
 type Routes []Route
-type prometheusReader struct {
-	res prometheus.Gatherer
-}
 
 func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
@@ -55,8 +52,15 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 
-	pr := prometheusReader{}
-	err = cache.Cache().Register("prometheus", &pr, h.cfg.MetricIntervalCached.Value)
+	err = cache.Cache().Upsert("prometheus", func() (res interface{}, err error) {
+		mf, err := prometheus.DefaultGatherer.Gather()
+		if err != nil {
+			err = fmt.Errorf("error prometheus Gather. err: %s", err)
+			return
+		}
+		res, err = json.Marshal(mf)
+		return res, nil
+	}, h.cfg.MetricIntervalCached.Value)
 	if err != nil {
 		logger.Panic(h.ctx, "cache collection is not init", zap.Error(err))
 	}
@@ -131,16 +135,4 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	//router.PathPrefix("/templates/").Handler(http.StripPrefix("/templates/", http.FileServer(http.Dir(h.cfg.Workingdir + "/templates"))))
 
 	return router
-}
-
-func (p *prometheusReader) ReadSource() (res []byte, err error) {
-	mf, err := prometheus.DefaultGatherer.Gather()
-	if err != nil {
-		err = fmt.Errorf("error prometheus Gather. err: %s", err)
-		return
-	}
-
-	res, err = json.Marshal(mf)
-
-	return res, nil
 }

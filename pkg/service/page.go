@@ -25,7 +25,7 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if in.Page == "" {
 		// получаем все страницы текущего приложения
-		objPages, err = s.api.LinkGet(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "")
+		objPages, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "")
 		//s.tree.Curl("GET", "_link?obj="+s.cfg.DataUid+"&source="+s.cfg.TplAppPagesPointsrc+"&mode=in", "", &objPages, map[string]string{})
 
 		for _, v := range objPages.Data {
@@ -46,7 +46,7 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	}
 
 	// запрос объекта страницы
-	objPage, err = s.api.ObjGet(ctx, in.Page)
+	objPage, err = s.api.ObjGetWithCache(ctx, in.Page)
 	if err != nil {
 		err = fmt.Errorf("%s (%s)", "Error: Fail GET-request!", err)
 		return out, err
@@ -118,10 +118,10 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	// ДОДЕЛАТЬ СРОЧНО!!!
 
 	// 2 запрос на объекты блоков страницы
-	objBlocks, err = s.api.LinkGet(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
+	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
 
 	// 3 запрос на объект макета
-	objMaket, err = s.api.ObjGet(ctx, maketUID)
+	objMaket, err = s.api.ObjGetWithCache(ctx, maketUID)
 	//s.tree.Curl("GET", "_objs/"+maketUID, "", &objMaket, map[string]string{})
 
 	if len(objMaket.Data) == 0 {
