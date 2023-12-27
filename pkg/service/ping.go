@@ -27,10 +27,19 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 		logger.Error(ctx, "cache.Cache", zap.Error(err))
 	}
 
-	err = json.Unmarshal(metrics.([]byte), &mobj)
-	if err != nil {
-		metrics = fmt.Sprintf("error. %s", err)
-		logger.Error(ctx, "cache.Cache Unmarshal", zap.Error(err))
+	if metrics != nil {
+
+	}
+
+	bmetric, ok := metrics.([]byte)
+	if ok {
+		err = json.Unmarshal(bmetric, &mobj)
+		if err != nil {
+			metrics = fmt.Sprintf("error. %s", err)
+			logger.Error(ctx, "cache.Cache Unmarshal",
+				zap.Error(err),
+				zap.String("metrics failed body", fmt.Sprintf("%+v", metrics)))
+		}
 	}
 
 	pg, _ := strconv.Atoi(s.cfg.PortApp)
