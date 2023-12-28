@@ -1,11 +1,15 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/ReneKroon/ttlcache"
+	"go.uber.org/zap"
 
 	"github.com/pkg/errors"
 )
@@ -22,9 +26,11 @@ var (
 )
 
 type cache struct {
-	items map[string]*cacheItem
-	mx    sync.RWMutex
-	ttl   time.Duration // интервал удаление записи из кеша
+	ctx             context.Context
+	items           map[string]*cacheItem
+	mx              sync.RWMutex
+	expiredInterval time.Duration // интервал, через который GС удалит запись
+	runGCInterval   time.Duration // интервал запуска GC
 }
 
 type cacheItem struct {
@@ -33,8 +39,8 @@ type cacheItem struct {
 	cache           *ttlcache.Cache
 	persistentCache *ttlcache.Cache
 	locks           locks
-	cacheTTL        time.Duration // интервал протухания/обновления кеша
-	expired         time.Time     // время удаляения записи из кеша
+	refreshInterval time.Duration // интервал обновления кеша
+	expiredTime     time.Time     // время протухания кеша (когда GС удалит запись)
 }
 
 func Cache() *cache {
@@ -46,7 +52,7 @@ func Cache() *cache {
 }
 
 // Upsert регистрируем новый/обновляем кеш (указываем фукнцию, кр будет возвращать нужное значение)
-func (c *cache) Upsert(key string, source func() (res interface{}, err error), ttl time.Duration) (err error) {
+func (c *cache) Upsert(key string, source func() (res interface{}, err error), refreshInterval time.Duration) (err error) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -57,7 +63,7 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), t
 	item, found := c.items[key]
 	if found {
 		item.reader = source
-		item.cacheTTL = ttl
+		item.refreshInterval = refreshInterval
 		_, err = c.updateCacheValue(key, item)
 		return err
 	}
@@ -65,8 +71,8 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), t
 	cache := ttlcache.NewCache()
 	cache.SkipTtlExtensionOnHit(true)
 
-	expiredTime := time.Now().Add(c.ttl)
-	if c.ttl == 0 {
+	expiredTime := time.Now().Add(c.expiredInterval)
+	if c.expiredInterval == 0 {
 		expiredTime = time.UnixMicro(0)
 	}
 	ci := cacheItem{
@@ -74,8 +80,8 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), t
 		persistentCache: ttlcache.NewCache(),
 		locks:           locks{keys: map[string]bool{}},
 		reader:          source,
-		cacheTTL:        ttl,
-		expired:         expiredTime,
+		refreshInterval: refreshInterval,
+		expiredTime:     expiredTime,
 	}
 
 	c.items[key] = &ci
@@ -111,14 +117,6 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 		return nil, ErrorCachePersistentNotInit
 	}
 
-	if item.expired != time.UnixMicro(0) && !item.expired.After(time.Now()) {
-		err = c.Delete(key)
-		if err != nil {
-			return nil, fmt.Errorf("error deleted item (expired time). err: %s", err)
-		}
-		return nil, ErrorItemExpired
-	}
-
 	if cachedValue, ok := item.cache.Get(cacheKeyPrefix + key); ok {
 		return cachedValue, nil
 	}
@@ -145,8 +143,9 @@ func (c *cache) updateCacheValue(key string, item *cacheItem) (result interface{
 		return nil, errors.Wrap(err, "could not get value from getter")
 	}
 
-	item.cache.SetWithTTL(cacheKeyPrefix+key, result, item.cacheTTL)
+	item.cache.SetWithTTL(cacheKeyPrefix+key, result, item.refreshInterval)
 	item.persistentCache.Set(cacheKeyPrefix+key, result)
+	item.expiredTime = time.Now().Add(c.expiredInterval)
 
 	return result, nil
 }
@@ -182,15 +181,19 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	return oldValue, err
 }
 
-// CacheInit инициализировали глобальную переменную defaultCache
-// ttl - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
-func CacheInit(ttl time.Duration) {
+// Init инициализировали глобальную переменную defaultCache
+// expiredInterval - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
+func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
 	d := cache{
-		items: map[string]*cacheItem{},
-		mx:    sync.RWMutex{},
-		ttl:   ttl,
+		ctx:             ctx,
+		items:           map[string]*cacheItem{},
+		mx:              sync.RWMutex{},
+		runGCInterval:   runGCInterval,
+		expiredInterval: expiredInterval,
 	}
 	cacheCollection = d
+
+	go d.gc()
 }
 
 // locks выполняет функции блокировки при одновременном обновлении значений в кеше.
@@ -214,4 +217,49 @@ func (l *locks) Set(key string, value bool) {
 	l.mx.Lock()
 	l.keys[key] = value
 	l.mx.Unlock()
+}
+
+// Balancer запускаем балансировщик реплик для сервисов
+// опрашивает список реплик из пингов и если запущено меньше, добавляет реплику.
+func (c *cache) gc() {
+	var err error
+	ticker := time.NewTicker(c.runGCInterval)
+
+	defer ticker.Stop()
+	defer func() {
+		lib.Recover(c.ctx)
+		if err != nil {
+			logger.Error(c.ctx, "error gc", zap.Error(err))
+		}
+	}()
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		case <-ticker.C:
+			err = c.cleaner()
+			if err != nil {
+				logger.Error(c.ctx, "error deleted item (expired time)", zap.Error(err))
+			}
+			ticker = time.NewTicker(c.runGCInterval)
+		}
+	}
+}
+
+func (c *cache) cleaner() (err error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
+	// удаляем значение ключа из хранилища (чтобы не копились старые хеши)
+	for key, item := range c.items {
+		if item.expiredTime != time.UnixMicro(0) && !item.expiredTime.After(time.Now()) {
+			err = c.Delete(key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return err
 }

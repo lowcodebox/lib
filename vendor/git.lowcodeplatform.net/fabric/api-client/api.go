@@ -22,10 +22,10 @@ import (
 const headerRequestId = "X-Request-Id"
 
 type api struct {
-	url        string
-	observeLog bool
-	cb         *gobreaker.CircuitBreaker
-	cacheTTL   time.Duration
+	url                 string
+	observeLog          bool
+	cb                  *gobreaker.CircuitBreaker
+	cacheUpdateInterval time.Duration
 }
 
 type Api interface {
@@ -77,7 +77,7 @@ func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.Query(ctx, query, method, bodyJSON)
 			return res, err
-		}, a.cacheTTL)
+		}, a.cacheUpdateInterval)
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
@@ -122,7 +122,7 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.R
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.ObjGet(ctx, uids)
 			return res, err
-		}, a.cacheTTL)
+		}, a.cacheUpdateInterval)
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
@@ -177,7 +177,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.LinkGet(ctx, tpl, obj, mode, short)
 			return res, err
-		}, a.cacheTTL)
+		}, a.cacheUpdateInterval)
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
@@ -263,7 +263,7 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.Element(ctx, action, body)
 			return res, err
-		}, a.cacheTTL)
+		}, a.cacheUpdateInterval)
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
@@ -312,7 +312,7 @@ func (a *api) ObjDelete(ctx context.Context, uids string) (result models.Respons
 	return result, err
 }
 
-func New(ctx context.Context, url string, observeLog bool, cacheTTL time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) Api {
+func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) Api {
 	var err error
 	if cbMaxRequests == 0 {
 		cbMaxRequests = 3
@@ -341,12 +341,12 @@ func New(ctx context.Context, url string, observeLog bool, cacheTTL time.Duratio
 	)
 
 	// инициализировали переменную кеша
-	cache.CacheInit(10 * time.Hour)
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
 
 	return &api{
 		url,
 		observeLog,
 		cb,
-		cacheTTL,
+		cacheUpdateInterval,
 	}
 }

@@ -1217,7 +1217,7 @@ func (t *funcMap) unmarshal(i string) (res interface{}) {
 
 	err := json.Unmarshal([]byte(i), &conf)
 	if err != nil {
-		return err
+		return res
 	}
 	return conf
 }

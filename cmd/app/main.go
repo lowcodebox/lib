@@ -170,7 +170,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		ctx,
 		cfg.UrlApi,
 		cfg.EnableObserverLogApi,
-		cfg.ApiCacheTTL.Duration,
+		cfg.CacheRefreshInterval.Duration,
 		cfg.CbMaxRequests,
 		cfg.CbTimeout.Duration,
 		cfg.CbInterval.Duration,

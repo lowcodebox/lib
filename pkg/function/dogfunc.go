@@ -410,7 +410,7 @@ func (d *dogfunc) ConfigValue(arg []string) (result string, err error) {
 func (d *dogfunc) SplitIndex(arg []string) (result string, err error) {
 	var valueDefault string
 
-	if len(arg) > 0 {
+	if len(arg) > 4 {
 
 		str := d.tplfunc.Replace(arg[0], "'", "", -1)
 		sep := d.tplfunc.Replace(arg[1], "'", "", -1)

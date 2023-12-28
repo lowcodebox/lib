@@ -20,7 +20,7 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/api-client v0.1.27
+# git.lowcodeplatform.net/fabric/api-client v0.1.28
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/api-client
 # git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe
@@ -29,8 +29,8 @@ git.lowcodeplatform.net/fabric/iam/pkg/i18n
 # git.lowcodeplatform.net/fabric/iam-client v0.1.3
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam-client
-# git.lowcodeplatform.net/fabric/lib v0.2.6
-## explicit; go 1.17
+# git.lowcodeplatform.net/fabric/lib v0.2.7
+## explicit; go 1.18
 git.lowcodeplatform.net/fabric/lib
 git.lowcodeplatform.net/fabric/lib/pkg/s3
 # git.lowcodeplatform.net/fabric/logbox v0.1.3
@@ -42,7 +42,7 @@ git.lowcodeplatform.net/fabric/logbox-client
 # git.lowcodeplatform.net/fabric/models v0.1.16
 ## explicit; go 1.17
 git.lowcodeplatform.net/fabric/models
-# git.lowcodeplatform.net/packages/cache v0.1.5
+# git.lowcodeplatform.net/packages/cache v0.1.8
 ## explicit; go 1.19
 git.lowcodeplatform.net/packages/cache
 # git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1

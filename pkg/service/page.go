@@ -276,7 +276,13 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	if maketFileInside != "" {
 		dataFile = maketFileInside
 	} else {
+		if maketFile == "" {
+			return "", fmt.Errorf("error. path maketFile is empty")
+		}
 		sliceMake := strings.Split(maketFile, "/")
+		if len(sliceMake) < 4 {
+			return "", fmt.Errorf("error path maketFile. current maketFile: %s", maketFile)
+		}
 		maketFile = strings.Join(sliceMake[3:], "/")
 
 		byteFile, _, err := s.vfs.Read(ctx, maketFile)
