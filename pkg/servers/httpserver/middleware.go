@@ -44,7 +44,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		r.ParseForm()
 		for k, _ := range r.Form {
-			if h.src.GetDynamicParams().PublicPages[k] {
+			if dps.PublicPages[k] {
 				flagPublicPages = true
 				break
 			}
@@ -60,7 +60,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 		// обращение к публичному урлу
 		if !flagPublicPages {
-			for k, _ := range dps.PublicPages {
+			for k, _ := range dps.PublicRoutes {
 				if strings.Contains(r.URL.Path, k) {
 					flagPublicRoutes = true
 					break

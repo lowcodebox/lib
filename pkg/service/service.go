@@ -16,6 +16,8 @@ import (
 	iam "git.lowcodeplatform.net/fabric/iam-client"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 const queryPublicPages = "sys_public_pages"
@@ -43,7 +45,7 @@ type service struct {
 	api      api.Api
 	iam      iam.IAM
 	vfs      lib.Vfs
-	dps      dynamicParams
+	dps      *dynamicParams
 }
 
 // Service interface
@@ -80,7 +82,7 @@ func New(
 	var blocks = block.New(cfg, function, tplfunc, api, vfs, cache)
 
 	// асинхронно обновляем список публичный страниц/блоков
-	go dps.reloadPublicPages(ctx, api, 10*time.Second)
+	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
 
 	return &service{
 		cfg,
@@ -92,12 +94,12 @@ func New(
 		api,
 		iam,
 		vfs,
-		dps,
+		&dps,
 	}
 }
 
 // ReloadFromPG обновляем meta если обновилось время в кипере (изменили данные и нажали - обновить в сервисе)
-func (d *dynamicParams) reloadPublicPages(ctx context.Context, api api.Api, intervalReload time.Duration) {
+func reloadPublicPages(ctx context.Context, d *dynamicParams, api api.Api, intervalReload time.Duration) {
 	var objs = models.ResponseData{}
 	ticker := time.NewTicker(intervalReload)
 	defer ticker.Stop()
@@ -109,11 +111,13 @@ func (d *dynamicParams) reloadPublicPages(ctx context.Context, api api.Api, inte
 		case <-ticker.C:
 			res, err := api.Query(ctx, queryPublicPages, http.MethodGet, "")
 			if err != nil {
+				logger.Error(ctx, "error api.Query", zap.String("query", queryPublicPages), zap.Error(err))
 				ticker = time.NewTicker(intervalReload)
 				continue
 			}
 			err = json.Unmarshal([]byte(res), &objs)
 			if err != nil {
+				logger.Error(ctx, "error Unmarshal api.Query", zap.String("query", queryPublicPages), zap.Error(err))
 				ticker = time.NewTicker(intervalReload)
 				continue
 			}
@@ -133,5 +137,5 @@ func (d *dynamicParams) reloadPublicPages(ctx context.Context, api api.Api, inte
 }
 
 func (s *service) GetDynamicParams() *dynamicParams {
-	return &s.dps
+	return s.dps
 }

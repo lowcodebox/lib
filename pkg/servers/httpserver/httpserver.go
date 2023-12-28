@@ -52,8 +52,17 @@ func (h *httpserver) Run() error {
 		ReadTimeout:  h.cfg.ReadTimeout.Value,
 		WriteTimeout: h.cfg.WriteTimeout.Value,
 	}
-	fmt.Printf("%s Service run (port:%s)\n", done, h.cfg.PortApp)
-	logger.Info(h.ctx, "Запуск https сервера", zap.String("port", h.cfg.PortApp))
+
+	securityModeDesc := ""
+	securityMode := false
+
+	if h.cfg.Signin == "checked" && h.cfg.SigninUrl != "" {
+		securityModeDesc = " (security mode: enable)"
+		securityMode = true
+	}
+
+	fmt.Printf("%s Service run%s (port:%s)\n", done, securityModeDesc, h.cfg.PortApp)
+	logger.Info(h.ctx, "Запуск https сервера", zap.Bool("security mode", securityMode), zap.String("port", h.cfg.PortApp))
 	//e := srv.ListenAndServeTLS(h.cfg.SSLCertPath, h.cfg.SSLPrivateKeyPath)
 
 	e := srv.ListenAndServe()
