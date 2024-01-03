@@ -2,6 +2,7 @@ package app_lib
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/csv"
@@ -9,11 +10,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/smtp"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -26,6 +29,7 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
+	"github.com/nfnt/resize"
 	"github.com/satori/go.uuid"
 )
 
@@ -37,6 +41,7 @@ const ttlCache = 5 * time.Minute
 type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
 	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
+	Write(ctx context.Context, file string, data []byte) (err error)
 }
 
 type Api interface {
@@ -175,12 +180,53 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"readfile":      Funcs.readfile,
 		"csvtosliсemap": Funcs.csvtosliсemap,
 
-		"objFromID": Funcs.objFromID,
-		"unzip":     Funcs.unzip,
+		"objFromID":  Funcs.objFromID,
+		"unzip":      Funcs.unzip,
+		"img resize": Funcs.imgResize,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// resize обрезает изображение по заданным размерам
+// сохраняем копию на диске, если она там есть - берет из хранилища
+func (t *funcMap) imgResize(file string, width, height uint) (resultFile string) {
+	var err error
+	var b bytes.Buffer
+	w := bufio.NewWriter(&b)
+
+	dir, fileT := path.Split(file)
+	fileT = fmt.Sprintf("%s_%dx%d%s", strings.Split(fileT, ".")[0], width, height, path.Ext(fileT))
+	resultFile = fmt.Sprintf("%s%s", dir, fileT)
+
+	convertedFile := t.readfile(resultFile)
+	if len(convertedFile) != 0 {
+		return resultFile
+	}
+
+	inFile := t.readfile(file)
+	f := bytes.NewReader(inFile)
+
+	// decode jpeg into image.Image
+	img, err := jpeg.Decode(f)
+	if err != nil {
+		return fmt.Sprintf("error jpeg.Decode, err: %s", err)
+	}
+
+	resImg := resize.Resize(width, height, img, resize.Lanczos3)
+
+	err = jpeg.Encode(w, resImg, nil)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	err = t.vfs.Write(context.Background(), resultFile, b.Bytes())
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	return resultFile
+}
 
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)

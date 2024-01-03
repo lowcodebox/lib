@@ -84,18 +84,19 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			}
 		}
 
+		fmt.Println("authKey", authKey)
+
 		// не передали ключ - вход не осуществлен. войди
 		if strings.TrimSpace(authKey) == "" {
-			if r.FormValue("ref") == "" {
-				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+h.cfg.ClientPath+r.RequestURI, 302)
-				return
-			}
-			next.ServeHTTP(w, r)
+			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+h.cfg.ClientPath+r.RequestURI, 302)
 			return
 		}
 
 		// валидируем токен
 		status, token, refreshToken, err := h.iam.Verify(authKey)
+
+		fmt.Println()
+		fmt.Println(status, token, refreshToken, err)
 
 		// пробуем обновить пришедший токен
 		if !status {

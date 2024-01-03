@@ -55,3 +55,26 @@ func Test_unzip(t *testing.T) {
 
 	fmt.Println(status)
 }
+
+func Test_imgResize(t *testing.T) {
+	cfg := config
+	cfg.VfsBucket = "buildbox"
+	cfg.VfsKind = "s3"
+	cfg.VfsEndpoint = "http://127.0.0.1:9000"
+	cfg.VfsAccessKeyId = "minioadmin"
+	cfg.VfsSecretKey = "minioadmin"
+	cfg.VfsRegion = ""
+	cfg.VfsComma = ""
+	cfg.VfsCertCA = ""
+
+	// подключаемся к файловому хранилищу
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
+
+	in := "landing/katya.jpg"
+
+	NewFuncMap(vfs, nil)
+
+	res := Funcs.imgResize(in, 100, 100)
+
+	fmt.Println("result:", res)
+}
