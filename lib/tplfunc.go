@@ -10,7 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"image"
 	"image/jpeg"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -30,6 +33,7 @@ import (
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
 	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 	"github.com/satori/go.uuid"
 )
 
@@ -183,12 +187,76 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"objFromID":  Funcs.objFromID,
 		"unzip":      Funcs.unzip,
 		"img resize": Funcs.imgResize,
+		"img cup":    Funcs.imgCrop,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
 
-// resize обрезает изображение по заданным размерам
+// crop обрезает изображение по заданным размерам
+// сохраняем копию на диске, если она там есть - берет из хранилища
+// file - путь к файлу (результирующий будет изменен)
+// width, height - ширина длина обрезания
+// mode - центрирование (center/topleft/...)
+// ratio - в width, height будет задано соотношение сторон
+// actorWidth, actorHeight - точка, откуда будем начинать отрезание (по-умолчанию topleft)
+func (t *funcMap) imgCrop(file string, width, height int, centered, ratio bool, actorX, actorY int) (resultFile string) {
+	var err error
+	var b bytes.Buffer
+	w := bufio.NewWriter(&b)
+
+	position := cutter.TopLeft
+	if centered {
+		position = cutter.Centered
+	}
+
+	dir, fileT := path.Split(file)
+	cropPrefix := lib.Hash(fmt.Sprintf("%d%d%t%t%d%d", width, height, centered, ratio, actorX, actorY))[:8]
+
+	fileT = fmt.Sprintf("%s_crop_%s%s", strings.Split(fileT, ".")[0], cropPrefix, path.Ext(fileT))
+	resultFile = fmt.Sprintf("%s%s", dir, fileT)
+
+	convertedFile := t.readfile(resultFile)
+	if len(convertedFile) != 0 {
+		return resultFile
+	}
+
+	inFile := t.readfile(file)
+	f := bytes.NewReader(inFile)
+
+	// decode jpeg into image.Image
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return fmt.Sprintf("error jpeg.Decode, err: %s", err)
+	}
+
+	var ratioXY cutter.Option
+	if ratio {
+		ratioXY = cutter.Ratio
+	}
+
+	cropImg, err := cutter.Crop(img, cutter.Config{
+		Height:  height,                      // height in pixel or Y ratio(see Ratio Option below)
+		Width:   width,                       // width in pixel or X ratio
+		Mode:    position,                    // Accepted Mode: TopLeft, Centered
+		Anchor:  image.Point{actorX, actorY}, // Position of the top left point
+		Options: ratioXY,                     // Accepted Option: Ratio
+	})
+
+	err = jpeg.Encode(w, cropImg, nil)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	err = t.vfs.Write(context.Background(), resultFile, b.Bytes())
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	return resultFile
+}
+
+// resize изменяет (тянет) размер изображения
 // сохраняем копию на диске, если она там есть - берет из хранилища
 func (t *funcMap) imgResize(file string, width, height uint) (resultFile string) {
 	var err error

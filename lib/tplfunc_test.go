@@ -78,3 +78,50 @@ func Test_imgResize(t *testing.T) {
 
 	fmt.Println("result:", res)
 }
+
+func Test_imgCrop(t *testing.T) {
+	cfg := config
+	cfg.VfsBucket = "buildbox"
+	cfg.VfsKind = "s3"
+	cfg.VfsEndpoint = "http://127.0.0.1:9000"
+	cfg.VfsAccessKeyId = "minioadmin"
+	cfg.VfsSecretKey = "minioadmin"
+	cfg.VfsRegion = ""
+	cfg.VfsComma = ""
+	cfg.VfsCertCA = ""
+
+	// подключаемся к файловому хранилищу
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
+
+	in := "landing/katya.jpg"
+
+	NewFuncMap(vfs, nil)
+
+	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
+
+	fmt.Println("result:", res)
+}
+
+func Test_imgCropAndResize(t *testing.T) {
+	cfg := config
+	cfg.VfsBucket = "buildbox"
+	cfg.VfsKind = "s3"
+	cfg.VfsEndpoint = "http://127.0.0.1:9000"
+	cfg.VfsAccessKeyId = "minioadmin"
+	cfg.VfsSecretKey = "minioadmin"
+	cfg.VfsRegion = ""
+	cfg.VfsComma = ""
+	cfg.VfsCertCA = ""
+
+	// подключаемся к файловому хранилищу
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
+
+	in := "landing/katya.jpg"
+
+	NewFuncMap(vfs, nil)
+
+	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
+	res = Funcs.imgResize(res, 100, 100)
+
+	fmt.Println("result:", res)
+}
