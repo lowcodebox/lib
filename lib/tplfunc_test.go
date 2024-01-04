@@ -70,7 +70,7 @@ func Test_imgResize(t *testing.T) {
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
-	in := "landing/katya.jpg"
+	in := "landing/ludam.png"
 
 	NewFuncMap(vfs, nil)
 

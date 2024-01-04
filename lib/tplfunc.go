@@ -276,7 +276,7 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 	f := bytes.NewReader(inFile)
 
 	// decode jpeg into image.Image
-	img, err := jpeg.Decode(f)
+	img, _, err := image.Decode(f)
 	if err != nil {
 		return fmt.Sprintf("error jpeg.Decode, err: %s", err)
 	}
