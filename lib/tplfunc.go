@@ -184,10 +184,10 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"readfile":      Funcs.readfile,
 		"csvtosliсemap": Funcs.csvtosliсemap,
 
-		"objFromID":  Funcs.objFromID,
-		"unzip":      Funcs.unzip,
-		"img resize": Funcs.imgResize,
-		"img cup":    Funcs.imgCrop,
+		"objFromID": Funcs.objFromID,
+		"unzip":     Funcs.unzip,
+		"imgresize": Funcs.imgResize,
+		"imgcup":    Funcs.imgCrop,
 	}
 }
 
