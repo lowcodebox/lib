@@ -48,6 +48,7 @@ type Config struct {
 	UrlGui               string `envconfig:"URL_GUI" default:""`
 	UrlApi               string `envconfig:"URL_API" default:""`
 	EnableObserverLogApi bool   `envconfig:"ENABLE_OBSERVER_LOG_API" default:"true"`
+	EnableObserverLogIam bool   `envconfig:"ENABLE_OBSERVER_LOG_IAM" default:"true"`
 	UrlIam               string `envconfig:"URL_IAM" default:""`
 	UidService           string `envconfig:"UID_SERVICE" default:""`
 

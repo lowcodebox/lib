@@ -11,6 +11,7 @@ import (
 )
 
 type session struct {
+	ctx context.Context
 	cfg model.Config
 	api api.Api
 	iam iam.IAM
@@ -38,10 +39,11 @@ type Session interface {
 	Cleaner(ctx context.Context) (err error)
 }
 
-func New(cfg model.Config, api api.Api, iam iam.IAM) Session {
+func New(ctx context.Context, cfg model.Config, api api.Api, iam iam.IAM) Session {
 	registrySession := SessionRegistry{}
 
 	return &session{
+		ctx,
 		cfg,
 		api,
 		iam,

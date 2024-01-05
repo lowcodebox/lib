@@ -36,6 +36,7 @@ type dynamicParams struct {
 }
 
 type service struct {
+	ctx      context.Context
 	cfg      model.Config
 	cache    cache.Cache
 	block    block.Block
@@ -85,6 +86,7 @@ func New(
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
 
 	return &service{
+		ctx,
 		cfg,
 		cache,
 		blocks,

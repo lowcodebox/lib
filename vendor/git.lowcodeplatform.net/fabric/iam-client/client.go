@@ -1,24 +1,40 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
+
+	"github.com/golang-jwt/jwt"
 )
+
+const headerRequestId = "X-Request-Id"
 
 // Refresh отправляем старый X-Auth-Access-токен
 // получаем X-Auth-Access токен (два токена + текущая авторизационная сессия)
 // этот ключ добавляется в куки или сохраняется в сервисе как ключ доступа
 // profile - uid-профиля, под которым проводим авторизацию
 // expire - признак того, что refresh-токен прийдет просроченный в новом токене
-func (o *iam) Refresh(token, profile string, expire bool) (result string, err error) {
+func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (result string, err error) {
 	var res models.Response
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "refresh", err, token, profile, expire)
+	}
 
-	_, err = lib.Curl("POST", o.url + "/token/refresh?profile="+profile+"&expire="+fmt.Sprint(expire), token, &res, map[string]string{}, nil)
+	urlc := o.url + "/token/refresh?profile=" + profile + "&expire=" + fmt.Sprint(expire)
+	urlc = strings.Replace(urlc, "//token", "/token", 1)
+
+	_, err = lib.Curl("POST", urlc, token, &res, map[string]string{}, nil)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
 
 	result = fmt.Sprint(res.Data)
@@ -26,12 +42,20 @@ func (o *iam) Refresh(token, profile string, expire bool) (result string, err er
 	return result, err
 }
 
-func (o *iam) ProfileGet(sessionID string) (result string, err error) {
+func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, err error) {
 	var res models.Response
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "refresh", err, sessionID)
+	}
 
-	_, err = lib.Curl("GET", o.url + "/profile/"+sessionID, "", &res, map[string]string{}, nil)
+	urlc := o.url + "/profile/" + sessionID
+	urlc = strings.Replace(urlc, "//profile", "/profile", 1)
+
+	_, err = lib.Curl("GET", urlc, "", &res, handlers, nil)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
 
 	b2, _ := json.Marshal(res.Data)
@@ -39,15 +63,52 @@ func (o *iam) ProfileGet(sessionID string) (result string, err error) {
 	return string(b2), err
 }
 
-func (o *iam) ProfileList() (result string, err error) {
+func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	var res models.Response
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "profileList", err)
+	}
 
-	_, err = lib.Curl("GET", o.url + "/profile/list", "", &res, map[string]string{}, nil)
+	urlc := o.url + "/profile/list"
+	urlc = strings.Replace(urlc, "//profile", "/profile", 1)
+
+	_, err = lib.Curl("GET", urlc, "", &res, handlers, nil)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
 
 	result = fmt.Sprint(res.Data)
 
 	return result, err
+}
+
+func (o *iam) verify(ctx context.Context, tokenString string) (status bool, body *models.Token, refreshToken string, err error) {
+	var in models.Token
+	var jtoken = map[string]string{}
+
+	jsonToken, err := lib.Decrypt([]byte(o.projectKey), tokenString)
+	if err != nil {
+		return false, nil, refreshToken, err
+	}
+
+	err = json.Unmarshal([]byte(jsonToken), &jtoken)
+	if err != nil {
+		return false, nil, refreshToken, err
+	}
+
+	tokenAccess := jtoken["access"]
+	refreshToken = jtoken["refresh"]
+
+	token, err := jwt.ParseWithClaims(tokenAccess, &in, func(token *jwt.Token) (interface{}, error) {
+		return []byte(o.projectKey), nil
+	})
+
+	if !token.Valid {
+		return false, nil, refreshToken, o.msg.TokenValidateFail.Error()
+	}
+	tbody := token.Claims.(*models.Token)
+
+	return true, tbody, refreshToken, err
 }

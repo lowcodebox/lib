@@ -84,8 +84,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			}
 		}
 
-		fmt.Println("authKey", authKey)
-
 		// не передали ключ - вход не осуществлен. войди
 		if strings.TrimSpace(authKey) == "" {
 			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+h.cfg.ClientPath+r.RequestURI, 302)
@@ -93,14 +91,15 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		// валидируем токен
-		status, token, refreshToken, err := h.iam.Verify(authKey)
-
-		fmt.Println()
-		fmt.Println(status, token, refreshToken, err)
+		status, token, refreshToken, err := h.iam.Verify(h.ctx, authKey)
 
 		// пробуем обновить пришедший токен
 		if !status {
-			authKey, err = h.iam.Refresh(refreshToken, "", false)
+			authKey, err = h.iam.Refresh(h.ctx, refreshToken, "", false)
+			//if err != nil {
+			//	return
+			//}
+			//fmt.Printf("h.iam.Refresh. authKey: %s\nrefreshToken: %s\nerr: %s\n\n", authKey, refreshToken, err)
 
 			// если токен был обновлен чуть ранее, то текущий запрос надо пропустить
 			// чтобы избежать повторного обновления и дать возможность завершиться отправленным
@@ -120,7 +119,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				}
 
 				// после обновления получаем текущий токен
-				status, token, _, err = h.iam.Verify(authKey)
+				status, token, _, err = h.iam.Verify(h.ctx, authKey)
 
 				// переписываем куку у клиента
 				http.SetCookie(w, cookie)

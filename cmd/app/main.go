@@ -191,11 +191,17 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}
 
 	iam := iam.New(
+		ctx,
 		ClearSlash(cfg.UrlIam),
 		cfg.ProjectKey,
+		cfg.EnableObserverLogIam,
+		cfg.CbMaxRequests,
+		cfg.CbTimeout.Duration,
+		cfg.CbInterval.Duration,
 	)
 
 	ses := session.New(
+		ctx,
 		cfg,
 		api,
 		iam,

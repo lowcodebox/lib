@@ -61,7 +61,7 @@ func (s *session) Set(sessionID string) (err error) {
 
 	expiration := time.Now().Add(30 * time.Hour)
 	// получем данные из IAM
-	b1, err := s.iam.ProfileGet(sessionID)
+	b1, err := s.iam.ProfileGet(s.ctx, sessionID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (s *session) Set(sessionID string) (err error) {
 	return err
 }
 
-// список всех токенов для всех пользователей доступных для сервиса
+// List список всех токенов для всех пользователей доступных для сервиса
 func (s *session) List() (result map[string]SessionRec) {
 	s.Registry.Mx.Lock()
 	defer s.Registry.Mx.Unlock()
@@ -91,7 +91,7 @@ func (s *session) List() (result map[string]SessionRec) {
 
 // Cleaner ////////////////////////////////
 // запускаем очиститель сессий для сервиса
-//////////////////////////////////
+// ////////////////////////////////
 func (s *session) Cleaner(ctx context.Context) (err error) {
 	ticker := time.NewTicker(s.cfg.IntervalCleaner.Value)
 	defer ticker.Stop()
@@ -120,7 +120,7 @@ func (s *session) Cleaner(ctx context.Context) (err error) {
 
 func (s *session) CleanSession(ctx context.Context) (err error) {
 
-	listIAM, err := s.iam.ProfileList() // получаем список актуальных сессий с сервера IAM
+	listIAM, err := s.iam.ProfileList(s.ctx) // получаем список актуальных сессий с сервера IAM
 	if err != nil {
 		return err
 	}
