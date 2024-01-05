@@ -162,8 +162,8 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		// добавили текущий валидный токен в заголовок запроса
 		ctx := context.WithValue(r.Context(), "token", authKey)
 		if token != nil {
-			current_profile, _ := h.session.GetProfile(token.Session)
-			ctx = context.WithValue(ctx, "profile", *current_profile)
+			currentProfile, _ := h.session.GetProfile(token.Session)
+			ctx = context.WithValue(ctx, "profile", *currentProfile)
 		}
 
 		next.ServeHTTP(w, r.WithContext(ctx))

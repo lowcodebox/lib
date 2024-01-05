@@ -25,7 +25,7 @@ type Formula struct {
 	App      *app
 }
 
-// Вставка - это одна функция, которая может иметь вложения
+// Insert Вставка - это одна функция, которая может иметь вложения
 // Text - строка вставки, по которому мы будем заменять в общем тексте
 type Insert struct {
 	Text      string      `json:"text"`
@@ -34,7 +34,7 @@ type Insert struct {
 	Functions Function
 }
 
-// Исчисляемая фукнция с аргументами и параметрами
+// Function Исчисляемая фукнция с аргументами и параметрами
 // может иметь вложения
 type Function struct {
 	Name      string   `json:"name"`

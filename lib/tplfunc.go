@@ -188,10 +188,24 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"unzip":     Funcs.unzip,
 		"imgresize": Funcs.imgResize,
 		"imgcup":    Funcs.imgCrop,
+
+		"profile": Funcs.profile,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// profile перемешивает полученный слайс
+func (t *funcMap) profile(r http.Request) (res models.ProfileData) {
+	var err error
+	ctxUser := r.Context().Value("profile") // текущий профиль пользователя
+	err = json.Unmarshal([]byte(Funcs.marshal(ctxUser)), &res)
+	if err != nil {
+		return
+	}
+
+	return res
+}
 
 // crop обрезает изображение по заданным размерам
 // сохраняем копию на диске, если она там есть - берет из хранилища
