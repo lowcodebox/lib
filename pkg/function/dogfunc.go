@@ -375,7 +375,7 @@ func (d *dogfunc) TplValue(v map[string]interface{}, arg []string) (result strin
 	return fmt.Sprint(result), err
 }
 
-// Получение значений из конфигурации проекта (хранится State в объекте приложение App)
+// ConfigValue получение значений из конфигурации проекта (хранится State в объекте приложение App)
 func (d *dogfunc) ConfigValue(arg []string) (result string, err error) {
 	var valueDefault string
 

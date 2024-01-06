@@ -41,6 +41,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		var flagPublicPages bool
 		var flagPublicRoutes bool
 		dps := h.src.GetDynamicParams()
+		refURL := h.cfg.ClientPath + r.RequestURI
 
 		r.ParseForm()
 		for k, _ := range r.Form {
@@ -69,7 +70,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		// пропускаем разрешенные страницы/пути
-		if flagPublicPages || flagPublicRoutes {
+		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -86,7 +87,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		// не передали ключ - вход не осуществлен. войди
 		if strings.TrimSpace(authKey) == "" {
-			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+h.cfg.ClientPath+r.RequestURI, 302)
+			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
 			return
 		}
 
