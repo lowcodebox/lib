@@ -22,7 +22,7 @@ type cache struct {
 	DB       *reindexer.Reindexer
 	cfg      model.Config
 	function function.Function
-	active   bool `json:"active"`
+	active   bool
 }
 
 type Cache interface {
@@ -43,8 +43,8 @@ func (c *cache) Active() bool {
 }
 
 // GenKey формируем ключ кеша
-// addСonditionPath, addСonditionURL - признаки добавления хеша пути и/или запроса в ключе (указываются в кеше блока)
-func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСonditionURL bool) (key, cacheParams string) {
+// addConditionPath, addConditionURL - признаки добавления хеша пути и/или запроса в ключе (указываются в кеше блока)
+func (c *cache) GenKey(uid, path, query string, addConditionPath, addConditionURL bool) (key, cacheParams string) {
 	key2 := ""
 	key3 := ""
 
@@ -55,26 +55,26 @@ func (c *cache) GenKey(uid, path, query string, addСonditionPath, addСondition
 	keyParams := ""
 
 	// учитываем путь и параметры
-	if addСonditionPath && addСonditionURL {
+	if addConditionPath && addConditionURL {
 		key = lib.Hash(string(key1)) + "_" + lib.Hash(key2) + "_" + lib.Hash(key3)
 		keyParams = "url:" + key2 + "; params:" + key3
 	}
 
 	// учитываем только путь
-	if !addСonditionPath && addСonditionURL {
+	if !addConditionPath && addConditionURL {
 		key = lib.Hash(string(key1)) + "_" + lib.Hash(key2) + "_"
 		keyParams = "url:" + key2 + "; params:"
 	}
 
 	// учитываем только параметры
-	if addСonditionPath && !addСonditionURL {
+	if addConditionPath && !addConditionURL {
 		key = lib.Hash(string(key1)) + "_" + "_" + lib.Hash(key3)
 		keyParams = "url: ; params:" + key3
 
 	}
 
 	// учитываем путь и параметры
-	if !addСonditionPath && !addСonditionURL {
+	if !addConditionPath && !addConditionURL {
 		key = lib.Hash(string(key1)) + "_" + "_"
 		keyParams = "url: ; params:"
 	}
@@ -183,7 +183,7 @@ func (c *cache) Write(key, cacheParams string, cacheInterval int, blockUid, page
 	return
 }
 
-// очищаем кеш приложения по заданному критерия (наличия значения в массиве линков)
+// Clear очищаем кеш приложения по заданному критерия (наличия значения в массиве линков)
 func (c *cache) Clear(links string) (count int, err error) {
 	if links == "all" {
 		// паременты не переданы - удаляем все объекты в заданном неймспейсе
@@ -193,7 +193,7 @@ func (c *cache) Clear(links string) (count int, err error) {
 		for _, v := range strings.Split(links, ",") {
 			int, err := c.DB.Query(c.cfg.Namespace).Where("Link", reindexer.SET, v).Delete()
 			if err != nil {
-				err = fmt.Errorf("Error cleaning cache. Now deleted %s objects. Error: ", count, err)
+				err = fmt.Errorf("error cleaning cache. Now deleted %s objects. Error: %s", count, err)
 				return count, err
 			}
 			count = count + int

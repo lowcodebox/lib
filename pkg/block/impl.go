@@ -2,6 +2,7 @@ package block
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"strconv"
@@ -10,27 +11,80 @@ import (
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/cache"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
 )
 
+// GetWithLocalCache получение данных с использованием пакета кеширования (без внутренней реализации)
+func (s *block) GetWithLocalCache(ctx context.Context, in model.ServiceIn, block, page models.Data, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
+	var addConditionPath, addConditionURL, ok bool
+	var cacheInterval int
+	var key string
+
+	cacheInt, _ := block.Attr("cache", "value") // включен ли режим кеширования
+	cacheKey2, _ := block.Attr("cache_keyAddPath", "value")
+	cacheKey3, _ := block.Attr("cache_keyAddURL", "value")
+
+	addConditionPath = cacheKey2 == "checked"
+	addConditionURL = cacheKey3 == "checked"
+
+	// если интервал не задан, то не кешируем
+	if cacheInt == "" {
+		cacheInt = "0"
+	}
+	cacheInterval, err = strconv.Atoi(cacheInt)
+	if err != nil {
+		cacheInterval = 0
+		err = nil
+	}
+
+	if cacheInterval != 0 {
+		key, _ = s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addConditionPath, addConditionURL)
+	}
+
+	cacheValue, err := cache.Cache().Get(key)
+	if errors.Is(err, cache.ErrorKeyNotFound) {
+		var value interface{}
+
+		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+			res, err = s.Get(ctx, in, block, page, values)
+			return res, err
+		}, time.Minute*time.Duration(cacheInterval))
+
+		value, err = cache.Cache().Get(key)
+		if err != nil {
+			err = fmt.Errorf("get value is fail. err: %s", err)
+		}
+
+		moduleResult, ok = value.(model.ModuleResult)
+		if !ok {
+			err = fmt.Errorf("error. cast type is fail")
+		}
+
+		return moduleResult, err
+	}
+
+	moduleResult, ok = cacheValue.(model.ModuleResult)
+	if !ok {
+		return moduleResult, fmt.Errorf("error. cast type is fail")
+	}
+
+	return moduleResult, err
+}
+
 // Get получение содержимого блока (с учетом операций с кешем)
 func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.Data, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
-
-	var addСonditionPath bool
-	var addСonditionURL bool
+	var result string
+	var addConditionPath, addConditionURL, flagExpired bool
 	var cacheInterval int
 
 	cacheInt, _ := block.Attr("cache", "value") // включен ли режим кеширования
 	cache_nokey2, _ := block.Attr("cache_keyAddPath", "value")
 	cache_nokey3, _ := block.Attr("cache_keyAddURL", "value")
 
-	if cache_nokey2 == "checked" {
-		addСonditionPath = true
-	}
-	if cache_nokey3 == "checked" {
-		addСonditionURL = true
-	}
+	addConditionPath = cache_nokey2 == "checked"
+	addConditionURL = cache_nokey3 == "checked"
 
 	t1 := time.Now()
 
@@ -48,8 +102,8 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 	if s.cache.Active() && cacheInterval != 0 {
 
 		// читаем из кеша и отдаем (ВСЕГДА сразу)
-		key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addСonditionPath, addСonditionURL)
-		result, _, flagExpired, err := s.cache.Read(key)
+		key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addConditionPath, addConditionURL)
+		result, _, flagExpired, err = s.cache.Read(key)
 
 		// 1 кеша нет (срабатывает только при первом формировании)
 		if err != nil {

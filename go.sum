@@ -56,6 +56,10 @@ git.lowcodeplatform.net/fabric/api-client v0.1.27 h1:ZTchbBk/AS7BMSNKEq0uV65envn
 git.lowcodeplatform.net/fabric/api-client v0.1.27/go.mod h1:PZVPCo+o6jxUJNs+ka7lGy+H8p2/2JOF234e4b3Wx10=
 git.lowcodeplatform.net/fabric/api-client v0.1.28 h1:+H3EFoaJJp7P2MO+hUa90TBJ2Cp7blVsP4u3Q50ES8s=
 git.lowcodeplatform.net/fabric/api-client v0.1.28/go.mod h1:BG/fDEBOVUAu1qdynCg7Bbugff+Mk7qoged2CKX8Tq0=
+git.lowcodeplatform.net/fabric/api-client v0.1.29 h1:OmGjX5tII7xGLA5bs8JVzNhlZlfOek0fKnyxJYYdOhc=
+git.lowcodeplatform.net/fabric/api-client v0.1.29/go.mod h1:BG/fDEBOVUAu1qdynCg7Bbugff+Mk7qoged2CKX8Tq0=
+git.lowcodeplatform.net/fabric/api-client v0.1.30 h1:l/JUMKavZoLvgutCv6gKyKbm0q5RLjvYloRDwnIfcgQ=
+git.lowcodeplatform.net/fabric/api-client v0.1.30/go.mod h1:BG/fDEBOVUAu1qdynCg7Bbugff+Mk7qoged2CKX8Tq0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.1.3 h1:F6PZrYZn+pwMvW8XAeb+xR30bxB6xbpJXVuSB+/ZC00=
@@ -86,6 +90,10 @@ git.lowcodeplatform.net/packages/cache v0.1.5 h1:lLvZU9PoCi1qMNFlkgOXfwOCCHUVvEQ
 git.lowcodeplatform.net/packages/cache v0.1.5/go.mod h1:078IvbJ5/Fqgr+hqaYMVCh3bVidcBTdiUCP7PUqAf20=
 git.lowcodeplatform.net/packages/cache v0.1.8 h1:LBUNza0n3z+Z9VMIDvF5AI9ui9WSF3tOg7hb9TPyS6A=
 git.lowcodeplatform.net/packages/cache v0.1.8/go.mod h1:+w6N8ipAhpEw0FzTQFQ56JY4OgcIjk1HP9SsYQuajyQ=
+git.lowcodeplatform.net/packages/cache v0.1.9 h1:xtzBYNNfHvj6NoqLNZ+nfBGNYoq1udhugVEwnqYa584=
+git.lowcodeplatform.net/packages/cache v0.1.9/go.mod h1:+w6N8ipAhpEw0FzTQFQ56JY4OgcIjk1HP9SsYQuajyQ=
+git.lowcodeplatform.net/packages/cache v0.1.10 h1:Z8r4c8ppZZ/rNq3Wsr8g9Gmf4cYAoNPPgVpbok2HTVo=
+git.lowcodeplatform.net/packages/cache v0.1.10/go.mod h1:+w6N8ipAhpEw0FzTQFQ56JY4OgcIjk1HP9SsYQuajyQ=
 git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 h1:yFpe7oU/WLDdhESLIMMLDj2VNDqQBa7eGXP1AMKz4GA=
 git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1/go.mod h1:09gPZ6xP6+st9ZDu52jc8Vw6QUIy3x9OFcf5sFt3yzU=
 git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 h1:bQ4r7z77sROu4I4Ra/ja30AQeAINL7YQdcynOPBxA0s=

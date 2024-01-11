@@ -11,11 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// внутренняя фунция сервиса.
+// updateCache внутренняя фунция сервиса.
 // не вынесена в пакет Cache потому-что требуется генерировать блок
 func (b *block) updateCache(ctx context.Context, key, cacheParams string, cacheInterval int, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result string, err error) {
 	t1 := time.Now()
-
 	logger.Info(ctx, "UpdateCache", zap.String("step", "start update cache"),
 		zap.String("cacheParams", cacheParams),
 		zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))

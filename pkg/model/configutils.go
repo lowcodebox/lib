@@ -39,7 +39,7 @@ func (d *Bool) UnmarshalText(text []byte) error {
 
 // Duration custom duration for toml configs
 type Duration struct {
-	time.Duration
+	_     time.Duration
 	Value time.Duration
 }
 

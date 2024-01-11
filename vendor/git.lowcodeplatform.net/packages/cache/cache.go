@@ -117,7 +117,7 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 		return nil, ErrorCachePersistentNotInit
 	}
 
-	if cachedValue, ok := item.cache.Get(cacheKeyPrefix + key); ok {
+	if cachedValue, ok := item.cache.Get(key); ok {
 		return cachedValue, nil
 	}
 
@@ -127,7 +127,11 @@ func (c *cache) Get(key string) (value interface{}, err error) {
 		return c.tryToGetOldValue(key)
 	}
 
-	return c.updateCacheValue(key, item)
+	// запускаем обновление фоном
+	go c.updateCacheValue(key, item)
+
+	// отдаем старое значение
+	return c.tryToGetOldValue(key)
 }
 
 // updateCacheValue обновление значений в кеше
@@ -143,8 +147,8 @@ func (c *cache) updateCacheValue(key string, item *cacheItem) (result interface{
 		return nil, errors.Wrap(err, "could not get value from getter")
 	}
 
-	item.cache.SetWithTTL(cacheKeyPrefix+key, result, item.refreshInterval)
-	item.persistentCache.Set(cacheKeyPrefix+key, result)
+	item.cache.SetWithTTL(key, result, item.refreshInterval)
+	item.persistentCache.Set(key, result)
 	item.expiredTime = time.Now().Add(c.expiredInterval)
 
 	return result, nil
@@ -161,7 +165,7 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	}
 
 	fnGetPersistentCacheValue := func() (interface{}, error) {
-		if cachedValue, ok := item.persistentCache.Get(cacheKeyPrefix + key); ok {
+		if cachedValue, ok := item.persistentCache.Get(key); ok {
 			return cachedValue, nil
 		}
 

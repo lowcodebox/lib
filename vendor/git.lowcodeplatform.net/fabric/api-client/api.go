@@ -116,7 +116,6 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.R
 	key := lib.Hash(uids)
 
 	cacheValue, err := cache.Cache().Get(key)
-
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {

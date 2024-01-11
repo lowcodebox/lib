@@ -13,11 +13,12 @@ import (
 	"git.lowcodeplatform.net/fabric/api-client"
 	applib "git.lowcodeplatform.net/fabric/app/lib"
 	iam "git.lowcodeplatform.net/fabric/iam-client"
+	"git.lowcodeplatform.net/packages/cache"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 	"go.uber.org/zap"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/cache"
+	implCache "git.lowcodeplatform.net/fabric/app/pkg/cache"
 	"git.lowcodeplatform.net/fabric/app/pkg/function"
 	"git.lowcodeplatform.net/fabric/app/pkg/i18n"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
@@ -116,8 +117,8 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		SecretKey:      cfg.LogboxSecretKey,
 		RequestTimeout: cfg.LogboxRequestTimeout.Value,
 		CbMaxRequests:  cfg.CbMaxRequestsLogbox,
-		CbTimeout:      cfg.CbTimeoutLogbox.Duration,
-		CbInterval:     cfg.CbIntervalLogbox.Duration,
+		CbTimeout:      cfg.CbTimeoutLogbox.Value,
+		CbInterval:     cfg.CbIntervalLogbox.Value,
 	}, map[string]string{
 		logger.ServiceIDKey:   cfg.HashRun,
 		logger.ConfigIDKey:    cfg.UidService,
@@ -171,14 +172,17 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		ctx,
 		cfg.UrlApi,
 		cfg.EnableObserverLogApi,
-		cfg.CacheRefreshInterval.Duration,
+		cfg.CacheRefreshInterval.Value,
 		cfg.CbMaxRequests,
-		cfg.CbTimeout.Duration,
-		cfg.CbInterval.Duration,
+		cfg.CbTimeout.Value,
+		cfg.CbInterval.Value,
 	)
 
 	// инициализация FuncMap
 	applib.NewFuncMap(vfs, api)
+
+	// инициализировали переменную кеша
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
 
 	fnc := function.New(
 		cfg,
@@ -197,8 +201,8 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		cfg.ProjectKey,
 		cfg.EnableObserverLogIam,
 		cfg.CbMaxRequests,
-		cfg.CbTimeout.Duration,
-		cfg.CbInterval.Duration,
+		cfg.CbTimeout.Value,
+		cfg.CbInterval.Value,
 	)
 
 	ses := session.New(
@@ -222,7 +226,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}
 	cfg.PortApp = port
 
-	cache := cache.New(
+	cache := implCache.New(
 		cfg,
 		fnc,
 	)
