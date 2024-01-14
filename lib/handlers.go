@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
 )
 
@@ -54,10 +56,20 @@ func (c *app) ProxyPing(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(res))
 }
 
-// Собираем страницу (параметры из конфига) и пишем в w.Write
+// PIndex Собираем страницу (параметры из конфига) и пишем в w.Write
 func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
-	var objPages, objPage ResponseData
+	var objPages, objPage models.ResponseData
+	var res string
+	var err error
 	vars := mux.Vars(r)
+
+	defer func() {
+		if err != nil {
+			w.WriteHeader(501)
+			w.Write([]byte(fmt.Sprint(err)))
+			return
+		}
+	}()
 
 	// указатель на профиль текущего пользователя
 	ctx := r.Context()
@@ -81,7 +93,12 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if page == "" {
 		// получаем все страницы текущего приложения
-		c.Curl("GET", "_link?obj="+data_source+"&source="+tpl_app_pages_pointsrc+"&mode=out", "", &objPages, r.Cookies())
+		//c.Curl("GET", "_link?obj="+data_source+"&source="+tpl_app_pages_pointsrc+"&mode=out", "", &objPages, r.Cookies())
+		objPages, err = c.api.LinkGet(r.Context(), tpl_app_pages_pointsrc, data_source, "out", "")
+		if err != nil {
+			err = fmt.Errorf("error pages current user. err: %s", err)
+			return
+		}
 		for _, v := range objPages.Data {
 			if def, _ := v.Attr("default", "value"); def == "checked" {
 				page = v.Uid
@@ -96,9 +113,11 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// запрос объекта страницы
-	_, err := c.Curl("GET", "_objs/"+page, "", &objPage, r.Cookies())
+	//_, err = c.Curl("GET", "_objs/"+page, "", &objPage, r.Cookies())
+	objPages, err = c.api.ObjGet(r.Context(), page)
 	if err != nil {
-		w.Write([]byte("Error: Fail GET-request!"))
+		err = fmt.Errorf("error get page. err: %s", err)
+		return
 	}
 
 	// ФИКС! иногда в разных приложениях называют одинаково страницы.
@@ -134,16 +153,19 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	values["Profile"] = profile
 	values["ProxyPath"] = c.ConfigGet("ProxyPointsrc")
 
-	result := c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
+	res, err = c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
+	if err != nil {
+
+	}
 
 	w.WriteHeader(200)
-	w.Write([]byte(result))
+	w.Write([]byte(res))
 }
 
-// возвращаем сформированную страницу в template.HTML (для cockpit-a и dashboard)
+// TIndex возвращаем сформированную страницу в template.HTML (для cockpit-a и dashboard)
 func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]string) template.HTML {
 
-	var objPage, objApp ResponseData
+	var objPage, objApp models.ResponseData
 	vars := mux.Vars(r)
 	page := vars["obj"] // ид-страницы передается через переменную obj
 
@@ -188,7 +210,12 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	}
 
 	// запрос объекта страницы
-	c.Curl("GET", "_objs/"+page, "", &objPage, r.Cookies())
+	//c.Curl("GET", "_objs/"+page, "", &objPage, r.Cookies())
+	objPage, err := c.api.ObjGet(r.Context(), page)
+	if err != nil {
+		err = fmt.Errorf("error get page (%s). err: %s", page, err)
+		return template.HTML(fmt.Sprintf("%s", err))
+	}
 	if &objPage == nil {
 		return template.HTML("Error: Not found page-object.") // если не найден объект страницы
 	}
@@ -203,7 +230,12 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	}
 
 	// запрос объекта приложения
-	c.Curl("GET", "_objs/"+appUid, "", &objApp, r.Cookies())
+	//c.Curl("GET", "_objs/"+appUid, "", &objApp, r.Cookies())
+	objApp, err = c.api.ObjGet(r.Context(), appUid)
+	if err != nil {
+		err = fmt.Errorf("error get obj application (%s). err: %s", appUid, err)
+		return template.HTML(fmt.Sprintf("%s", err))
+	}
 	if &objApp == nil {
 		return template.HTML("Error: Not found application-object.") // если не найден объект приложения
 	}
@@ -247,19 +279,22 @@ func (c *app) TIndex(w http.ResponseWriter, r *http.Request, Config map[string]s
 	values["Profile"] = profile
 	values["ProxyPath"] = c.ConfigGet("ProxyPointsrc")
 
-	result := c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
+	res, err := c.BPage(r, tpl_app_blocks_pointsrc, objPage, values)
+	if err != nil {
+		return template.HTML(fmt.Sprint(err))
+	}
 
-	//fmt.Println("result: ", result)
-
-	return template.HTML(result)
+	return template.HTML(res)
 }
 
-// Собираем страницу
-func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, values map[string]interface{}) string {
-	var err error
-	var objMaket, objBlocks ResponseData
+// BPage собираем страницу
+func (l *app) BPage(r *http.Request, blockSrc string, objPage models.ResponseData, values map[string]interface{}) (res string, err error) {
+	var objMaket, objBlocks models.ResponseData
 	moduleResult := ModuleResult{}
 	statModule := map[string]interface{}{}
+
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(r.Context())
 
 	// флаг режима генерации модулей (последовательно/параллельно)
 
@@ -278,7 +313,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 	p.Blocks = map[string]interface{}{}
 
 	if len(objPage.Data) == 0 {
-		return "Error: Object page is null."
+		return "", fmt.Errorf("error: Object page is null")
 	}
 
 	pageUID := objPage.Data[0].Uid
@@ -288,19 +323,39 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 	// ДОДЕЛАТЬ СРОЧНО!!!
 
 	// 2 запрос на объекты блоков страницы
-	l.Curl("GET", "_link?obj="+pageUID+"&source="+blockSrc+"&mode=in", "", &objBlocks, r.Cookies())
+	//urlc := l.urlAPI + "_link?obj=" + pageUID + "&source=" + blockSrc + "&mode=in"
+	//urlc = strings.Replace(urlc, "//_link", "/_link", 1)
+	//_, err = lib.Curl("GET", urlc, "", &objBlocks, handlers, r.Cookies())
+
+	objBlocks, err = l.api.LinkGet(r.Context(), blockSrc, pageUID, "in", "")
+	if err != nil {
+		err = fmt.Errorf("error pages current user. err: %s", err)
+		return
+	}
+	if len(objBlocks.Data) == 0 {
+		err = fmt.Errorf("error: Objects block %s is null", blockSrc)
+		return "", err
+	}
 
 	//for _, v := range objBlocks.Data {
 	//	fmt.Println("objBlocks: ", v.Title, v.Id)
 	//}
 
 	// 3 запрос на объект макета
-	l.Curl("GET", "_objs/"+maketUID, "", &objMaket, r.Cookies())
+	//urlc = l.urlAPI + "_objs/" + maketUID
+	//urlc = strings.Replace(urlc, "//_objs", "/_objs", 1)
+	//_, err = lib.Curl("GET", urlc, "", &objMaket, handlers, r.Cookies())
+
+	objMaket, err = l.api.ObjGet(r.Context(), maketUID)
+	if err != nil {
+		err = fmt.Errorf("%s (%s)", "Error: Get object Module is failed!", err)
+		res = fmt.Sprint(err)
+	}
 	if &objMaket == nil {
-		return "Error: Not found maketUID: " + maketUID // если не найден объект
+		return "", fmt.Errorf("error: Not found maketUID: %s", maketUID) // если не найден объект
 	}
 	if len(objMaket.Data) == 0 {
-		return "Error: Data maketUID id empty. maketUID: " + maketUID // если не найден объект
+		return "", fmt.Errorf("error: Data maketUID id empty. maketUID: %s", maketUID) // если не найден объект
 	}
 
 	// 4 из объекта макета берем путь к шаблону + css и js
@@ -334,7 +389,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 	shemaJSON, _ := objPage.Data[0].Attr("shema", "value")
 	json.Unmarshal([]byte(shemaJSON), &i)
 	if i == nil {
-		return "Error! Fail json shema!"
+		return "", fmt.Errorf("error! Fail json shema")
 	}
 	p.Shema = i
 
@@ -438,7 +493,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 
 		byteFile, _, err := l.vfs.Read(r.Context(), maketFile)
 		if err != nil {
-			return fmt.Sprintf("error vfs.Read, maketFile: %s, err: %s", maketFile, err)
+			return "", fmt.Errorf("error vfs.Read, maketFile: %s, err: %s", maketFile, err)
 		}
 		dataFile = string(byteFile)
 	}
@@ -450,24 +505,38 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage ResponseData, valu
 		tmp := template.New(maketFile)
 		t, err = tmp.Parse(dataFile)
 		if err != nil {
-			return fmt.Sprintf("error tmp.Parse, maketFile: %s, data: %s, err: %s", maketFile, string(dataFile), err)
+			return "", fmt.Errorf("error tmp.Parse, maketFile: %s, data: %s, err: %s", maketFile, string(dataFile), err)
 		}
 		t.Execute(&c, p)
 	} else {
 		t.ExecuteTemplate(&c, maketFile, p)
 	}
 
-	return c.String()
+	return c.String(), err
 }
 
-// генерируем один блок - внешний запрос
+// GetBlock генерируем один блок - внешний запрос
 func (c *app) GetBlock(w http.ResponseWriter, r *http.Request) {
-	var objBlock ResponseData
+	var objBlock models.ResponseData
+	var err error
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(r.Context())
+
 	vars := mux.Vars(r)
 	block := vars["block"]
-	dataPage := Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
+	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 
-	c.Curl("GET", "_objs/"+block, "", &objBlock, r.Cookies())
+	// 3 запрос на объект макета
+	//urlc = c.urlAPI + "_objs/" + block
+	//urlc = strings.Replace(urlc, "//_objs", "/_objs", 1)
+	//_, err = lib.Curl("GET", urlc, "", &objBlock, handlers, r.Cookies())
+
+	objBlock, err = c.api.ObjGet(r.Context(), block)
+	if err != nil {
+		err = fmt.Errorf("error: Get object is failed %s (%s)", block, err)
+		w.Write([]byte(fmt.Sprint(err))) // если не найден объект
+		return
+	}
 	if &objBlock == nil {
 		w.Write([]byte("Error: block is not found. block: " + block)) // если не найден объект
 		return
@@ -482,9 +551,9 @@ func (c *app) GetBlock(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(moduleResult.result))
 }
 
-// генерируем один блок через внутренний запрос - для cocpit-a
-func (c *app) TBlock(r *http.Request, block Data, Config map[string]string) template.HTML {
-	dataPage := Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
+// TBlock генерируем один блок через внутренний запрос - для cocpit-a
+func (c *app) TBlock(r *http.Request, block models.Data, Config map[string]string) template.HTML {
+	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 
 	moduleResult := c.ModuleBuild(block, r, dataPage, nil, false)
 

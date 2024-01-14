@@ -20,8 +20,10 @@ import (
 
 // Page ...
 func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.ServicePageOut, err error) {
-	var objPages, objPage models.ResponseData
+	var objPages models.ResponseData
+	var objPage *models.ResponseData
 
+	//t := time.Now()
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if in.Page == "" {
 		// получаем все страницы текущего приложения
@@ -45,6 +47,8 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 		return out, err
 	}
 
+	//t2 := time.Now()
+
 	// запрос объекта страницы
 	objPage, err = s.api.ObjGetWithCache(ctx, in.Page)
 	if err != nil {
@@ -52,13 +56,15 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 		return out, err
 	}
 
+	//log.Printf("\n\nполучаем (с кешем) объект страницы) s.api.ObjGetWithCache %fc reqID: %s\n", time.Since(t2).Seconds(), logger.GetRequestIDCtx(ctx))
+
 	// ФИКС! иногда в разных приложениях называют одинаково страницы.
 	// удаляем из объекта objPage значения не текущего приложения
 	if len(objPage.Data) > 1 {
 		for k, v := range objPage.Data {
 			app, _ := v.Attr("app", "src")
 			if app != s.cfg.DataUid {
-				lib.RemoveElementFromData(&objPage, k)
+				lib.RemoveElementFromData(objPage, k)
 			}
 		}
 	}
@@ -78,14 +84,20 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	values["Cookie"] = in.RequestRaw.Cookies()
 	values["Request"] = in.RequestRaw
 
-	out.Body, err = s.BPage(ctx, in, objPage, values)
+	//fmt.Printf("\nсгенерили подготовительные объекты (макет и страница)  values %fc", time.Since(t).Seconds())
+	//t3 := time.Now()
+
+	out.Body, err = s.BPage(ctx, in, *objPage, values)
+
+	//fmt.Printf("\nгенерация страницы (сервис) s.BPage %fc\n", time.Since(t3).Seconds())
 
 	return out, err
 }
 
 // BPage собираем страницу
 func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.ResponseData, values map[string]interface{}) (result string, err error) {
-	var objMaket, objBlocks models.ResponseData
+	var objMaket *models.ResponseData
+	var objBlocks models.ResponseData
 	var t *template.Template
 
 	moduleResult := model.ModuleResult{}
@@ -122,7 +134,6 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 
 	// 3 запрос на объект макета
 	objMaket, err = s.api.ObjGetWithCache(ctx, maketUID)
-	//s.tree.Curl("GET", "_objs/"+maketUID, "", &objMaket, map[string]string{})
 
 	if len(objMaket.Data) == 0 {
 		return result, fmt.Errorf("%s (uid: %s)", "Error. Object maket is empty.", maketUID)

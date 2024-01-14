@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error) {
-	var objBlock models.ResponseData
+	var objBlock *models.ResponseData
 
 	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 	objBlock, err = s.api.ObjGetWithCache(ctx, in.Block)

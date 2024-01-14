@@ -177,7 +177,7 @@ func (c *cache) Write(key, cacheParams string, cacheInterval int, blockUid, page
 	err = c.DB.Upsert(c.cfg.Namespace, valueCache)
 	if err != nil {
 		logger.Error(ctx, "Error! Created cache from is failed!", zap.Error(err))
-		return fmt.Errorf("%s", "Error! Created cache from is failed!")
+		return fmt.Errorf("error. Created cache from is failed! err: %s", err)
 	}
 
 	return

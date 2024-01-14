@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/models"
 	"github.com/restream/reindexer"
 )
 
-// формируем ключ кеша
-func (l *app) SetCahceKey(r *http.Request, p Data) (key, keyParam string) {
+// SetCahceKey формируем ключ кеша
+func (l *app) SetCahceKey(r *http.Request, p models.Data) (key, keyParam string) {
 	key2 := ""
 	key3 := ""
 
@@ -46,9 +47,10 @@ func (l *app) SetCahceKey(r *http.Request, p Data) (key, keyParam string) {
 	return key, "url:" + key2 + "; params:" + key3
 }
 
+// СacheGet
 // key - ключ, который будет указан в кеше
 // option - объект блока (запроса и тд) то, где хранится время кеширования
-func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string) (string, bool) {
+func (l *app) СacheGet(key string, block models.Data, r *http.Request, page models.Data, values map[string]interface{}, url string) (string, bool) {
 	var res string
 	var rows *reindexer.Iterator
 
@@ -92,10 +94,10 @@ func (l *app) СacheGet(key string, block Data, r *http.Request, page Data, valu
 	return "", false
 }
 
-// key - ключ, который будет указан в кеше
+// CacheSet key - ключ, который будет указан в кеше
 // option - объект блока (запроса и тд) то, где хранится время кеширования
 // data - то, что кладется в кеш
-func (l *app) CacheSet(key string, block Data, page Data, value, url string) bool {
+func (l *app) CacheSet(key string, block models.Data, page models.Data, value, url string) bool {
 	var valueCache = ValueCache{}
 	var deadTime time.Duration
 
@@ -136,7 +138,7 @@ func (l *app) CacheSet(key string, block Data, page Data, value, url string) boo
 	return true
 }
 
-func (l *app) cacheUpdate(key string, block Data, r *http.Request, page Data, values map[string]interface{}, url string) {
+func (l *app) cacheUpdate(key string, block models.Data, r *http.Request, page models.Data, values map[string]interface{}, url string) {
 
 	// получаем контент модуля
 	value := l.ModuleBuild(block, r, page, values, false)
@@ -147,7 +149,7 @@ func (l *app) cacheUpdate(key string, block Data, r *http.Request, page Data, va
 	return
 }
 
-func (l *app) refreshTime(options Data) int {
+func (l *app) refreshTime(options models.Data) int {
 
 	refresh, _ := options.Attr("cache", "value")
 	if refresh == "" {

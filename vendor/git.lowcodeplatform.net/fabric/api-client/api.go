@@ -34,7 +34,7 @@ type Api interface {
 
 type Obj interface {
 	ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error)
-	ObjGetWithCache(ctx context.Context, uids string) (result models.ResponseData, err error)
+	ObjGetWithCache(ctx context.Context, uids string) (result *models.ResponseData, err error)
 	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
 	ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error)
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
@@ -106,7 +106,12 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 	return result, err
 }
 
-func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.ResponseData, err error) {
+func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.ResponseData, err error) {
+	//t := time.Now()
+	//defer func() {
+	//	fmt.Printf("\nDEFER Время выполнения общее ObjGetWithCache: %fc\n", time.Since(t).Seconds())
+	//}()
+
 	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
@@ -116,6 +121,8 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.R
 	key := lib.Hash(uids)
 
 	cacheValue, err := cache.Cache().Get(key)
+	//fmt.Printf("\nберем объект из кеша. cacheValue uids: %s len %s, время: %fc, err: %s, reqID: %s", uids, len(fmt.Sprint(cacheValue)), time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
+
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
 		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
@@ -125,23 +132,25 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result models.R
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("get value is fail. err: %s", err)
+			err = fmt.Errorf("[ObjGetWithCache] get value is fail. err: %s", err)
 		}
 
-		result, ok = value.(models.ResponseData)
+		res, ok := value.(models.ResponseData)
 		if !ok {
-			err = fmt.Errorf("error. cast type is fail")
+			err = fmt.Errorf("[ObjGetWithCache] error. cast type (ResponseData) is fail for cache.ErrorKeyNotFound. result: %+v", value)
 		}
 
-		return result, err
+		return &res, err
 	}
 
-	result, ok = cacheValue.(models.ResponseData)
+	res, ok := cacheValue.(models.ResponseData)
 	if !ok {
-		return result, fmt.Errorf("error. cast type is fail")
+		return result, fmt.Errorf("[ObjGetWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
-	return result, err
+	//fmt.Printf("\nберем объект из кеша. общее время: %fc, err: %s reqID: %s\n\n", time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
+
+	return &res, err
 }
 
 // LinkGet - получение связанных объектов
@@ -180,12 +189,12 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("get value is fail. err: %s", err)
+			err = fmt.Errorf("[LinkGetWithCache] get value is fail. err: %s", err)
 		}
 
 		result, ok = value.(models.ResponseData)
 		if !ok {
-			err = fmt.Errorf("error. cast type is fail")
+			err = fmt.Errorf("[LinkGetWithCache] error. cast type (ResponseData) is fail. result: %+v", value)
 		}
 
 		return result, err
@@ -193,7 +202,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 
 	result, ok = cacheValue.(models.ResponseData)
 	if !ok {
-		return result, fmt.Errorf("error. cast type is fail")
+		return result, fmt.Errorf("[LinkGetWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
 	return result, err
@@ -202,7 +211,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 // ObjAttrUpdate изменение значения аттрибута объекта
 func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	if uid == "" {
-		return result, fmt.Errorf("error ObjAttrUpdate. uid is empty")
+		return result, fmt.Errorf("[ObjAttrUpdate] error ObjAttrUpdate. uid is empty")
 	}
 	_, err = a.cb.Execute(func() (interface{}, error) {
 		result, err = a.objAttrUpdate(ctx, uid, name, value, src, editor)
@@ -210,7 +219,7 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 	})
 	if err != nil {
 		logger.Error(ctx, "error ObjAttrUpdate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request ObjAttrUpdate (primary route). check apiCircuitBreaker. err: %s", err)
+		return result, fmt.Errorf("[ObjAttrUpdate] error request ObjAttrUpdate (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
@@ -233,7 +242,7 @@ func (a *api) Element(ctx context.Context, action, body string) (result models.R
 	})
 	if err != nil {
 		logger.Error(ctx, "error Element primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request Element (primary route). check apiCircuitBreaker. err: %s", err)
+		return result, fmt.Errorf("[Element] error request Element (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
 	return result, err
@@ -266,12 +275,12 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 
 		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("get value is fail. err: %s", err)
+			err = fmt.Errorf("[ElementWithCache] get value is fail. err: %s", err)
 		}
 
 		result, ok = value.(models.ResponseData)
 		if !ok {
-			err = fmt.Errorf("error. cast type is fail")
+			err = fmt.Errorf("[ElementWithCache] error. cast type (ResponseData) is fail. result: %+v", value)
 		}
 
 		return result, err
@@ -279,7 +288,7 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 
 	result, ok = cacheValue.(models.ResponseData)
 	if !ok {
-		return result, fmt.Errorf("error. cast type is fail")
+		return result, fmt.Errorf("[ElementWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
 	return result, err

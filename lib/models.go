@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"sync"
 
+	"git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/lib"
 	"github.com/restream/reindexer"
 )
+
+const headerRequestId = "X-Request-Id"
 
 type app struct {
 	serviceMetrics lib.ServiceMetric
@@ -20,6 +23,7 @@ type app struct {
 	count          string
 	config         Cfg
 	vfs            lib.Vfs
+	api            api.Api
 }
 
 type Cfg struct {
@@ -234,7 +238,7 @@ type Block struct {
 	mx               sync.Mutex
 }
 
-// возвращаем необходимый значение атрибута для объекта если он есть, инае пусто
+// Attr возвращаем необходимый значение атрибута для объекта если он есть, инае пусто
 // а также из заголовка объекта
 func (p *Data) Attr(name, element string) (result string, found bool) {
 
@@ -284,7 +288,7 @@ func (p *Data) Attr(name, element string) (result string, found bool) {
 	return "", false
 }
 
-// заменяем значение аттрибутов в объекте профиля
+// AttrSet заменяем значение аттрибутов в объекте профиля
 func (p *Data) AttrSet(name, element, value string) bool {
 	g := Attribute{}
 
@@ -332,7 +336,7 @@ func (p *Block) CSSPath() {
 	return
 }
 
-func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, cache *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs) App {
+func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, cache *reindexer.Reindexer, status, count string, config map[string]string, vfs lib.Vfs, api api.Api) App {
 
 	// добавляем карту функций FuncMap функциями из библиотеки github.com/Masterminds/sprig
 	// только те, которые не описаны в FuncMap самостоятельно
@@ -355,5 +359,6 @@ func New(metric lib.ServiceMetric, urlORM, urlAPI, urlGUI string, cache *reindex
 		count:          count,
 		config:         conf,
 		vfs:            vfs,
+		api:            api,
 	}
 }

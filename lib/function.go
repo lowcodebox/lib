@@ -22,7 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 	"github.com/labstack/gommon/log"
 )
 
@@ -105,7 +106,6 @@ func (c *app) WriteFile(path string, data []byte) {
 }
 
 func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies []*http.Cookie) (result interface{}, err error) {
-
 	var mapValues map[string]string
 	var req *http.Request
 	var flagExtRequest bool
@@ -246,7 +246,7 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 // p 	- объект переданных в модуль данных блока (запрос/конфигураци)
 // r 	- значения реквеста
 // page - объект страницы, которую парсим
-func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[string]interface{}, enableCache bool) (result ModuleResult) {
+func (l *app) ModuleBuild(block models.Data, r *http.Request, page models.Data, values map[string]interface{}, enableCache bool) (result ModuleResult) {
 	var err error
 
 	// указатель на профиль текущего пользователя
@@ -331,7 +331,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	// в блоке есть настройки поля расширенного фильтра, который можно добавить в самом блоке
 	// дополняем параметры request-a, доп. параметрами, которые переданы через блок
 	extfilter, _ := block.Attr("extfilter", "value") // дополнительный фильтр для блока
-	dv := []Data{block}
+	dv := []models.Data{block}
 
 	extfilter = l.DogParse(extfilter, r, &dv, b.Value)
 	extfilter = strings.Replace(extfilter, "?", "", -1)
@@ -390,7 +390,7 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	}
 
 	// обработк @-функции в конфигурации
-	dv = []Data{block}
+	dv = []models.Data{block}
 	dogParseConfiguration := l.DogParse(tconfiguration, r, &dv, b.Value)
 
 	// конфигурация без обработки @-функции
@@ -547,9 +547,9 @@ func (l *app) ModuleBuild(block Data, r *http.Request, page Data, values map[str
 	return result
 }
 
-// ДЛЯ ПАРАЛЛЕЛЬНОЙ сборки модуля
+// ModuleBuildParallel ДЛЯ ПАРАЛЛЕЛЬНОЙ сборки модуля
 // получаем объект модуля (отображения)
-func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request, page Data, values map[string]interface{}, enableCache bool, buildChan chan ModuleResult, wg *sync.WaitGroup) {
+func (l *app) ModuleBuildParallel(ctxM context.Context, p models.Data, r *http.Request, page models.Data, values map[string]interface{}, enableCache bool, buildChan chan ModuleResult, wg *sync.WaitGroup) {
 	defer wg.Done()
 	t1 := time.Now()
 
@@ -652,7 +652,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	// в блоке есть настройки поля расширенного фильтра, который можно добавить в самом блоке
 	// дополняем параметры request-a, доп. параметрами, которые переданы через блок
 	extfilter, _ := p.Attr("extfilter", "value") // дополнительный фильтр для блока
-	dp := []Data{p}
+	dp := []models.Data{p}
 	extfilter = l.DogParse(extfilter, r, &dp, b.Value)
 	extfilter = strings.Replace(extfilter, "?", "", -1)
 
@@ -708,7 +708,7 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 	}
 
 	// обработк @-функции в конфигурации
-	dp = []Data{p}
+	dp = []models.Data{p}
 	dogParseConfiguration := l.DogParse(tconfiguration, r, &dp, b.Value)
 
 	// конфигурация без обработки @-функции
@@ -843,8 +843,12 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p Data, r *http.Request,
 }
 
 // генерируем блок в зависимости от переданного пути (или из файла или из данных в объекте)
+// TODO переделать lib.Curl на api - проверить корректность использования либы в гуи
 func (l *app) generateBlock(ctx context.Context, tplName string, bl Block, uidModule string) (res string, err error) {
 	var c bytes.Buffer
+
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 
 	// TODO удалить позже
 	// очищаем доп.путей, которые были при использовании файловой структуры
@@ -864,11 +868,13 @@ func (l *app) generateBlock(ctx context.Context, tplName string, bl Block, uidMo
 			res = fmt.Sprint(err)
 		}
 	} else {
-		var objModule ResponseData
+		var objModule models.ResponseData
 
 		// запроса модуля (в нем HTML-тело шаблона)
-		//objModule, err = b.api.ObjGet(uidModule)
-		_, err = l.Curl("GET", "_objs/"+uidModule, "", &objModule, nil)
+		//urlc := l.urlAPI + "_objs/" + uidModule
+		//urlc = strings.Replace(urlc, "//_objs", "/_objs", 1)
+		//_, err = lib.Curl("GET", urlc, "", &objModule, handlers, nil)
+		objModule, err = l.api.ObjGet(ctx, uidModule)
 		if err != nil {
 			err = fmt.Errorf("%s (%s)", "Error: Get object Module is failed!", err)
 			res = fmt.Sprint(err)
@@ -1098,7 +1104,7 @@ func (l *app) ModuleError(err interface{}, r *http.Request) template.HTML {
 	return result
 }
 
-// отправка запроса на получения данных из интерфейса GUI
+// GUIQuery отправка запроса на получения данных из интерфейса GUI
 // параметры переданные в строке (r.URL) отправляем в теле запроса
 func (c *app) GUIQuery(tquery string, r *http.Request) (returnResp Response, err error) {
 
@@ -1138,8 +1144,10 @@ func (c *app) GUIQuery(tquery string, r *http.Request) (returnResp Response, err
 	// не получилось передать в app состояние, поэтому добавляю ранее путь к GUI и если он указан, то отправляю по полному пути
 	// дополняем путем до API если не передан вызов внешнего запроса через http://
 	//if tquery[:4] != "http" {
-	q := c.urlGUI + "/query/" + tquery + filters
-	resultInterface, err = lib.Curl(r.Method, q, string(bodyJSON), &dataResp, map[string]string{}, r.Cookies())
+	//resultInterface, err = lib.Curl(r.Method, q, string(bodyJSON), &dataResp, map[string]string{}, r.Cookies())
+	q := tquery + filters
+	res, err := c.api.Query(r.Context(), q, r.Method, string(bodyJSON))
+	err = json.Unmarshal([]byte(res), &dataResp)
 	if err != nil {
 		err = fmt.Errorf("error get in GUIQuery, query: %s, err: %s", q, err)
 		return returnResp, err

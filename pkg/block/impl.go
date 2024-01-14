@@ -59,7 +59,7 @@ func (s *block) GetWithLocalCache(ctx context.Context, in model.ServiceIn, block
 
 		moduleResult, ok = value.(model.ModuleResult)
 		if !ok {
-			err = fmt.Errorf("error. cast type is fail")
+			err = fmt.Errorf("error. cast type (ModuleResult) is fail")
 		}
 
 		return moduleResult, err
@@ -67,7 +67,7 @@ func (s *block) GetWithLocalCache(ctx context.Context, in model.ServiceIn, block
 
 	moduleResult, ok = cacheValue.(model.ModuleResult)
 	if !ok {
-		return moduleResult, fmt.Errorf("error. cast type is fail")
+		return moduleResult, fmt.Errorf("error. cast type (ModuleResult) is fail")
 	}
 
 	return moduleResult, err

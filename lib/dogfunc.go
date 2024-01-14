@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
 )
@@ -17,8 +18,8 @@ import (
 ////////////////////////////////////////////////////////////
 
 type Formula struct {
-	Value    string `json:"value"`
-	Document []Data `json:"document"`
+	Value    string        `json:"value"`
+	Document []models.Data `json:"document"`
 	Request  *http.Request
 	Inserts  []*Insert
 	Values   map[string]interface{} //  параметры переданные в шаблон при генерации страницы (доступны в шаблоне как $.Value)
@@ -379,7 +380,7 @@ func (c *app) FuncURL(r *http.Request, arg []string) (result string) {
 }
 
 // Вставляем значения системных полей объекта
-func (c *app) Path(d []Data, arg []string) (result string) {
+func (c *app) Path(d []models.Data, arg []string) (result string) {
 	var valueDefault string
 
 	if len(arg) > 0 {
@@ -592,7 +593,7 @@ func (c *app) Cookie(r *http.Request, arg []string) (result string) {
 }
 
 // Вставляем значения системных полей объекта
-func (c *app) Obj(data []Data, arg []string) (result string) {
+func (c *app) Obj(data []models.Data, arg []string) (result string) {
 	var valueDefault, r string
 	var res = []string{}
 	if len(arg) == 0 {
@@ -640,7 +641,7 @@ func (c *app) Obj(data []Data, arg []string) (result string) {
 
 // Вставляем значения (Value) элементов из формы
 // Если поля нет, то выводит переданное значение (может быть любой символ)
-func (c *app) FieldValue(data []Data, arg []string) (result string) {
+func (c *app) FieldValue(data []models.Data, arg []string) (result string) {
 	var valueDefault, separator string
 	var resSlice = []string{}
 
@@ -675,7 +676,7 @@ func (c *app) FieldValue(data []Data, arg []string) (result string) {
 
 // Вставляем ID-объекта (SRC) элементов из формы
 // Если поля нет, то выводит переданное значение (может быть любой символ)
-func (c *app) FieldSrc(data []Data, arg []string) (result string) {
+func (c *app) FieldSrc(data []models.Data, arg []string) (result string) {
 	var valueDefault, separator string
 	var resSlice = []string{}
 
@@ -706,11 +707,11 @@ func (c *app) FieldSrc(data []Data, arg []string) (result string) {
 	return result
 }
 
-// Разбиваем значения по элементу (Value(по-умолчанию)/Src) элементов из формы по разделителю и возвращаем
+// FieldSplit Разбиваем значения по элементу (Value(по-умолчанию)/Src) элементов из формы по разделителю и возвращаем
 // значение по указанному номеру (начала от 0)
 // Синтаксис: FieldValueSplit(поле, элемент, разделитель, номер_элемента)
 // для разделителя есть кодовые слова slash - / (нельзя вставить в фукнцию)
-func (c *app) FieldSplit(data []Data, arg []string) (result string) {
+func (c *app) FieldSplit(data []models.Data, arg []string) (result string) {
 	var resSlice = []string{}
 	var r string
 
@@ -895,7 +896,7 @@ func (c *app) Query(r *http.Request, arg []string) (result interface{}, err erro
 }
 
 // DogParse Собачья-обработка (поиск в строке @функций и их обработка)
-func (c *app) DogParse(p string, r *http.Request, queryData *[]Data, values map[string]interface{}) (result string) {
+func (c *app) DogParse(p string, r *http.Request, queryData *[]models.Data, values map[string]interface{}) (result string) {
 	s1 := Formula{
 		App: c,
 	}
@@ -906,13 +907,13 @@ func (c *app) DogParse(p string, r *http.Request, queryData *[]Data, values map[
 		s1.Request = r
 		s1.Values = values
 		s1.Document = *queryData
-		res_parse := s1.Replace()
+		resParse := s1.Replace()
 
-		if p == res_parse {
-			result = res_parse
+		if p == resParse {
+			result = resParse
 			break
 		}
-		p = res_parse
+		p = resParse
 	}
 
 	return result

@@ -85,6 +85,7 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 	}
 
 	c.items[key] = &ci
+	_, err = c.updateCacheValue(key, &ci)
 
 	return err
 }

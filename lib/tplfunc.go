@@ -747,7 +747,7 @@ func (t *funcMap) divfloat(a, b interface{}) interface{} {
 
 // обработка @-функций внутри конфигурации (в шаблонизаторе)
 func (t *funcMap) confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
-	var d Data
+	var d models.Data
 	var lb app
 
 	b, err := json.Marshal(queryData)
@@ -756,7 +756,7 @@ func (t *funcMap) confparse(configuration string, r *http.Request, queryData int
 	if err != nil {
 		return "Error! Failed marshal queryData: " + fmt.Sprint(err)
 	}
-	dv := []Data{d}
+	dv := []models.Data{d}
 	confParse := lb.DogParse(configuration, r, &dv, nil)
 
 	// конфигурация с обработкой @-функции
@@ -774,13 +774,13 @@ func (t *funcMap) confparse(configuration string, r *http.Request, queryData int
 
 // обработка @-функций внутри шаблонизатора
 func (t *funcMap) dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
-	var d Data
+	var d models.Data
 	var lb app
 
 	b, _ := json.Marshal(queryData)
 	json.Unmarshal(b, &d)
 
-	dv := []Data{d}
+	dv := []models.Data{d}
 	result = lb.DogParse(p, r, &dv, values)
 
 	return result

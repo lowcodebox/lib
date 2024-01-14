@@ -23,6 +23,7 @@ import (
 // @Router /api/v1/page [get]
 func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 	var err error
+	//t := time.Now()
 	defer func() {
 		if err != nil {
 			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
@@ -36,6 +37,8 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	serviceResult, er := h.service.Page(r.Context(), in)
+	//log.Printf("\n\nservice.Page %v", time.Since(t).Seconds())
+
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
 		return
