@@ -189,11 +189,32 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"imgresize": Funcs.imgResize,
 		"imgcup":    Funcs.imgCrop,
 
-		"profile": Funcs.profile,
+		"profile":    Funcs.profile,
+		"profileuid": Funcs.profileuid,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// profileuid берем uid профиля по uid-роли
+func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
+	var err error
+	var res models.ProfileData
+	ctxUser := r.Context().Value("profile") // текущий профиль пользователя
+	err = json.Unmarshal([]byte(Funcs.marshal(ctxUser)), &res)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	for _, v := range res.Profiles {
+		ruid, found := v.Attr("userroles", "src")
+		if found && ruid == roleuid {
+			return v.Uid
+		}
+	}
+
+	return ""
+}
 
 // profile перемешивает полученный слайс
 func (t *funcMap) profile(r http.Request) (res models.ProfileData) {

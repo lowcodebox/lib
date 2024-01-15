@@ -106,6 +106,8 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.Namespace = cfg.Name + "_" + cfg.ServiceType
 	cfg.ClientPath = cfg.Name + "/" + cfg.ServiceType
 
+	fmt.Printf("cfg.Name %s, cfg.ServiceType %s", cfg.Name, cfg.ServiceType)
+
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
 		cfg.VfsBucket = cfg.Name
