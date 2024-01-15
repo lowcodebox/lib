@@ -178,7 +178,7 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	// 4 запускаем сборку модулей (получаем сгенерированный template.HTML без JS и CSS
 	// шаблоны рендерятся в каждом модуле отдельно (можно далее хранить в кеше)
 
-	if s.cfg.BuildModuleParallel.Value && 1 == 1 {
+	if s.cfg.BuildModuleParallel.Value && 0 == 1 {
 		ctx := context.WithValue(context.Background(), "timeout", s.cfg.TimeoutBlockGenerate.Value)
 		ctx, cancel := context.WithCancel(ctx)
 
