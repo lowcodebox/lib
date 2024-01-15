@@ -137,9 +137,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		// добавляем значение токена в локальный реестр сесссий (ПЕРЕДЕЛАТЬ)
 		if token != nil {
-			logger.Info(h.ctx, "AuthProcessor", zap.String("stage", "добавляем значение токена в локальный реестр сесссий"),
-				zap.String("token", fmt.Sprintf("%+v", token)))
-
 			var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
 
 			prof, _ := h.session.GetProfile(token.Session)
@@ -167,9 +164,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "token", authKey)
 		if token != nil {
 			currentProfile, _ := h.session.GetProfile(token.Session)
-
-			logger.Info(ctx, "AuthProcessor", zap.String("stage", "добавили профиль в куку"),
-				zap.String("profile", fmt.Sprintf("%+v", *currentProfile)))
 			ctx = context.WithValue(ctx, "profile", *currentProfile)
 		}
 
