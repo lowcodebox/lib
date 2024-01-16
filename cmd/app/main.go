@@ -104,9 +104,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.HashRun = lib.UUID()
 	cfg.Name, cfg.Version = lib.ValidateNameVersion("", cfg.Type, cfg.Domain)
 	cfg.Namespace = cfg.Name + "_" + cfg.Type
-	cfg.ClientPath = cfg.Name + "/" + cfg.Version
-
-	fmt.Printf("cfg.Name %s, cfg.Type %s Version %s cfg.Domain %s", cfg.Name, cfg.Type, cfg.Version, cfg.Domain)
+	cfg.ClientPath = "/" + cfg.Name + "/" + cfg.Version
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {

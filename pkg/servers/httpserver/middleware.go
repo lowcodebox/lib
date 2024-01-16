@@ -43,7 +43,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
 
-		fmt.Printf("\n%t %s %s\n", strings.Contains(refURL, h.cfg.SigninUrl), refURL, h.cfg.SigninUrl)
+		//fmt.Printf("\n%t %s %s\n", strings.Contains(refURL, h.cfg.SigninUrl), refURL, h.cfg.SigninUrl)
 
 		r.ParseForm()
 		for k, _ := range r.Form {
