@@ -198,22 +198,19 @@ var FuncMapS = sprig.FuncMap()
 
 // profileuid берем uid профиля по uid-роли
 func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
-	var err error
-	var res models.ProfileData
-	ctxUser := r.Context().Value("profile") // текущий профиль пользователя
-	err = json.Unmarshal([]byte(Funcs.marshal(ctxUser)), &res)
-	if err != nil {
-		return fmt.Sprint(err)
-	}
+	mapRoles := map[string]string{}
 
-	for _, v := range res.Profiles {
-		ruid, found := v.Attr("userroles", "src")
-		if found && ruid == roleuid {
+	for _, v := range t.profile(r).Profiles {
+		roleSrc, _ := v.Attr("userroles", "src")
+		roleValue, _ := v.Attr("userroles", "value")
+		mapRoles[roleSrc] = roleValue
+		if roleSrc == roleuid {
 			return v.Uid
 		}
 	}
 
-	return ""
+	g, _ := json.Marshal(mapRoles)
+	return string(g)
 }
 
 // profile перемешивает полученный слайс
