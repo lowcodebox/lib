@@ -4,9 +4,12 @@ type Config struct {
 	HttpsOnly  string `envconfig:"HTTPS_ONLY" default:""`
 	ProjectKey string `envconfig:"PROJECT_KEY" default:"LKHlhb899Y09olUi"`
 
-	Name        string `envconfig:"NAME" default:"app" description:"имя сервиса (по-умолчанию = тип сервиса)"`
-	ServiceType string `envconfig:"SERVICE_TYPE" default:"app"`
-	HashRun     string `envconfig:"HASH_RUN" default:"is empty"`
+	Name           string `envconfig:"NAME" default:"app" description:"имя сервиса (по-умолчанию = тип сервиса)"`
+	Type           string `envconfig:"TYPE" default:"app"`
+	Version        string `envconfig:"VERSION" default:"app"`
+	ServiceVersion string `envconfig:"SERVICE_VERSION" default:""`
+	HashCommit     string `envconfig:"HASH_COMMIT" default:""`
+	HashRun        string `envconfig:"HASH_RUN" default:"is empty"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
@@ -24,9 +27,6 @@ type Config struct {
 
 	// Cache
 	TimeoutCacheGenerate Duration `envconfig:"TIMEOUT_CACHE_GENERATE" default:"3m" description:"интервал после которого будет реинициализировано обновление кеша для статуса updated"`
-
-	ServiceVersion string `envconfig:"SERVICE_VERSION" default:""`
-	HashCommit     string `envconfig:"HASH_COMMIT" default:""`
 
 	// Config
 	ConfigName          string `envconfig:"CONFIG_NAME" default:""`

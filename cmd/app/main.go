@@ -102,18 +102,18 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.UidService = cfg.DataUid
 	cfg.ConfigName = cfg.DataUid
 	cfg.HashRun = lib.UUID()
-	cfg.Name, cfg.ServiceType = lib.ValidateNameVersion("", cfg.ServiceType, cfg.Domain)
-	cfg.Namespace = cfg.Name + "_" + cfg.ServiceType
-	cfg.ClientPath = cfg.Name + "/" + cfg.ServiceType
+	cfg.Name, cfg.Version = lib.ValidateNameVersion("", cfg.Type, cfg.Domain)
+	cfg.Namespace = cfg.Name + "_" + cfg.Type
+	cfg.ClientPath = cfg.Name + "/" + cfg.Version
 
-	fmt.Printf("cfg.Name %s, cfg.ServiceType %s", cfg.Name, cfg.ServiceType)
+	fmt.Printf("cfg.Name %s, cfg.Type %s Version %s cfg.Domain %s", cfg.Name, cfg.Type, cfg.Version, cfg.Domain)
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
 		cfg.VfsBucket = cfg.Name
 	}
 
-	err = logger.SetupDefaultLogboxLogger(cfg.Name+"/"+cfg.ServiceType, logger.LogboxConfig{
+	err = logger.SetupDefaultLogboxLogger(cfg.Name+"/"+cfg.Type, logger.LogboxConfig{
 		Endpoint:       cfg.LogboxEndpoint,
 		AccessKeyID:    cfg.LogboxAccessKeyId,
 		SecretKey:      cfg.LogboxSecretKey,
@@ -124,16 +124,16 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}, map[string]string{
 		logger.ServiceIDKey:   cfg.HashRun,
 		logger.ConfigIDKey:    cfg.UidService,
-		logger.ServiceTypeKey: cfg.ServiceType,
+		logger.ServiceTypeKey: cfg.Type,
 	})
 
 	// логируем в консоль, если ошибка подлючения к сервису хранения логов
 	if err != nil {
 		fmt.Errorf("%s Error init Logbox logger. Was init default logger. err: %s\n", fail, err)
-		logger.SetupDefaultLogger(cfg.Name+"/"+cfg.ServiceType,
+		logger.SetupDefaultLogger(cfg.Name+"/"+cfg.Type,
 			logger.WithCustomField(logger.ServiceIDKey, cfg.HashRun),
 			logger.WithCustomField(logger.ConfigIDKey, cfg.UidService),
-			logger.WithCustomField(logger.ServiceTypeKey, cfg.ServiceType),
+			logger.WithCustomField(logger.ServiceTypeKey, cfg.Type),
 		)
 	}
 

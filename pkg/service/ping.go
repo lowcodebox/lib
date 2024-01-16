@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/cache"
@@ -27,10 +26,6 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 		logger.Error(ctx, "cache.Cache", zap.Error(err))
 	}
 
-	if metrics != nil {
-
-	}
-
 	bmetric, ok := metrics.([]byte)
 	if ok {
 		err = json.Unmarshal(bmetric, &mobj)
@@ -46,16 +41,10 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 
 	https := false
 
-	version := s.cfg.ServiceType
-	splDomain := strings.Split(s.cfg.Domain, "/")
-	if len(splDomain) == 2 {
-		version = splDomain[1]
-	}
-
 	pong := models.Pong{}
 	pong.Uid = s.cfg.DataUid
 	pong.Name = s.cfg.Name
-	pong.Version = version
+	pong.Version = s.cfg.Version
 	pong.Status = "run"
 	pong.PortHTTP, pong.Port = pg, pg
 	pong.Config = s.cfg.ConfigName

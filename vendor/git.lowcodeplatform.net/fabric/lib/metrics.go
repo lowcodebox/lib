@@ -76,8 +76,8 @@ func SendServiceParamsToMetric(uid, name, version, status, pid, replicas, portHT
 }
 
 // ValidateNameVersion - формирует правильные имя проекта и версию сервиса исходя из того, что пришло из настроек
-func ValidateNameVersion(project, version, domain string) (resName, resVersion string) {
-	name := "unknown"
+func ValidateNameVersion(project, types, domain string) (name, version string) {
+	name = "unknown"
 
 	if project != "" {
 		if len(strings.Split(project, "-")) > 3 { // признак того, что получили UID (для совместимости)
@@ -88,26 +88,23 @@ func ValidateNameVersion(project, version, domain string) (resName, resVersion s
 		name = project // название проекта
 	}
 
-	if name == "unknown" && domain != "" {
-		name = strings.Split(domain, "/")[0]
+	pp := strings.Split(domain, "/")
+	if len(pp) == 1 {
+		if pp[0] != "" {
+			name = pp[0]
+		}
+	}
+	if len(pp) == 2 {
+		if pp[0] != "" {
+			name = pp[0]
+		}
+		if pp[1] != "" {
+			version = pp[1]
+		}
 	}
 
-	// TODO deplicated - удалить когда все сервисы переедут на адресацию по короткому имени проекта
-	if version == "" || name == "" {
-		pp := strings.Split(domain, "/")
-		if len(pp) == 1 {
-			if pp[0] != "" {
-				name = pp[0]
-			}
-		}
-		if len(pp) == 2 {
-			if pp[0] != "" {
-				name = pp[0]
-			}
-			if pp[1] != "" {
-				version = pp[1]
-			}
-		}
+	if version == "" {
+		version = types
 	}
 
 	return name, version

@@ -43,6 +43,8 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
 
+		fmt.Printf("\n%t %s %s\n", strings.Contains(refURL, h.cfg.SigninUrl), refURL, h.cfg.SigninUrl)
+
 		r.ParseForm()
 		for k, _ := range r.Form {
 			if dps.PublicPages[k] {
@@ -130,7 +132,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		// выкидываем если обновление невозможно
 		if !status || err != nil {
 			if r.FormValue("ref") == "" {
-				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+h.cfg.ClientPath+r.RequestURI, 302)
+				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
 				return
 			}
 		}
