@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
-	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -156,15 +154,15 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	//	cfg.LogIntervalMetric.Value,
 	//)
 
-	defer func() {
-		rec := recover()
-		if rec != nil {
-			b := string(debug.Stack())
-			logger.Panic(ctx, "Recover panic from main function.", zap.String("debug stack", b))
-			cancel()
-			runtime.Goexit()
-		}
-	}()
+	//defer func() {
+	//	rec := recover()
+	//	if rec != nil {
+	//		b := string(debug.Stack())
+	//		logger.Panic(ctx, "Recover panic from main function.", zap.String("debug stack", b))
+	//		cancel()
+	//		runtime.Goexit()
+	//	}
+	//}()
 
 	msg := i18n.New()
 
