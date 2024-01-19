@@ -205,9 +205,9 @@ var FuncMapS = sprig.FuncMap()
 //	{{ $val }}
 //
 // {{- end }}
-func (t *funcMap) iterate(count int64) []int64 {
-	var i int64
-	var Items []int64
+func (t *funcMap) iterate(count int) []int {
+	var i int
+	var Items []int
 	for i = 0; i < (count); i++ {
 		Items = append(Items, i)
 	}
