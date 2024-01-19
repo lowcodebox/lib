@@ -191,10 +191,22 @@ func NewFuncMap(vfs Vfs, api Api) {
 
 		"profile":    Funcs.profile,
 		"profileuid": Funcs.profileuid,
+
+		"iterate": Funcs.iterate,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// iterate возвращает слайс, по-которому потом можно итерироваться range-ом
+func (t *funcMap) iterate(count uint) []uint {
+	var i uint
+	var Items []uint
+	for i = 0; i < (count); i++ {
+		Items = append(Items, i)
+	}
+	return Items
+}
 
 // profileuid берем uid профиля по uid-роли
 func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
