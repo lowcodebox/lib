@@ -495,6 +495,9 @@ func (b *block) guiQuery(ctx context.Context, tquery, token, queryRaw, method st
 	// поэтому если не Response то дописываем в Data полученное тело
 	if err == nil {
 		returnResp.Data = dd1.Data
+		returnResp.Metrics = dd1.Metrics
+		returnResp.Status = dd1.Status
+
 		return returnResp
 	}
 
@@ -503,6 +506,9 @@ func (b *block) guiQuery(ctx context.Context, tquery, token, queryRaw, method st
 	err = json.Unmarshal([]byte(resultInterface), &dd2)
 	if err == nil {
 		returnResp.Data = dd1.Data
+		returnResp.Metrics = dd1.Metrics
+		returnResp.Status = dd1.Status
+
 		return returnResp
 	}
 
