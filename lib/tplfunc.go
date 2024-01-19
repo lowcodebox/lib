@@ -199,9 +199,13 @@ func NewFuncMap(vfs Vfs, api Api) {
 var FuncMapS = sprig.FuncMap()
 
 // iterate возвращает слайс, по-которому потом можно итерироваться range-ом
-func (t *funcMap) iterate(count uint) []uint {
-	var i uint
-	var Items []uint
+// Пример:
+// {{- range $val := iterate 5 }}
+//    {{ $val }}
+// {{- end }}
+func (t *funcMap) iterate(count int) []int {
+	var i int
+	var Items []int
 	for i = 0; i < (count); i++ {
 		Items = append(Items, i)
 	}
