@@ -201,11 +201,13 @@ var FuncMapS = sprig.FuncMap()
 // iterate возвращает слайс, по-которому потом можно итерироваться range-ом
 // Пример:
 // {{- range $val := iterate 5 }}
-//    {{ $val }}
+//
+//	{{ $val }}
+//
 // {{- end }}
-func (t *funcMap) iterate(count int) []int {
-	var i int
-	var Items []int
+func (t *funcMap) iterate(count int64) []int64 {
+	var i int64
+	var Items []int64
 	for i = 0; i < (count); i++ {
 		Items = append(Items, i)
 	}
