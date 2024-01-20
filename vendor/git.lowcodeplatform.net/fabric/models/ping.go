@@ -18,6 +18,7 @@ type Pong struct {
 	DeadTime    int64       `json:"dead_time"`
 	Follower    string      `json:"follower"`
 	Metrics     interface{} `json:"metrics"`
+	Environment string      `json:"environment"`
 
 	ServiceVersion string `json:"service_version"`
 	HashCommit     string `json:"hash_commit"`
