@@ -14,6 +14,7 @@ import (
 	"git.lowcodeplatform.net/packages/cache"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	implCache "git.lowcodeplatform.net/fabric/app/pkg/cache"
@@ -84,10 +85,8 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	done := color.Green("[OK]")
 	fail := color.Red("[Fail]")
 
-	ctx, cancel := context.WithCancel(ctxm)
-	defer func() {
-		cancel()
-	}()
+	ctx, cancel := signal.NotifyContext(ctxm, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	// инициируем пакеты
 	err = lib.ConfigLoad(configfile, &cfg)
@@ -254,35 +253,29 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		hashCommit,
 	)
 
-	// для завершения сервиса ждем сигнал в процесс
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	go ListenForShutdown(ch, cancel)
-
 	srv := servers.New(
 		"http",
 		src,
 		httpserver,
 		cfg,
 	)
-	srv.Run()
 
-	return err
-}
+	errChannel := make(chan error)
+	go func() {
+		errChannel <- srv.Run()
+	}()
 
-func ListenForShutdown(ch <-chan os.Signal, cancelFunc context.CancelFunc) {
-	var done = color.Grey("[OK]")
-	ctx := context.Background()
-
-	<-ch
-	cancelFunc()
-	logger.Info(ctx, "Service is stopped. Logfile is closed.")
-
-	fmt.Printf("%s Service is stopped. Logfile is closed.\n", done)
-
-	time.Sleep(2 * time.Second)
-
-	os.Exit(0)
+	select {
+	case <-ctx.Done():
+		close(errChannel)
+		errs := make([]error, len(errChannel))
+		for err := range errChannel {
+			errs = append(errs, err)
+		}
+		return multierr.Combine(errs...)
+	case err := <-errChannel:
+		return err
+	}
 }
 
 func ClearSlash(str string) (result string) {

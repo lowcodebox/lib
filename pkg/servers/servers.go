@@ -17,14 +17,16 @@ type servers struct {
 }
 
 type Servers interface {
-	Run()
+	Run() error
 }
 
-// запускаем указанные севрера
-func (s *servers) Run() {
+// Run запускаем указанные севрера
+func (s *servers) Run() (err error) {
 	if strings.Contains(s.mode, "http") {
-		s.httpserver.Run()
+		err = s.httpserver.Run()
 	}
+
+	return err
 }
 
 func New(
