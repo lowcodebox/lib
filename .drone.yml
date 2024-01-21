@@ -3,7 +3,7 @@ type: docker
 name: app
 
 steps:
-  - name: linux amd64
+  - name: linux amd64/386
     failure: ignore
     image: golang:1.20.3-alpine3.17
     commands:
