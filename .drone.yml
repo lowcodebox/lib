@@ -10,6 +10,7 @@ steps:
       - cd /drone/src
       - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_linux_amd64 cmd/app/main.go
       - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_amd64_${DRONE_TAG}
+      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_386
       - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_386_${DRONE_TAG}
     volumes:
       - name: releases
