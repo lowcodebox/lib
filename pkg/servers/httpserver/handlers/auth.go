@@ -66,10 +66,13 @@ func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Re
 	w.Header().Set("X-Auth-Key", out.Token)
 
 	cookie := &http.Cookie{
-		Path:   "/",
-		Name:   "X-Auth-Key",
-		Value:  out.Token,
-		MaxAge: 30000,
+		Path:     "/",
+		Name:     "X-Auth-Key",
+		Value:    out.Token,
+		MaxAge:   30000,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	//// переписываем куку у клиента

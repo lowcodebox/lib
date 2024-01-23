@@ -115,10 +115,13 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			if err == nil && authKey != "<nil>" && authKey != "" {
 				// заменяем куку у пользователя в браузере
 				cookie := &http.Cookie{
-					Path:   "/",
-					Name:   "X-Auth-Key",
-					Value:  authKey,
-					MaxAge: 30000,
+					Path:     "/",
+					Name:     "X-Auth-Key",
+					Value:    authKey,
+					MaxAge:   30000,
+					HttpOnly: true,
+					Secure:   true,
+					SameSite: http.SameSiteLaxMode,
 				}
 
 				// после обновления получаем текущий токен
