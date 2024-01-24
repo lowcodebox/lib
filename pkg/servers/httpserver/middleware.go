@@ -41,7 +41,12 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if name != "ProxyPing" { //&& false == true
-			if !strings.Contains(r.Header.Get(headerReferer), r.Host) {
+			headerRef := r.Header.Get(headerReferer)
+			if headerRef == "" {
+				next.ServeHTTP(w, r.WithContext(r.Context()))
+				return
+			}
+			if !strings.Contains(headerRef, r.Host) {
 				http.Redirect(w, r, h.cfg.SigninUrl+"?error="+errorReferer, 302)
 				return
 			}
