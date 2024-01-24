@@ -105,6 +105,9 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		handler = route.HandlerFunc
 		handler = h.MiddleLogger(handler, route.Name)
 
+		// проверяем адреса для исключения SSRF-уязвимостей
+		handler = h.MiddleSecurity(handler, route.Name)
+
 		for _, v := range strings.Split(route.Method, ",") {
 			router.
 				Methods(v).
@@ -115,9 +118,6 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	}
 
 	//router.Use(h.Recover)
-
-	// проверяем адреса для исключения SSRF-уязвимостей
-	router.Use(h.MiddleSecurity)
 
 	// проверяем на возможность переадресации только для HTTP запросов
 	if checkHttpsOnly && h.cfg.HttpsOnly != "" {
