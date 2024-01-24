@@ -28,6 +28,7 @@ type Handlers interface {
 	Block(w http.ResponseWriter, r *http.Request)
 	Cache(w http.ResponseWriter, r *http.Request)
 	AuthChangeRole(w http.ResponseWriter, r *http.Request)
+	AuthLogOut(w http.ResponseWriter, r *http.Request)
 	Storage(w http.ResponseWriter, r *http.Request)
 }
 
