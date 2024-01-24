@@ -116,6 +116,9 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 
 	//router.Use(h.Recover)
 
+	// проверяем адреса для исключения SSRF-уязвимостей
+	router.Use(h.MiddleSecurity)
+
 	// проверяем на возможность переадресации только для HTTP запросов
 	if checkHttpsOnly && h.cfg.HttpsOnly != "" {
 		router.Use(h.HttpsOnly)

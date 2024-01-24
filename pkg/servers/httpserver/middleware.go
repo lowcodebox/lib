@@ -12,6 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const headerReferer = "Referer"
+
+const errorReferer = "421 Misdirected Request"
+
 func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -31,6 +35,17 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)
 		//serviceMetrics.SetTimeRequest(timeInterval)
+	})
+}
+
+func (h *httpserver) MiddleSecurity(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get(headerReferer), r.Host) {
+			http.Redirect(w, r, h.cfg.SigninUrl+"?error="+errorReferer, 302)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(r.Context()))
 	})
 }
 
