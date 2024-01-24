@@ -193,10 +193,32 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"profileuid": Funcs.profileuid,
 
 		"iterate": Funcs.iterate,
+		"decrypt": Funcs.decrypt,
+		"encrypt": Funcs.encrypt,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// decrypt расшифровываем тело ключом (совместимо с lib.Decrypt)
+func (t *funcMap) decrypt(key, payload string) string {
+	text, err := lib.Decrypt([]byte(key), payload)
+	if err != nil {
+		return fmt.Sprintf("error decrypted payload. err: %s", err)
+	}
+
+	return text
+}
+
+// encrypt зашифровываем тело ключом (совместимо с lib.Decrypt)
+func (t *funcMap) encrypt(key, payload string) string {
+	text, err := lib.Encrypt([]byte(key), payload)
+	if err != nil {
+		return fmt.Sprintf("error encrypted payload. err: %s", err)
+	}
+
+	return text
+}
 
 // iterate возвращает слайс, по-которому потом можно итерироваться range-ом
 // Пример:
