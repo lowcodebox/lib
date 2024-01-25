@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
@@ -58,7 +59,10 @@ func storageDecodeRequest(ctx context.Context, r *http.Request) (request model.S
 		file = strings.Join(fileName[2:], "/")
 	}
 
-	file = strings.Split(file, "..")[0]
+	file = filepath.Clean(file)
+	if !strings.Contains(file, "/assets/") && !strings.Contains(file, "/templates/") {
+		return request, fmt.Errorf("error. path is not valid")
+	}
 
 	request.Bucket = fileName[1]
 	request.File = file
