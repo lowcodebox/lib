@@ -503,6 +503,9 @@ func (t *funcMap) groupbyfield(queryData interface{}, groupField, groupPoint str
 				return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
 			}
 		})
+		if desc {
+			m = reverseData(m)
+		}
 		resultSortedMap[n] = m
 	}
 
@@ -532,9 +535,20 @@ func (t *funcMap) sortbyfield(queryData interface{}, sortField, sortPoint string
 		}
 	})
 
+	if desc {
+		m = reverseData(m)
+	}
+
 	d.Data = m
 
 	return d, nil
+}
+
+func reverseData(input []models.Data) []models.Data {
+	if len(input) == 0 {
+		return input
+	}
+	return append(reverseData(input[1:]), input[0])
 }
 
 // redirect
