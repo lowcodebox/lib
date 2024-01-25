@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
@@ -59,7 +58,7 @@ func storageDecodeRequest(ctx context.Context, r *http.Request) (request model.S
 		file = strings.Join(fileName[2:], "/")
 	}
 
-	file = filepath.Clean(file)
+	file = strings.Split(file, "..")[0]
 
 	request.Bucket = fileName[1]
 	request.File = file
