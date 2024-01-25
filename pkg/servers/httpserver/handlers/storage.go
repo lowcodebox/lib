@@ -60,9 +60,9 @@ func storageDecodeRequest(ctx context.Context, r *http.Request) (request model.S
 	}
 
 	file = filepath.Clean(file)
-	if !strings.Contains(file, "/assets/") && !strings.Contains(file, "/templates/") {
-		return request, fmt.Errorf("error. path is not valid. file: %s", file)
-	}
+	//if !strings.Contains(file, "/assets/") && !strings.Contains(file, "/templates/") {
+	//	return request, fmt.Errorf("error. path is not valid. file: %s", file)
+	//}
 
 	request.Bucket = fileName[1]
 	request.File = file
