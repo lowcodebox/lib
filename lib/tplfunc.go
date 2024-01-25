@@ -529,7 +529,7 @@ func (t *funcMap) sortbyfield(queryData interface{}, sortField, sortPoint string
 		case "src":
 			return m[i].Attributes[sortField].Src < m[j].Attributes[sortField].Src
 		case "rev":
-			return m[i].Attributes[sortField].Rev < m[j].Attributes[sortField].Rev
+			return m[i].Rev < m[j].Rev
 		default:
 			return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
 		}
