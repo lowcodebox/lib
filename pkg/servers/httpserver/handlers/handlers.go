@@ -42,7 +42,9 @@ func (h *handlers) transportResponse(w http.ResponseWriter, response interface{}
 	if err != nil {
 		w.WriteHeader(403)
 	}
-	w.Write(d)
+
+	_, err = w.Write(d)
+
 	return err
 }
 

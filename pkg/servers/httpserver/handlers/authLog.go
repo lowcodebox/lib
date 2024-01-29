@@ -14,6 +14,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const authTokenName = "X-Auth-Key"
+
 type authResponse struct {
 	models.Response
 	Ref string `json:"ref"`
@@ -35,14 +37,14 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[AuthLogIn] Error response execution", zap.Error(err))
 		}
 	}()
 
 	ctx := r.Context()
 	err = h.localization(w, r)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[Auth] error exec localization")
+		err = h.transportError(r.Context(), w, 500, err, "[AuthLogIn] error exec localization")
 		return
 	}
 
@@ -67,6 +69,12 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 	err = h.authTransportResponse(w, r, out)
 	if err != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[AuthLog] error exec authTransportResponse")
+		return
+	}
+
+	err = h.transportResponse(w, out)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[AuthLog] error exec transportResponse")
 		return
 	}
 
@@ -126,11 +134,11 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 	token := fmt.Sprint(out.Response.Data)
 
 	// редиректим страницу, передав в куку новый токен с просроченным временем
-	w.Header().Set("X-Auth-Key", token)
+	w.Header().Set(authTokenName, token)
 
 	cookie := &http.Cookie{
 		Path:     "/",
-		Name:     "X-Auth-Key",
+		Name:     authTokenName,
 		Value:    token,
 		MaxAge:   30000,
 		HttpOnly: true,
@@ -140,7 +148,7 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 
 	//// переписываем куку у клиента
 	http.SetCookie(w, cookie)
-	http.Redirect(w, r, r.Referer(), 302)
+	//http.Redirect(w, r, r.Referer(), 302)
 
 	return err
 }

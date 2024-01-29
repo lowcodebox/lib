@@ -28,6 +28,7 @@ var constPublicLink = map[string]bool{
 	"/templates": true,
 	"/upload":    true,
 	"/logout":    true,
+	"/login":     true,
 }
 
 // динамические параметры, которые могут меняться через асинхронные шедулеры (повышение производительности)
