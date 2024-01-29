@@ -92,6 +92,8 @@ git.lowcodeplatform.net/fabric/models v0.1.16 h1:7j9a5fSxIDFQXDAT6n/pb7GWOT8NkBv
 git.lowcodeplatform.net/fabric/models v0.1.16/go.mod h1:RSR+ysusHS7bhYOCDuWbkuGQkFL0Mum4r/FXPzStUQQ=
 git.lowcodeplatform.net/fabric/models v0.1.18 h1:ibWJYY+KN0evW7jd52WmYdprLt03YhCqGm77/8yyRFw=
 git.lowcodeplatform.net/fabric/models v0.1.18/go.mod h1:RSR+ysusHS7bhYOCDuWbkuGQkFL0Mum4r/FXPzStUQQ=
+git.lowcodeplatform.net/fabric/models v0.1.19 h1:mLg3b7C993wSO8joe4WRhr2cN1kYIZhDRTSElfVqJ7U=
+git.lowcodeplatform.net/fabric/models v0.1.19/go.mod h1:RSR+ysusHS7bhYOCDuWbkuGQkFL0Mum4r/FXPzStUQQ=
 git.lowcodeplatform.net/packages/cache v0.0.0-20230603080834-b3c659c259f1 h1:rZd6B1iQvHYCb54et7TLkxCXdNzr+PmWwxhavS1ticc=
 git.lowcodeplatform.net/packages/cache v0.0.0-20230603080834-b3c659c259f1/go.mod h1:078IvbJ5/Fqgr+hqaYMVCh3bVidcBTdiUCP7PUqAf20=
 git.lowcodeplatform.net/packages/cache v0.1.5 h1:lLvZU9PoCi1qMNFlkgOXfwOCCHUVvEQAAW8lbhyERZg=

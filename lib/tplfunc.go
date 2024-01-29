@@ -524,16 +524,29 @@ func (t *funcMap) sortbyfield(queryData interface{}, sortField, sortPoint string
 
 	// сортируем внутри каждого группы по заданному полю
 	m := d.Data
-	sort.Slice(m, func(i, j int) bool {
-		switch sortPoint {
-		case "src":
-			return m[i].Attributes[sortField].Src < m[j].Attributes[sortField].Src
-		case "rev":
-			return m[i].Rev < m[j].Rev
-		default:
-			return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
-		}
-	})
+	if sortField != "" {
+		sort.Slice(m, func(i, j int) bool {
+			switch sortPoint {
+			case "src":
+				return m[i].Attributes[sortField].Src < m[j].Attributes[sortField].Src
+			case "rev":
+				return m[i].Attributes[sortField].Rev < m[j].Attributes[sortField].Rev
+			default:
+				return m[i].Attributes[sortField].Value < m[j].Attributes[sortField].Value
+			}
+		})
+	} else {
+		sort.Slice(m, func(i, j int) bool {
+			switch sortPoint {
+			case "source":
+				return m[i].Source < m[j].Source
+			case "rev":
+				return m[i].Rev < m[j].Rev
+			default:
+				return m[i].Title < m[j].Title
+			}
+		})
+	}
 
 	if desc {
 		m = reverseData(m)
