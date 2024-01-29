@@ -26,7 +26,7 @@ git.lowcodeplatform.net/fabric/api-client
 # git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam/pkg/i18n
-# git.lowcodeplatform.net/fabric/iam-client v0.1.6
+# git.lowcodeplatform.net/fabric/iam-client v0.1.7
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam-client
 # git.lowcodeplatform.net/fabric/lib v0.2.9

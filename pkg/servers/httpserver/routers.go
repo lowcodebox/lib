@@ -74,6 +74,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 
 		// обновить роль в сессии
 		Route{"ProxyPing", "GET", "/auth/change", handler.AuthChangeRole},
+		Route{"ProxyPing", "GET", "/auth/login", handler.AuthChangeRole},
 		Route{"ProxyPing", "GET", "/auth/logout", handler.AuthLogOut},
 
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},

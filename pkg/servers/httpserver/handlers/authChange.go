@@ -3,24 +3,11 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
 )
-
-func (h *handlers) AuthLogOut(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	err = h.deleteCookie(w, r)
-	if err != nil {
-		err = h.transportError(r.Context(), w, 500, err, "[AuthLogOut] error delete cookie")
-		return
-	}
-
-	return
-}
 
 func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -57,7 +44,7 @@ func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *handlers) changeroleDecodeRequest(ctx context.Context, r *http.Request) (request model.ServiceAuthIn, err error) {
+func (h *handlers) changeroleDecodeRequest(ctx context.Context, r *http.Request) (request model.ServiceAuthChangeIn, err error) {
 	request.Profile = r.FormValue("profile") // uid-профиля, который надо сделать активным
 	expire := r.FormValue("expire")          // признак того, что надо вернуть протухших, но валидный токен
 
@@ -68,13 +55,13 @@ func (h *handlers) changeroleDecodeRequest(ctx context.Context, r *http.Request)
 	return request, err
 }
 
-func (h *handlers) changeroleEncodeResponse(ctx context.Context, serviceResult model.ServiceAuthOut, in model.ServiceAuthIn) (response model.ServiceAuthOut, err error) {
+func (h *handlers) changeroleEncodeResponse(ctx context.Context, serviceResult model.ServiceAuthChangeOut, in model.ServiceAuthChangeIn) (response model.ServiceAuthChangeOut, err error) {
 	response.RequestURI = in.RequestURI
 	response.Token = serviceResult.Token
 	return serviceResult, err
 }
 
-func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Request, out model.ServiceAuthOut) (err error) {
+func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Request, out model.ServiceAuthChangeOut) (err error) {
 	// редиректим страницу, передав в куку новый токен с просроченным временем
 	w.Header().Set("X-Auth-Key", out.Token)
 
@@ -86,25 +73,6 @@ func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Re
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-	}
-
-	//// переписываем куку у клиента
-	http.SetCookie(w, cookie)
-	http.Redirect(w, r, r.Referer(), 302)
-
-	return err
-}
-
-func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err error) {
-	w.Header().Set("X-Auth-Key", "")
-
-	cookie := &http.Cookie{
-		Path:    "/",
-		Name:    "X-Auth-Key",
-		Expires: time.Unix(0, 0),
-		Value:   "",
-		MaxAge:  30000,
-		Secure:  true,
 	}
 
 	//// переписываем куку у клиента

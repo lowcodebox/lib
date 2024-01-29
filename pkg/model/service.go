@@ -48,15 +48,27 @@ type AliveOut struct {
 	Session interface{} `json:"session"`
 }
 
-type ServiceAuthOut struct {
+type ServiceAuthChangeOut struct {
 	Token      string `json:"token"` // Обновленный токен с просроченным временем
 	RequestURI string `json:"request_uri"`
 }
 
-type ServiceAuthIn struct {
+type ServiceAuthChangeIn struct {
 	Profile    string `json:"profile"`
 	Expire     bool   `json:"expire"`
 	RequestURI string `json:"request_uri"`
+}
+
+type ServiceAuthOut struct {
+	XAuthToken string
+	Result     models.ResponseData
+	Error      error
+	Ref        string
+}
+
+type ServiceAuthIn struct {
+	Ref     string `json:"ref"`
+	Payload string `json:"payload"`
 }
 
 type ServiceFilesOut struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -82,6 +83,27 @@ func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	result = fmt.Sprint(res.Data)
 
 	return result, err
+}
+
+func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token string, err error) {
+	var res models.Response
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if o.observeLog {
+		defer func() {
+			o.observeLogger(ctx, time.Now(), "auth", err, token)
+		}()
+	}
+
+	urlc := o.url + "/auth?suser=&ref=" + ref
+	urlc = strings.Replace(urlc, "//auth", "/auth", 1)
+
+	_, err = lib.Curl(http.MethodPost, urlc, suser, &res, handlers, nil)
+	if err != nil {
+		return false, "", fmt.Errorf("urlc: %s, err: %s", urlc, err)
+	}
+
+	return true, fmt.Sprint(res.Data), nil
 }
 
 func (o *iam) verify(ctx context.Context, tokenString string) (status bool, body *models.Token, refreshToken string, err error) {

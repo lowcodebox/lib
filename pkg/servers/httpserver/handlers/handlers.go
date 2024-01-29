@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
@@ -14,6 +15,8 @@ import (
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
 )
+
+const LocalDefault = "RU"
 
 type handlers struct {
 	ctx     context.Context
@@ -28,6 +31,7 @@ type Handlers interface {
 	Block(w http.ResponseWriter, r *http.Request)
 	Cache(w http.ResponseWriter, r *http.Request)
 	AuthChangeRole(w http.ResponseWriter, r *http.Request)
+	AuthLogIn(w http.ResponseWriter, r *http.Request)
 	AuthLogOut(w http.ResponseWriter, r *http.Request)
 	Storage(w http.ResponseWriter, r *http.Request)
 }
@@ -132,6 +136,23 @@ func (h *handlers) transportResponseHTTP(w http.ResponseWriter, response string)
 	_, err = w.Write([]byte(response))
 	if err != nil {
 		return fmt.Errorf("error exec transportError. err: %s", err)
+	}
+
+	return err
+}
+
+func (h *handlers) localization(w http.ResponseWriter, r *http.Request) (err error) {
+	cookie, err := r.Cookie("local")
+	if err != nil {
+		cookie = &http.Cookie{
+			Name:    "local",
+			Value:   LocalDefault,
+			Expires: time.Now().Add(500 * time.Hour),
+			Path:    "/",
+		}
+		r.AddCookie(cookie)
+		http.SetCookie(w, cookie)
+		return nil
 	}
 
 	return err

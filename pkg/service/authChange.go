@@ -15,7 +15,7 @@ import (
 // на стороне AuthProcessor приложения, атакже данные новой роли в хранилище сессии, поскольку токен будет завершенны
 // 2. обновляем токен на клиенте через редирект на страницу с новой кукой,
 // в которой полученный от IAM валидный, но завершенный токен
-func (s *service) AuthChangeRole(ctx context.Context, in model.ServiceAuthIn) (out model.ServiceAuthOut, err error) {
+func (s *service) AuthChangeRole(ctx context.Context, in model.ServiceAuthChangeIn) (out model.ServiceAuthChangeOut, err error) {
 	status, _, refreshToken, err := s.iam.Verify(s.ctx, fmt.Sprint(ctx.Value("token")))
 	if err != nil {
 		return out, fmt.Errorf("%s", "Error verify from AuthChangeRole")

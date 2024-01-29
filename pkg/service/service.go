@@ -59,7 +59,8 @@ type Service interface {
 	Page(ctx context.Context, in model.ServiceIn) (out model.ServicePageOut, err error)
 	Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error)
 	Cache(ctx context.Context, in model.ServiceCacheIn) (out model.RestStatus, err error)
-	AuthChangeRole(ctx context.Context, in model.ServiceAuthIn) (out model.ServiceAuthOut, err error)
+	AuthChangeRole(ctx context.Context, in model.ServiceAuthChangeIn) (out model.ServiceAuthChangeOut, err error)
+	AuthLogIn(ctx context.Context, in model.ServiceAuthIn) (out model.ServiceAuthOut, err error)
 
 	GetDynamicParams() *dynamicParams
 }

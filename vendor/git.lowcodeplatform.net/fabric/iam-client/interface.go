@@ -23,6 +23,7 @@ type iam struct {
 }
 
 type IAM interface {
+	Auth(ctx context.Context, ref, payload string) (status bool, token string, err error)
 	Verify(ctx context.Context, tokenString string) (statue bool, body *models.Token, refreshToken string, err error)
 	Refresh(ctx context.Context, token, profile string, expire bool) (result string, err error)
 	ProfileGet(ctx context.Context, sessionID string) (result string, err error)
@@ -66,6 +67,19 @@ func (a *iam) ProfileList(ctx context.Context) (result string, err error) {
 	}
 
 	return result, err
+}
+
+func (a *iam) Auth(ctx context.Context, payload, ref string) (status bool, token string, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		status, token, err = a.auth(ctx, payload, ref)
+		return status, err
+	})
+	if err != nil {
+		logger.Error(ctx, "error Auth primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return status, token, fmt.Errorf("error request Auth (primary route). check iamCircuitBreaker. err: %s", err)
+	}
+
+	return status, token, err
 }
 
 func (a *iam) Verify(ctx context.Context, tokenString string) (status bool, body *models.Token, refreshToken string, err error) {

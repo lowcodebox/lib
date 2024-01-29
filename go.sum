@@ -74,6 +74,8 @@ git.lowcodeplatform.net/fabric/iam-client v0.1.5 h1:hP2d0vMofqKT1zzczhM9xOGKetqv
 git.lowcodeplatform.net/fabric/iam-client v0.1.5/go.mod h1:9VnNgJ72vWXZVkFxKbl5ttQPR562NQTYxCBXUXGTzZk=
 git.lowcodeplatform.net/fabric/iam-client v0.1.6 h1:Yfijc1c6NTGhme/13hy3LmE6L4LyG3+iuJUhID6Q1iI=
 git.lowcodeplatform.net/fabric/iam-client v0.1.6/go.mod h1:9VnNgJ72vWXZVkFxKbl5ttQPR562NQTYxCBXUXGTzZk=
+git.lowcodeplatform.net/fabric/iam-client v0.1.7 h1:EhB6IngcJO/BIDWtDL+zw4CJmp4M156ygHHq+7oJ1/o=
+git.lowcodeplatform.net/fabric/iam-client v0.1.7/go.mod h1:9VnNgJ72vWXZVkFxKbl5ttQPR562NQTYxCBXUXGTzZk=
 git.lowcodeplatform.net/fabric/lib v0.2.3 h1:W9C9dOp6u8dND/PDjzZJx0YnkJP0Hy5wHu5NtuQ9LpA=
 git.lowcodeplatform.net/fabric/lib v0.2.3/go.mod h1:l+MnEjJvSbMX/g20BH5Wqh42cpj3xc2dORHSI1Mqra0=
 git.lowcodeplatform.net/fabric/lib v0.2.5 h1:VNXDBPceLTcudAU/K84O+vykH92387NpC2MKPV68o4U=
