@@ -42,7 +42,7 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	https := false
 
 	pong := models.Pong{}
-	pong.Uid = s.cfg.DataUid
+	pong.Uid = s.cfg.HashRun
 	pong.Name = s.cfg.Name
 	pong.Version = s.cfg.Version
 	pong.Status = "run"
