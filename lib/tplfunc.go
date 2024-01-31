@@ -179,7 +179,8 @@ func NewFuncMap(vfs Vfs, api Api) {
 		"groupbyfield":        Funcs.groupbyfield,
 		"sortbyfield":         Funcs.sortbyfield,
 
-		"randstringslice": Funcs.randstringslice,
+		"randstringslice":    Funcs.randstringslice,
+		"randinterfaceslice": Funcs.randinterfaceslice,
 
 		"readfile":      Funcs.readfile,
 		"csvtosliсemap": Funcs.csvtosliсemap,
@@ -401,7 +402,16 @@ func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
 	return status
 }
 
-// randomizer перемешивает полученный слайс
+// randinterfaceslice перемешивает полученный слайс
+func (t *funcMap) randinterfaceslice(a []interface{}) (res []interface{}) {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(a),
+		func(i, j int) { a[i], a[j] = a[j], a[i] })
+
+	return a
+}
+
+// randstringslice перемешивает полученный слайс
 func (t *funcMap) randstringslice(a []string) (res []string) {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(a),
