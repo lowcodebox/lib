@@ -41,6 +41,8 @@ type ProfileData struct {
 	First_name string            //deplicated
 	Last_name  string            //deplicated
 
+	Identity string `json:"identity"`
+	Phone    string `json:"phone"`
 }
 
 type Items struct {

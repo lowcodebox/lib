@@ -24,9 +24,10 @@ type Pong struct {
 	HashCommit     string `json:"hash_commit"`
 
 	//deprecated
-	Port  int    `json:"port"`
-	State string `json:"state"`
-	Https bool   `json:"https"`
+	Port         int    `json:"port"`
+	State        string `json:"state"`
+	Https        bool   `json:"https"`
+	AccessPublic bool   `json:"access_public"`
 }
 
 type Hosts struct {

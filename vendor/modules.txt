@@ -39,7 +39,7 @@ git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk
 # git.lowcodeplatform.net/fabric/logbox-client v0.1.12
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/logbox-client
-# git.lowcodeplatform.net/fabric/models v0.1.19
+# git.lowcodeplatform.net/fabric/models v0.1.21
 ## explicit; go 1.17
 git.lowcodeplatform.net/fabric/models
 # git.lowcodeplatform.net/packages/cache v0.1.11

@@ -17,6 +17,7 @@ type Config struct {
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
 	IntervalCleaner Duration `envconfig:"INTERVAL_CLEANER" default:"10m" description:"период очистки кеша сессий через запрос актуальных сессий в IAM"`
+	AccessPublic    Bool     `envconfig:"ACCESS_PUBLIC" default:"false"`
 
 	// VFS
 	VfsBucket      string `envconfig:"VFS_BUCKET" default:"buildbox"`

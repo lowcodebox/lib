@@ -57,6 +57,7 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	pong.ServiceVersion = s.cfg.ServiceVersion
 	pong.HashCommit = s.cfg.HashCommit
 	pong.Environment = s.cfg.Environment
+	pong.AccessPublic = s.cfg.AccessPublic.Value
 
 	pong.State = ""
 	pong.Https = https
