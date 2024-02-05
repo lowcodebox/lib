@@ -190,3 +190,13 @@ func ClearSlash(url string) (result string) {
 
 	return url
 }
+
+func PortResolver(port string) (status bool) {
+	ln, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		return false
+	}
+
+	ln.Close()
+	return true
+}
