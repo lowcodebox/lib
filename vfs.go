@@ -377,11 +377,11 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 
 	item, err = v.location.ItemByURL(&urlPath)
 	if err != nil {
-		return nil, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %s, err: %s", urlPath, err)
+		return nil, fmt.Errorf("error. location.ItemByURL is failled. urlPath: %v, err: %s", urlPath, err)
 	}
 
 	if item == nil {
-		return nil, fmt.Errorf("error. Item is null. urlPath: %s", urlPath)
+		return nil, fmt.Errorf("error. Item is null. urlPath: %v", urlPath)
 	}
 
 	return item, err

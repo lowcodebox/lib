@@ -52,7 +52,7 @@ type Metrics struct {
 	PageTo      int   `json:"page_to"`
 }
 
-// возвращаем необходимый значение атрибута для объекта если он есть, инае пусто
+// Attr возвращаем необходимый значение атрибута для объекта если он есть, инае пусто
 // а также из заголовка объекта
 func (p *Data) Attr(name, element string) (result string, found bool) {
 
@@ -86,11 +86,13 @@ func (p *Data) Attr(name, element string) (result string, found bool) {
 			return p.Type, true
 		}
 	} else {
-		switch name {
+		switch element {
 		case "uid":
 			return p.Uid, true
 		case "source":
 			return p.Source, true
+		case "rev":
+			return p.Rev, true
 		case "id":
 			return p.Id, true
 		case "title":
@@ -102,7 +104,7 @@ func (p *Data) Attr(name, element string) (result string, found bool) {
 	return "", false
 }
 
-// заменяем значение аттрибутов в объекте профиля
+// AttrSet заменяем значение аттрибутов в объекте профиля
 func (p *Data) AttrSet(name, element, value string) bool {
 	g := Attribute{}
 
@@ -137,7 +139,7 @@ func (p *Data) AttrSet(name, element, value string) bool {
 	return false
 }
 
-// удаляем элемент из слайса
+// RemoveData удаляем элемент из слайса
 func (p *ResponseData) RemoveData(i int) bool {
 
 	if i < len(p.Data) {

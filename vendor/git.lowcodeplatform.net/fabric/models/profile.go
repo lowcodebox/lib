@@ -16,15 +16,16 @@ type ProfileData struct {
 	Status         string `json:"status"` // - src поля Status в профиле (иногда необходимо для доп.фильтрации)
 	Raw            []Data `json:"raw"`    // объект пользователя (нужен при сборки проекта для данного юзера при добавлении прав на базу)
 	Tables         []Data `json:"tables"`
-	Roles          []Data
-	Homepage       string   `json:"homepage"`
-	Maket          string   `json:"maket"`
-	UpdateFlag     bool     `json:"update_flag"`
-	UpdateData     []Data   `json:"update_data"`
-	CurrentRole    Data     `json:"current_role"`
-	Profiles       []Data   `json:"profiles"`
-	CurrentProfile Data     `json:"current_profile"`
-	Navigator      []*Items `json:"navigator"`
+	//Roles          []Data	// разремить после запуска новой версии
+	Roles          map[string]string `json:"roles"` // deprecated
+	Homepage       string            `json:"homepage"`
+	Maket          string            `json:"maket"`
+	UpdateFlag     bool              `json:"update_flag"`
+	UpdateData     []Data            `json:"update_data"`
+	CurrentRole    Data              `json:"current_role"`
+	Profiles       []Data            `json:"profiles"`
+	CurrentProfile Data              `json:"current_profile"`
+	Navigator      []*Items          `json:"navigator"`
 
 	Groups             string
 	GroupsValue        string
@@ -40,6 +41,8 @@ type ProfileData struct {
 	First_name string            //deplicated
 	Last_name  string            //deplicated
 
+	Identity string `json:"identity"`
+	Phone    string `json:"phone"`
 }
 
 type Items struct {
