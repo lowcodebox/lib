@@ -19,6 +19,7 @@ func TestXServiceKey(t *testing.T) {
 		token, err := GenXServiceKey(c.domain, c.projectKey, c.tokenInterval)
 		fmt.Println(token, err)
 
+		time.Sleep(5 * time.Second)
 		valid := CheckXServiceKey(c.domain, c.projectKey, token)
 		fmt.Println(valid)
 
