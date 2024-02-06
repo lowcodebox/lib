@@ -10,12 +10,8 @@ import (
 
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
-
 	"github.com/golang-jwt/jwt"
 )
-
-const headerRequestId = "X-Request-Id"
 
 // Refresh отправляем старый X-Auth-Access-токен
 // получаем X-Auth-Access токен (два токена + текущая авторизационная сессия)
@@ -25,7 +21,8 @@ const headerRequestId = "X-Request-Id"
 func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "refresh", err, token, profile, expire)
 	}
@@ -33,7 +30,7 @@ func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (
 	urlc := o.url + "/token/refresh?profile=" + profile + "&expire=" + fmt.Sprint(expire)
 	urlc = strings.Replace(urlc, "//token", "/token", 1)
 
-	_, err = lib.Curl("POST", urlc, token, &res, map[string]string{}, nil)
+	_, err = lib.Curl(ctx, "POST", urlc, token, &res, map[string]string{}, nil)
 	if err != nil {
 		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
@@ -46,7 +43,8 @@ func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (
 func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "refresh", err, sessionID)
 	}
@@ -54,7 +52,7 @@ func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, 
 	urlc := o.url + "/profile/" + sessionID
 	urlc = strings.Replace(urlc, "//profile", "/profile", 1)
 
-	_, err = lib.Curl("GET", urlc, "", &res, handlers, nil)
+	_, err = lib.Curl(ctx, "GET", urlc, "", &res, handlers, nil)
 	if err != nil {
 		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
@@ -67,7 +65,8 @@ func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, 
 func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "profileList", err)
 	}
@@ -75,7 +74,7 @@ func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	urlc := o.url + "/profile/list"
 	urlc = strings.Replace(urlc, "//profile", "/profile", 1)
 
-	_, err = lib.Curl("GET", urlc, "", &res, handlers, nil)
+	_, err = lib.Curl(ctx, "GET", urlc, "", &res, handlers, nil)
 	if err != nil {
 		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
@@ -88,7 +87,8 @@ func (o *iam) profileList(ctx context.Context) (result string, err error) {
 func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer func() {
 			o.observeLogger(ctx, time.Now(), "auth", err, token)
@@ -98,7 +98,7 @@ func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token s
 	urlc := o.url + "/auth?suser=&ref=" + ref
 	urlc = strings.Replace(urlc, "//auth", "/auth", 1)
 
-	_, err = lib.Curl(http.MethodPost, urlc, suser, &res, handlers, nil)
+	_, err = lib.Curl(ctx, http.MethodPost, urlc, suser, &res, handlers, nil)
 	if err != nil {
 		return false, "", fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}

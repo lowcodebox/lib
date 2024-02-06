@@ -3,15 +3,17 @@
 package tree
 
 import (
-	"git.lowcodeplatform.net/fabric/models"
 	"sort"
 	"strconv"
+
+	"git.lowcodeplatform.net/fabric/models"
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ///////////////  /////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
-// формируем вложенную структуру объектов
+
+// DataToIncl формируем вложенную структуру объектов
 func (u *tree) DataToIncl(objData []models.Data) []*models.DataTree {
 
 	// переводим slice в map, чтобы можно было удалять объект и обращаться по ключу при формировании подуровней навигатора
@@ -27,7 +29,7 @@ func (u *tree) DataToIncl(objData []models.Data) []*models.DataTree {
 		item.Type = v.Type
 		item.Parent = v.Parent
 		item.Rev = v.Rev
-		item.Сopies = v.Сopies
+		item.Сopies = v.Copies
 
 		mapLevel[v.Uid] = &item
 	}
@@ -63,7 +65,6 @@ func (u *tree) DataToIncl(objData []models.Data) []*models.DataTree {
 	return sliceNavigator
 }
 
-
 // сортируем в слейсе полигонов по полю sort
 // typesort - тип сортировки (string/int) - если int то преобразуем в число перед сортировкой
 // fieldsort - поле для сортировки
@@ -77,7 +78,6 @@ func (u *tree) SortItems(p []*models.DataTree, fieldsort string, typesort string
 			value1 = "0"
 			value2 = "0"
 		}
-
 
 		if oi, found := p[i].Attributes[fieldsort]; found {
 			if oi.Value != "" {
@@ -104,7 +104,6 @@ func (u *tree) SortItems(p []*models.DataTree, fieldsort string, typesort string
 			// если стринг, то всегда проверяем как-будто это сравнение строк
 			return vi1 < vi2
 		}
-
 
 	})
 
@@ -136,5 +135,3 @@ func (u *tree) TreeShowIncl(in []*models.DataTree, obj string) (out []*models.Da
 	}
 	return out
 }
-
-

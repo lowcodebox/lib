@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"git.lowcodeplatform.net/fabric/iam/pkg/i18n"
@@ -13,6 +14,10 @@ import (
 	"github.com/sony/gobreaker"
 )
 
+const headerRequestId = "X-Request-Id"
+const headerServiceKey = "X-Service-Key"
+const tokenInterval = 10 * time.Second
+
 type iam struct {
 	ctx        context.Context
 	url        string
@@ -20,6 +25,7 @@ type iam struct {
 	msg        i18n.I18n
 	observeLog bool
 	cb         *gobreaker.CircuitBreaker
+	domain     string
 }
 
 type IAM interface {
@@ -127,6 +133,13 @@ func New(ctx context.Context, url, projectKey string, observeLog bool, cbMaxRequ
 		},
 	)
 
+	url = strings.TrimSuffix(url, "/")
+	splitUrl := strings.Split(url, "/")
+	if len(splitUrl) < 2 {
+		return nil
+	}
+	domain := splitUrl[len(splitUrl)-2:]
+
 	msg := i18n.New()
 	return &iam{
 		ctx,
@@ -135,5 +148,6 @@ func New(ctx context.Context, url, projectKey string, observeLog bool, cbMaxRequ
 		msg,
 		observeLog,
 		cb,
+		strings.Join(domain, "/"),
 	}
 }

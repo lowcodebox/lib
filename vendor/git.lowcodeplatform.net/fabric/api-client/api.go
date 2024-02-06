@@ -7,6 +7,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"git.lowcodeplatform.net/fabric/lib"
@@ -20,12 +21,16 @@ import (
 )
 
 const headerRequestId = "X-Request-Id"
+const headerServiceKey = "X-Service-Key"
+const tokenInterval = 10 * time.Second
 
 type api struct {
 	url                 string
 	observeLog          bool
 	cb                  *gobreaker.CircuitBreaker
 	cacheUpdateInterval time.Duration
+	domain              string
+	projectKey          string
 }
 
 type Api interface {
@@ -320,7 +325,7 @@ func (a *api) ObjDelete(ctx context.Context, uids string) (result models.Respons
 	return result, err
 }
 
-func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) Api {
+func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration, projectKey string) Api {
 	var err error
 	if cbMaxRequests == 0 {
 		cbMaxRequests = 3
@@ -348,6 +353,13 @@ func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval t
 		},
 	)
 
+	url = strings.TrimSuffix(url, "/")
+	splitUrl := strings.Split(url, "/")
+	if len(splitUrl) < 2 {
+		return nil
+	}
+	domain := splitUrl[len(splitUrl)-2:]
+
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
 
@@ -356,5 +368,7 @@ func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval t
 		observeLog,
 		cb,
 		cacheUpdateInterval,
+		strings.Join(domain, "/"),
+		projectKey,
 	}
 }

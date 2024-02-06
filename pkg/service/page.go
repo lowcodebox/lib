@@ -195,7 +195,7 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 			vv.Source = v.Source
 			vv.Rev = v.Rev
 			vv.Type = v.Type
-			vv.Сopies = v.Сopies
+			vv.Copies = v.Copies
 			vv.Parent = v.Parent
 			idBlock, _ := v.Attr("id", "value") // название блока
 

@@ -174,10 +174,11 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		cfg.CbMaxRequests,
 		cfg.CbTimeout.Value,
 		cfg.CbInterval.Value,
+		cfg.ProjectKey,
 	)
 
 	// инициализация FuncMap
-	applib.NewFuncMap(vfs, api)
+	applib.NewFuncMap(vfs, api, cfg.ProjectKey)
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)

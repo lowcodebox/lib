@@ -59,8 +59,9 @@ type Api interface {
 }
 
 type funcMap struct {
-	vfs Vfs
-	api Api
+	vfs        Vfs
+	api        Api
+	projectKey string
 }
 
 type FuncMaper interface {
@@ -93,10 +94,11 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api) {
+func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 	Funcs = funcMap{
 		vfs,
 		api,
+		projectKey,
 	}
 
 	FuncMap = template.FuncMap{
@@ -665,7 +667,7 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 		h[k] = fmt.Sprint(v)
 	}
 
-	raw, err := lib.Curl(method, urlc, bodyJSON, responseData, h, cookies)
+	raw, err := lib.Curl(context.Background(), method, urlc, bodyJSON, responseData, h, cookies)
 	if len(responseData.Data) == 0 {
 		if err != nil {
 			return fmt.Sprint(err)
@@ -680,7 +682,7 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjGet(ctx, uids)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjGet(ctx, uids)
 	}
 
 	return t.api.ObjGet(ctx, uids)
@@ -689,7 +691,7 @@ func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseD
 func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjCreate(ctx, bodymap)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
 	}
 
 	return t.api.ObjCreate(ctx, bodymap)
@@ -698,7 +700,7 @@ func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result
 func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjDelete(ctx, uids)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjDelete(ctx, uids)
 	}
 
 	return t.api.ObjDelete(ctx, uids)
@@ -707,7 +709,7 @@ func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.Respon
 func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjAttrUpdate(ctx, uid, name, value, src, editor)
 	}
 
 	return t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
@@ -716,7 +718,7 @@ func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor 
 func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).LinkGet(ctx, tpl, obj, mode, short)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).LinkGet(ctx, tpl, obj, mode, short)
 	}
 
 	return t.api.LinkGet(ctx, tpl, obj, mode, short)
@@ -725,7 +727,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (resul
 func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err error) {
 	ctx := context.Background()
 	if apiURL == "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second).Query(ctx, query, method, bodyJSON)
+		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
 	}
 
 	return t.api.Query(ctx, query, method, bodyJSON)
