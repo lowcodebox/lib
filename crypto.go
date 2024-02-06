@@ -6,9 +6,14 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
+	"time"
+
+	"git.lowcodeplatform.net/fabric/models"
 )
 
 // Пример использования
@@ -18,7 +23,6 @@ import (
 //	msg, _ := decrypt(key, encryptMsg)
 //	fmt.Println(msg) // Hello World
 //}
-
 
 func addBase64Padding(value string) string {
 	m := len(value) % 4
@@ -96,4 +100,42 @@ func Decrypt(key []byte, text string) (string, error) {
 	}
 
 	return string(unpadMsg), nil
+}
+
+// GenXServiceKey создаем токен
+func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duration) (token string, err error) {
+	t := models.XServiceKey{
+		Domain:  domain,
+		Expired: time.Now().Add(tokenInterval).Unix(),
+	}
+	strJson, err := json.Marshal(t)
+	if err != nil {
+		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
+	}
+
+	token, err = Encrypt(projectKey, string(strJson))
+	if err != nil {
+		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
+	}
+
+	return token, nil
+}
+
+// CheckXServiceKey берем из заголовка X-Service-Key. если он есть, то он должен быть расшифровать
+// и валидируем содержимое
+func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool {
+	var xsKeyValid bool
+	var xsKey models.XServiceKey
+
+	v, err := Decrypt(projectKey, xServiceKey)
+	err = json.Unmarshal([]byte(v), &xsKey)
+	if err != nil {
+		return false
+	}
+
+	if xsKey.Domain == domain && xsKey.Expired > time.Now().Unix() {
+		xsKeyValid = true
+	}
+
+	return xsKeyValid
 }

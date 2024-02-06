@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -19,7 +20,7 @@ const clientHttpTimeout = 60 * time.Second
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
-func Curl(method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
+func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -100,11 +101,7 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 	}
 
 	// дополняем переданными заголовками
-	if len(headers) > 0 {
-		for k, v := range headers {
-			req.Header.Add(k, v)
-		}
-	}
+	httpClientHeaders(ctx, req, headers)
 
 	// дополянем куками назначенными для данного запроса
 	if cookies != nil {
@@ -157,7 +154,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		var portDataAPI models.Response
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
-		_, err := Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		_, err := Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
 		if err != nil {
 			return "", err
 		}
@@ -232,40 +229,24 @@ func ReadUserIP(r *http.Request) string {
 	return IPAddress
 }
 
-// GenXServiceKey создаем токен
-func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duration) (token string, err error) {
-	t := models.XServiceKey{
-		Domain:  domain,
-		Expired: time.Now().Add(tokenInterval).Unix(),
-	}
-	strJson, err := json.Marshal(t)
-	if err != nil {
-		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
+// httpClientHeaders устанавливает заголовки реквеста из контекста и headers
+func httpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
+	for ctxField, headerField := range models.ProxiedHeaders {
+		if value := getFieldCtx(ctx, ctxField); value != "" {
+			req.Header.Add(headerField, value)
+		}
 	}
 
-	token, err = Encrypt(projectKey, string(strJson))
-	if err != nil {
-		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
+	if len(headers) > 0 {
+		for k, v := range headers {
+			req.Header.Add(k, v)
+		}
 	}
-
-	return token, nil
 }
 
-// CheckXServiceKey берем из заголовка X-Service-Key. если он есть, то он должен быть расшифровать
-// и валидируем содержимое
-func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool {
-	var xsKeyValid bool
-	var xsKey models.XServiceKey
+func getFieldCtx(ctx context.Context, name string) string {
+	nameKey := "logger." + name
+	requestID, _ := ctx.Value(nameKey).(string)
 
-	v, err := Decrypt(projectKey, xServiceKey)
-	err = json.Unmarshal([]byte(v), &xsKey)
-	if err != nil {
-		return false
-	}
-
-	if xsKey.Domain == domain && xsKey.Expired > time.Now().Unix() {
-		xsKeyValid = true
-	}
-
-	return xsKeyValid
+	return requestID
 }

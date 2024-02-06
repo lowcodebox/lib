@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	git.lowcodeplatform.net/fabric/logbox-client v0.1.3
-	git.lowcodeplatform.net/fabric/models v0.1.25
+	git.lowcodeplatform.net/fabric/models v0.1.27
 	github.com/BurntSushi/toml v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/go-kit/kit v0.12.0
@@ -14,7 +14,6 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli v1.22.10
 )
 

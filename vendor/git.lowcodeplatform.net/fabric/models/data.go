@@ -10,7 +10,7 @@ type Data struct {
 	Type       string               `json:"type"`
 	Title      string               `json:"title"`
 	Rev        string               `json:"rev"`
-	Сopies     string               `json:"copies"`
+	Copies     string               `json:"copies"`
 	Attributes map[string]Attribute `json:"attributes"`
 }
 
