@@ -62,9 +62,11 @@ type Config struct {
 	CbInterval           Duration `envconfig:"CB_INTERVAL" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
 	CacheRefreshInterval Duration `envconfig:"CACHE_REFRESH_INTERVAL" default:"1m"`
 
-	PortInterval    string `envconfig:"PORT_INTERVAL" default:""`
-	ProxyPointsrc   string `envconfig:"PROXY_POINTSRC" default:""`
-	ProxyPointvalue string `envconfig:"PROXY_POINTVALUE" default:""`
+	PortInterval         string   `envconfig:"PORT_INTERVAL" default:""`
+	ProxyPointsrc        string   `envconfig:"PROXY_POINTSRC" default:""`
+	ProxyPointvalue      string   `envconfig:"PROXY_POINTVALUE" default:""`
+	ProxyMaxCountRetries Int      `envconfig:"PROXY_MAX_COUNT_RETRIES" default:"12"`
+	ProxyTimeRetries     Duration `envconfig:"PROXY_TIME_RETRIES" default:"5s"`
 
 	// LOGBOX
 	LogboxEndpoint       string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`

@@ -190,3 +190,33 @@ func ClearSlash(url string) (result string) {
 
 	return url
 }
+
+func PortResolver(port string) (status bool) {
+	ln, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		return false
+	}
+
+	ln.Close()
+	return true
+}
+
+// ProxyPort свободный порт от прокси с проверкой доступности на локальной машине
+// если занято - ретраим согласно заданным параметрам
+func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries time.Duration) (port string, err error) {
+	port, err = Retrier(maxCountRetries, timeRetries, func() (string, error) {
+		port, err = AddressProxy(addressProxy, interval)
+		if err != nil {
+			return "", err
+		}
+
+		status := PortResolver(port)
+		if status {
+			return port, nil
+		}
+
+		return "", fmt.Errorf("listen tcp :%s. address already in use", port)
+	})
+
+	return port, err
+}

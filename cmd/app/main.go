@@ -222,6 +222,17 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 			return err
 		}
 	}
+
+	if port == "" {
+		port, err = lib.ProxyPort(cfg.ProxyPointsrc, cfg.PortInterval, cfg.ProxyMaxCountRetries.Value, cfg.ProxyTimeRetries.Value)
+		if err != nil {
+			logger.Error(context.Background(), "port is not resolved", zap.String("proxyPath", cfg.ProxyPointsrc),
+				zap.String("portInterval", cfg.PortInterval), zap.String("proxyPath", cfg.ProxyPointsrc))
+			err = fmt.Errorf("port is not resolved")
+			fmt.Printf("%s Port is not resolved! path: %s, interval: %s\n", fail, cfg.ProxyPointsrc, cfg.PortInterval)
+			return err
+		}
+	}
 	cfg.PortApp = port
 
 	cache := implCache.New(
