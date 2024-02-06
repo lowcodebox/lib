@@ -218,6 +218,18 @@ func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries t
 	return port, err
 }
 
+func ReadUserIP(r *http.Request) string {
+	IPAddress := r.Header.Get("X-Real-Ip")
+	if IPAddress == "" {
+		IPAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if IPAddress == "" {
+		IPAddress = r.RemoteAddr
+	}
+	return IPAddress
+}
+
+
 // httpClientHeaders устанавливает заголовки реквеста из контекста и headers
 func httpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
 	for ctxField, headerField := range models.ProxiedHeaders {
