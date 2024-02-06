@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -19,7 +20,7 @@ const clientHttpTimeout = 60 * time.Second
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
-func Curl(method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
+func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -100,11 +101,7 @@ func Curl(method, urlc, bodyJSON string, response interface{}, headers map[strin
 	}
 
 	// дополняем переданными заголовками
-	if len(headers) > 0 {
-		for k, v := range headers {
-			req.Header.Add(k, v)
-		}
-	}
+	httpClientHeaders(ctx, req, headers)
 
 	// дополянем куками назначенными для данного запроса
 	if cookies != nil {
@@ -157,7 +154,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		var portDataAPI models.Response
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
-		_, err := Curl("GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		_, err := Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
 		if err != nil {
 			return "", err
 		}
@@ -219,4 +216,26 @@ func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries t
 	})
 
 	return port, err
+}
+
+// httpClientHeaders устанавливает заголовки реквеста из контекста и headers
+func httpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
+	for ctxField, headerField := range models.ProxiedHeaders {
+		if value := getFieldCtx(ctx, ctxField); value != "" {
+			req.Header.Add(headerField, value)
+		}
+	}
+
+	if len(headers) > 0 {
+		for k, v := range headers {
+			req.Header.Add(k, v)
+		}
+	}
+}
+
+func getFieldCtx(ctx context.Context, name string) string {
+	nameKey := "logger." + name
+	requestID, _ := ctx.Value(nameKey).(string)
+
+	return requestID
 }
