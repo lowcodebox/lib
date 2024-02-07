@@ -103,17 +103,17 @@ func New(ctx context.Context, urlstr string, reqTimeout time.Duration, cbMaxRequ
 		return nil, err
 	}
 	splitUrl := strings.Split(u.Path, "/")
-	if len(splitUrl) < 3 {
-		return nil, fmt.Errorf("error path: %s", urlstr)
-	}
-	domain := splitUrl[1:3]
+	//if len(splitUrl) < 3 {
+	//	domain := []string{""}
+	//}
+	//splitUrl = splitUrl[1:3]
 
 	return &client{
 		client:     b,
 		cb:         cb,
-		domain:     strings.Join(domain, "/"),
+		domain:     strings.Join(splitUrl, "/"),
 		projectKey: projectKey,
-	}, err
+	}, nil
 }
 
 func GRPCUnaryClientInterceptor(

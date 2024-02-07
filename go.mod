@@ -8,7 +8,7 @@ require (
 	git.lowcodeplatform.net/fabric/lib v0.2.14
 	git.lowcodeplatform.net/fabric/models v0.1.27
 	git.lowcodeplatform.net/packages/cache v0.1.11
-	git.lowcodeplatform.net/packages/logger v0.1.21
+	git.lowcodeplatform.net/packages/logger v0.1.22
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.12.0
@@ -37,7 +37,7 @@ require (
 	cloud.google.com/go/storage v1.28.1 // indirect
 	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
 	git.lowcodeplatform.net/fabric/logbox v0.2.15 // indirect
-	git.lowcodeplatform.net/fabric/logbox-client v0.1.16 // indirect
+	git.lowcodeplatform.net/fabric/logbox-client v0.1.17 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect
 	git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 // indirect
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible // indirect

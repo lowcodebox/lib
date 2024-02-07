@@ -20,8 +20,6 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/agent-client v0.1.4
-## explicit; go 1.18
 # git.lowcodeplatform.net/fabric/api-client v0.1.38
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/api-client
@@ -38,7 +36,7 @@ git.lowcodeplatform.net/fabric/lib/pkg/s3
 # git.lowcodeplatform.net/fabric/logbox v0.2.15
 ## explicit; go 1.20
 git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk
-# git.lowcodeplatform.net/fabric/logbox-client v0.1.16
+# git.lowcodeplatform.net/fabric/logbox-client v0.1.17
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/logbox-client
 # git.lowcodeplatform.net/fabric/models v0.1.27
@@ -54,7 +52,7 @@ git.lowcodeplatform.net/packages/curl
 ## explicit; go 1.17
 git.lowcodeplatform.net/packages/grpcbalancer
 git.lowcodeplatform.net/packages/grpcbalancer/multiresolver
-# git.lowcodeplatform.net/packages/logger v0.1.21
+# git.lowcodeplatform.net/packages/logger v0.1.22
 ## explicit; go 1.19
 git.lowcodeplatform.net/packages/logger
 git.lowcodeplatform.net/packages/logger/types

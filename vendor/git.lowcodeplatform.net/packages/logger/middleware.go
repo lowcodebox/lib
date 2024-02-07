@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/models"
 	"github.com/segmentio/ksuid"
 	_ "github.com/segmentio/ksuid"
 	"go.uber.org/zap"
@@ -97,12 +98,10 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 // HttpClientHeaders устанавливает заголовки реквеста из контекста и headers
 func HttpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
-	if requestID := req.Header.Get(headerXRequestID); requestID != "" {
-		req.Header.Add(headerXRequestID, requestID)
-	}
-
-	if userID := req.Header.Get(headerXUserID); userID != "" {
-		req.Header.Add(headerXUserID, userID)
+	for ctxField, headerField := range models.ProxiedHeaders {
+		if value := GetFieldCtx(ctx, ctxField); value != "" {
+			req.Header.Add(headerField, value)
+		}
 	}
 
 	if len(headers) > 0 {
