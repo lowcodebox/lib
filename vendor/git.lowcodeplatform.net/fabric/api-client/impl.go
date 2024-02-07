@@ -183,8 +183,9 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 	urlc = a.url + "/objs?format=json"
 	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
 
-	_, err = lib.Curl(ctx, "POST", urlc, string(body), &result, handlers, nil)
+	res, err := lib.Curl(ctx, "POST", urlc, string(body), &result, handlers, nil)
 	if err != nil {
+		result.Res = res
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
 
