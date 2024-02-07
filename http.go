@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 )
 
 const clientHttpTimeout = 60 * time.Second
+
+var reCrLf = regexp.MustCompile(`[\r\n]+`)
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
@@ -58,8 +61,11 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	// только если в запросе не указаны передаваемые параметры
 	clearUrl := strings.Contains(urlc, "?")
 
-	bodyJSON = strings.Replace(bodyJSON, "  ", "", -1)
+	bodyJSON = reCrLf.ReplaceAllString(bodyJSON, "")
 	err = json.Unmarshal([]byte(bodyJSON), &mapValues)
+	if err != nil {
+		return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+	}
 
 	if method == "JSONTOGET" && bodyJSON != "" && clearUrl {
 		actionType = "JSONTOGET"
