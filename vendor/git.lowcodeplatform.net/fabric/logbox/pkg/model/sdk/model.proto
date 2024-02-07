@@ -17,6 +17,7 @@ message Event {
 	string timing = 9;
 	string request = 10;
 	string payload = 11;
+	string user = 12;
 }
 
 //TODO: Если делать поиск с возможностью учитывать регист создать структуру Search (используется в корне и колонках)

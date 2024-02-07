@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 
 const headerRequestId = "X-Request-Id"
 const headerServiceKey = "X-Service-Key"
-const tokenInterval = 10 * time.Second
+const tokenInterval = 1 * time.Minute
 
 type iam struct {
 	ctx        context.Context
@@ -101,10 +102,8 @@ func (a *iam) Verify(ctx context.Context, tokenString string) (status bool, body
 	return status, body, refreshToken, err
 }
 
-func New(ctx context.Context, url, projectKey string, observeLog bool, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) IAM {
-	if url[len(url)-1:] == "/" {
-		url = url[:len(url)-1]
-	}
+func New(ctx context.Context, urlstr, projectKey string, observeLog bool, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) IAM {
+	urlstr = strings.TrimSuffix(urlstr, "/")
 
 	var err error
 	if cbMaxRequests == 0 {
@@ -133,17 +132,17 @@ func New(ctx context.Context, url, projectKey string, observeLog bool, cbMaxRequ
 		},
 	)
 
-	url = strings.TrimSuffix(url, "/")
-	splitUrl := strings.Split(url, "/")
-	if len(splitUrl) < 2 {
+	u, _ := url.Parse(urlstr)
+	splitUrl := strings.Split(u.Path, "/")
+	if len(splitUrl) < 3 {
 		return nil
 	}
-	domain := splitUrl[len(splitUrl)-2:]
+	domain := splitUrl[1:3]
 
 	msg := i18n.New()
 	return &iam{
 		ctx,
-		url,
+		urlstr,
 		projectKey,
 		msg,
 		observeLog,

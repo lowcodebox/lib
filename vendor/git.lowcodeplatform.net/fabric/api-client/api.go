@@ -7,6 +7,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ import (
 
 const headerRequestId = "X-Request-Id"
 const headerServiceKey = "X-Service-Key"
-const tokenInterval = 10 * time.Second
+const tokenInterval = 1 * time.Minute
 
 type api struct {
 	url                 string
@@ -325,7 +326,7 @@ func (a *api) ObjDelete(ctx context.Context, uids string) (result models.Respons
 	return result, err
 }
 
-func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration, projectKey string) Api {
+func New(ctx context.Context, urlstr string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration, projectKey string) Api {
 	var err error
 	if cbMaxRequests == 0 {
 		cbMaxRequests = 3
@@ -353,18 +354,18 @@ func New(ctx context.Context, url string, observeLog bool, cacheUpdateInterval t
 		},
 	)
 
-	url = strings.TrimSuffix(url, "/")
-	splitUrl := strings.Split(url, "/")
-	if len(splitUrl) < 2 {
+	u, _ := url.Parse(urlstr)
+	splitUrl := strings.Split(u.Path, "/")
+	if len(splitUrl) < 3 {
 		return nil
 	}
-	domain := splitUrl[len(splitUrl)-2:]
+	domain := splitUrl[1:3]
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
 
 	return &api{
-		url,
+		urlstr,
 		observeLog,
 		cb,
 		cacheUpdateInterval,

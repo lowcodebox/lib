@@ -62,6 +62,7 @@ func (c *client) search(ctx context.Context, in searchRes) (out searchReq, err e
 			m.Name,
 			m.Config,
 			m.Request,
+			m.User,
 			m.Srv,
 			m.Msg,
 			m.Time,

@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	requestIDField 	string = "request-id"
-	serviceIDField 	string = "service-id"
-	configIDField 	string = "config-id"
+	requestIDField string = "request-id"
+	userIDField    string = "user-id"
+	serviceIDField string = "service-id"
+	configIDField  string = "config-id"
 )
 
 //nolint:gochecknoglobals
@@ -31,7 +32,7 @@ func SetFieldCtx(ctx context.Context, name, val string) context.Context {
 		logKeys[nameKey] = struct{}{}
 		mtx.Unlock()
 	}
-	
+
 	return context.WithValue(ctx, nameKey, val)
 }
 
@@ -64,8 +65,16 @@ func SetRequestIDCtx(ctx context.Context, val string) context.Context {
 	return SetFieldCtx(ctx, requestIDField, val)
 }
 
+func SetUserIDCtx(ctx context.Context, val string) context.Context {
+	return SetFieldCtx(ctx, userIDField, val)
+}
+
 func GetRequestIDCtx(ctx context.Context) string {
 	return GetFieldCtx(ctx, requestIDField)
+}
+
+func GetUserIDCtx(ctx context.Context) string {
+	return GetFieldCtx(ctx, userIDField)
 }
 
 func SetServiceIDCtx(ctx context.Context, val string) context.Context {

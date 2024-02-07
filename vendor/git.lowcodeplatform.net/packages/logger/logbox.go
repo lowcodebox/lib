@@ -25,6 +25,7 @@ type LogLine struct {
 	Timing    string      `json:"timing"`
 	ConfigID  string      `json:"config-id"`
 	RequestID string      `json:"request-id"`
+	UserID    string      `json:"user-id"`
 	ServiceID string      `json:"service-id"`
 	Msg       interface{} `json:"msg"`
 }
@@ -73,6 +74,7 @@ func (v *logboxSender) Write(p []byte) (n int, err error) {
 			l.Name,
 			l.ConfigID,
 			l.RequestID,
+			l.UserID,
 			l.ServiceID,
 			l.Msg.(string),
 			l.Time,

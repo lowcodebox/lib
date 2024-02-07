@@ -9,6 +9,7 @@ type event struct {
 	Timing    string `json:"timing"`
 	ConfigID  string `json:"config-id"`
 	RequestID string `json:"request-id"`
+	UserID    string `json:"user-id"`
 	ServiceID string `json:"service-id"`
 	Msg       string `json:"msg"`
 	Payload   string `json:"payload"`
@@ -57,6 +58,7 @@ func (c *client) NewEvent(
 	Name string,
 	ConfigID string,
 	RequestID string,
+	UserID string,
 	ServiceID string,
 	Msg string,
 	Time string,
@@ -70,6 +72,7 @@ func (c *client) NewEvent(
 		ConfigID:  ConfigID,
 		ServiceID: ServiceID,
 		RequestID: RequestID,
+		UserID:    UserID,
 		Time:      Time,
 		Uid:       Uid,
 		Type:      Type,

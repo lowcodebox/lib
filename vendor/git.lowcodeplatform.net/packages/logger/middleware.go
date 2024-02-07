@@ -14,24 +14,25 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/packages/logger/types"
-	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
+	_ "github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"git.lowcodeplatform.net/packages/logger/types"
 )
 
 const (
 	headerXRequestID      = "X-Request-ID"
+	headerXUserID         = "X-User-ID"
 	headerXRequestUnit    = "X-Request-Unit"
 	headerXRequestService = "X-Request-Service"
-)
 
-const (
 	requestIDKey        = "request-id"
 	ServiceTypeKey      = "service-type"
 	ServiceIDKey        = "service-id"
-	ConfigIDKey        	= "config-id"
+	ConfigIDKey         = "config-id"
 	requestUserAgentKey = "user-agent"
 	requestUnitKey      = "unit-key"
 	requestServiceKey   = "service-key"
@@ -78,13 +79,37 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := r.Header.Get(headerXRequestID)
 		if requestID == "" {
-			requestID = uuid.New().String()
+			requestID = ksuid.New().String()
 			r.Header.Add(headerXRequestID, requestID) // keep compatibility with old logger
 		}
 		w.Header().Set(headerXRequestID, requestID)
 		ctx := SetRequestIDCtx(r.Context(), requestID)
+
+		userID := r.Header.Get(headerXUserID)
+		if userID != "" {
+			w.Header().Set(headerXUserID, userID)
+			ctx = SetUserIDCtx(ctx, userID)
+		}
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// HttpClientHeaders устанавливает заголовки реквеста из контекста и headers
+func HttpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
+	if requestID := req.Header.Get(headerXRequestID); requestID != "" {
+		req.Header.Add(headerXRequestID, requestID)
+	}
+
+	if userID := req.Header.Get(headerXUserID); userID != "" {
+		req.Header.Add(headerXUserID, userID)
+	}
+
+	if len(headers) > 0 {
+		for k, v := range headers {
+			req.Header.Add(k, v)
+		}
+	}
 }
 
 // HTTPMiddleWareParams параметры логирования, при пустых параметрах HTTPMiddlewareWithParams
@@ -142,12 +167,18 @@ func (m *middleware) HTTPMiddlewareWithParams(next http.Handler) http.Handler {
 
 		requestID := r.Header.Get(headerXRequestID)
 		if requestID == "" {
-			requestID = uuid.New().String()
+			requestID = ksuid.New().String()
 			r.Header.Add(headerXRequestID, requestID) // keep compatibility with old logger
 		}
 
 		w.Header().Set(headerXRequestID, requestID)
 		ctx := SetRequestIDCtx(r.Context(), requestID)
+
+		userID := r.Header.Get(headerXUserID)
+		if userID != "" {
+			w.Header().Set(headerXUserID, userID)
+			ctx = SetUserIDCtx(ctx, userID)
+		}
 
 		if m.params.NeedToLogIncomingPostRequest && isPostWithContent(r) {
 			Logger(r.Context()).Info("incoming POST request",
@@ -280,20 +311,28 @@ func GRPCUnaryServerInterceptor(
 	_ *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (interface{}, error) {
-	var requestID string
+	var requestID, userID string
 
 	if headers, ok := metadata.FromIncomingContext(ctx); ok {
 		if header, ok := headers["x-request-id"]; ok && len(header) > 0 {
 			requestID = header[0]
 		}
+		if header, ok := headers["x-user-id"]; ok && len(header) > 0 {
+			userID = header[0]
+		}
 	}
 
 	if requestID == "" {
-		requestID = uuid.New().String()
+		requestID = ksuid.New().String()
 	}
 
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("x-request-id", requestID))
+	ctx = AddToGRPCHeader(ctx, "x-request-id", requestID)
 	ctx = SetRequestIDCtx(ctx, requestID)
+
+	if userID != "" {
+		ctx = AddToGRPCHeader(ctx, "x-user-id", userID)
+		ctx = SetRequestIDCtx(ctx, userID)
+	}
 
 	return handler(ctx, req)
 }
@@ -307,15 +346,19 @@ func GRPCUnaryClientInterceptor(
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) error {
-	var requestID string
+	var requestID, userID string
 
 	requestID = GetRequestIDCtx(ctx)
+	userID = GetUserIDCtx(ctx)
 
 	if requestID == "" {
-		requestID = uuid.New().String()
+		requestID = ksuid.New().String()
 	}
 
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("x-request-id", requestID))
+	ctx = AddToGRPCHeader(ctx, "x-request-id", requestID)
+	if userID != "" {
+		ctx = AddToGRPCHeader(ctx, "x-user-id", userID)
+	}
 
 	err := invoker(ctx, method, req, reply, cc, opts...)
 

@@ -38,6 +38,7 @@ func (c *client) upsert(ctx context.Context, in upsertReq) (out upsertRes, err e
 			Timing:  v.Timing,
 			Type:    v.Type,
 			Request: v.RequestID,
+			User:    v.UserID,
 			Payload: v.Payload,
 		})
 	}

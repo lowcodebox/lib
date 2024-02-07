@@ -3,19 +3,20 @@ module git.lowcodeplatform.net/fabric/app
 go 1.20
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.1.36
-	git.lowcodeplatform.net/fabric/iam-client v0.1.9
+	git.lowcodeplatform.net/fabric/api-client v0.1.38
+	git.lowcodeplatform.net/fabric/iam-client v0.1.11
 	git.lowcodeplatform.net/fabric/lib v0.2.14
 	git.lowcodeplatform.net/fabric/models v0.1.27
 	git.lowcodeplatform.net/packages/cache v0.1.11
-	git.lowcodeplatform.net/packages/logger v0.1.16
+	git.lowcodeplatform.net/packages/logger v0.1.19
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.12.0
-	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.1
 	github.com/labstack/gommon v0.4.1
 	github.com/lib/pq v1.10.9
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/oliamb/cutter v0.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
@@ -24,6 +25,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/swaggo/http-swagger v1.3.3
 	github.com/swaggo/swag v1.8.7
+	go.uber.org/multierr v1.10.0
 	go.uber.org/zap v1.26.0
 )
 
@@ -34,8 +36,8 @@ require (
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.28.1 // indirect
 	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
-	git.lowcodeplatform.net/fabric/logbox v0.1.3 // indirect
-	git.lowcodeplatform.net/fabric/logbox-client v0.1.12 // indirect
+	git.lowcodeplatform.net/fabric/logbox v0.2.15 // indirect
+	git.lowcodeplatform.net/fabric/logbox-client v0.1.14 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect
 	git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 // indirect
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible // indirect
@@ -67,6 +69,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/graymeta/stow v0.2.8 // indirect
@@ -85,12 +88,11 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/ncw/swift v1.0.53 // indirect
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/oliamb/cutter v0.2.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/kafka-go v0.4.40 // indirect
+	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
@@ -99,7 +101,6 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect

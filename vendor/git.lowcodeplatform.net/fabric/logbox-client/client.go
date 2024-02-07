@@ -30,7 +30,7 @@ type Client interface {
 	Search(ctx context.Context, in searchRes) (out searchReq, err error)
 
 	NewUpsertReq() upsertReq
-	NewEvent(Uid string, Level string, Type string, Name string, ConfigID string, RequestID string, ServiceID string, Msg string, Time string, Timing string, Payload string) event
+	NewEvent(Uid, Level, Type, Name, ConfigID, RequestID, UserID, ServiceID, Msg, Time, Timing, Payload string) event
 
 	Close() error
 }
