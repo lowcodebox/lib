@@ -127,11 +127,9 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	responseString := string(responseData)
 
 	// возвращаем объект ответа, если передано - в какой объект класть результат
+	// НА ОШИБКУ НЕ ПРОВЕРЯТЬ!!!!!!
 	if response != nil {
-		err = json.Unmarshal([]byte(responseString), &response)
-		if err != nil {
-			return "", fmt.Errorf("error Unmarshal to obj. responseString. responseString: %s, err: %s", responseString, err)
-		}
+		json.Unmarshal([]byte(responseString), &response)
 	}
 
 	// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
