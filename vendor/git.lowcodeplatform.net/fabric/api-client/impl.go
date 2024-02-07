@@ -183,11 +183,17 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 	urlc = a.url + "/objs?format=json"
 	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
 
-	res, err := lib.Curl(ctx, "POST", urlc, string(body), &result, handlers, nil)
+	res, err := curl.NewRequestDefault().Method("POST").Payload(string(body)).MapToObj(&result).Headers(handlers).Url(urlc).Do(nil)
 	if err != nil {
 		result.Res = res
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
+
+	//res, err := lib.Curl(ctx, "POST", urlc, string(body), &result, handlers, nil)
+	//if err != nil {
+	//	result.Res = res
+	//	err = fmt.Errorf("%s (url: %s)", err, urlc)
+	//}
 
 	return result, err
 }

@@ -54,6 +54,8 @@ git.lowcodeplatform.net/fabric/api-client v0.1.42 h1:MxyqT7ORSmaYsFIqDvfSxHYNmol
 git.lowcodeplatform.net/fabric/api-client v0.1.42/go.mod h1:Ze/8H4y+gVbGdwUniEkMsRld2XqUJ0FrQutBzpGIbfE=
 git.lowcodeplatform.net/fabric/api-client v0.1.43 h1:MPBWuLwIekBN1FtC6frKWPAzjlyYJG2Eyo8gzX7hwP4=
 git.lowcodeplatform.net/fabric/api-client v0.1.43/go.mod h1:UZIX0UUxOc4gRw3osE8ZOR85ogTM8ey+9+Zmt7Tlu8A=
+git.lowcodeplatform.net/fabric/api-client v0.1.45 h1:+vv78bYGXYGw713c3E7C1OiLM020Fu+od6LFL13+1c8=
+git.lowcodeplatform.net/fabric/api-client v0.1.45/go.mod h1:UZIX0UUxOc4gRw3osE8ZOR85ogTM8ey+9+Zmt7Tlu8A=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.1.11 h1:MkRhdz6A6RS19vntsrmO4QYieI9qu+1FWTEyMjwQznY=
