@@ -12,16 +12,16 @@ func TestXServiceKey(t *testing.T) {
 		projectKey    []byte
 		tokenInterval time.Duration
 	}{
-		{"/lms/ru", []byte("LKHlhb899Y09olUi"), 10 * time.Second},
+		{"algiva/orm", []byte("LKHlhb899Y09olUi"), 1000 * time.Second},
 	}
 
 	for _, c := range cases {
 		token, err := GenXServiceKey(c.domain, c.projectKey, c.tokenInterval)
 		fmt.Println(token, err)
 
-		time.Sleep(5 * time.Second)
+		token = "e5vCdpG-s7Ya0hbt1vXE1pSrs8TAUbXjowBgcQSOYkaXlNf6wrxoea-QNEiLYVSu_fXz7jKEbLiODjghxwMzhw"
 		valid := CheckXServiceKey(c.domain, c.projectKey, token)
-		fmt.Println(valid)
+		fmt.Println(c.domain, string(c.projectKey), token, "->", valid)
 
 	}
 }

@@ -127,6 +127,10 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool
 	var xsKeyValid bool
 	var xsKey models.XServiceKey
 
+	if xServiceKey == "" {
+		return false
+	}
+
 	v, err := Decrypt(projectKey, xServiceKey)
 	err = json.Unmarshal([]byte(v), &xsKey)
 	if err != nil {
