@@ -681,7 +681,7 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 // ObjGet операции с объектами через клиента API
 func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjGet(ctx, uids)
 	}
 
@@ -690,7 +690,7 @@ func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseD
 
 func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
 	}
 
@@ -699,7 +699,7 @@ func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result
 
 func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjDelete(ctx, uids)
 	}
 
@@ -708,7 +708,7 @@ func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.Respon
 
 func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjAttrUpdate(ctx, uid, name, value, src, editor)
 	}
 
@@ -717,7 +717,7 @@ func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor 
 
 func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).LinkGet(ctx, tpl, obj, mode, short)
 	}
 
@@ -726,7 +726,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (resul
 
 func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err error) {
 	ctx := context.Background()
-	if apiURL == "" {
+	if apiURL != "" {
 		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
 	}
 
