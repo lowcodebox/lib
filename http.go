@@ -207,7 +207,7 @@ func PortResolver(port string) (status bool) {
 // ProxyPort свободный порт от прокси с проверкой доступности на локальной машине
 // если занято - ретраим согласно заданным параметрам
 func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries time.Duration) (port string, err error) {
-	port, err = Retrier(maxCountRetries, timeRetries, func() (string, error) {
+	port, err = Retrier(maxCountRetries, timeRetries, true, func() (string, error) {
 		port, err = AddressProxy(addressProxy, interval)
 		if err != nil {
 			return "", err
