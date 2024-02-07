@@ -303,9 +303,6 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
 	_, err = a.cb.Execute(func() (interface{}, error) {
 		result, err = a.objCreate(ctx, bodymap)
-		if err != nil {
-			err = fmt.Errorf("error create obj, bodymap: %+v", bodymap)
-		}
 		return result, err
 	})
 	if err != nil {

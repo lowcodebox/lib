@@ -18,6 +18,9 @@ import (
 func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
 	var handlers = map[string]string{}
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 
 	if a.observeLog {
@@ -44,6 +47,9 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result
 func (a *api) objGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "ObjGet", err, uids)
@@ -63,6 +69,9 @@ func (a *api) objGet(ctx context.Context, uids string) (result models.ResponseDa
 func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "LinkGet", err, tpl, obj, mode, short)
@@ -83,6 +92,9 @@ func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string) (result
 func (a *api) objAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "ObjAttrUpdate", err, uid, name, value, src, editor)
@@ -120,6 +132,9 @@ func (a *api) element(ctx context.Context, action, body string) (result models.R
 	var handlers = map[string]string{}
 	var urlc string
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "Element", err, urlc, action, body)
@@ -152,16 +167,23 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 	var handlers = map[string]string{}
 	var urlc string
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "ObjCreate", err, urlc, bodymap)
 	}
 
-	body, _ := json.Marshal(bodymap)
+	body, err := json.Marshal(bodymap)
+	if err != nil {
+		return result, fmt.Errorf("error Marshal. bodymap: %+v, err: %v", bodymap, err)
+	}
+
 	urlc = a.url + "/objs?format=json"
 	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
 
-	_, err = lib.Curl(ctx, "POST", urlc, string(body), &result, map[string]string{}, nil)
+	_, err = lib.Curl(ctx, "POST", urlc, string(body), &result, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
@@ -173,6 +195,9 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 	var handlers = map[string]string{}
 	var urlc string
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
 	handlers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "objDelete", err, urlc, uids)
@@ -186,7 +211,7 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 	urlc = a.url + "/objs/delete?ids=" + uids
 	urlc = strings.Replace(urlc, "//objs", "/objs", 1)
 
-	_, err = lib.Curl(ctx, "JSONTOPOST", urlc, string(payloadJson), &result, map[string]string{}, nil)
+	_, err = lib.Curl(ctx, "JSONTOPOST", urlc, string(payloadJson), &result, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
