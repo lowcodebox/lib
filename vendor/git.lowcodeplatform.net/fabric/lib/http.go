@@ -62,10 +62,6 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	clearUrl := strings.Contains(urlc, "?")
 
 	bodyJSON = reCrLf.ReplaceAllString(bodyJSON, "")
-	err = json.Unmarshal([]byte(bodyJSON), &mapValues)
-	if err != nil {
-		return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
-	}
 
 	if method == "JSONTOGET" && bodyJSON != "" && clearUrl {
 		actionType = "JSONTOGET"
@@ -76,34 +72,34 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 
 	switch actionType {
 	case "JSONTOGET": // преобразуем параметры в json в строку запроса
-		if err == nil {
-			for k, v := range mapValues {
-				values.Set(k, v)
-			}
-			uri, _ := url.Parse(urlc)
-			uri.RawQuery = values.Encode()
-			urlc = uri.String()
-			req, err = http.NewRequest("GET", urlc, strings.NewReader(bodyJSON))
-		} else {
-			fmt.Println("Error! Fail parsed bodyJSON from GET Curl: ", err)
+		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
+		if err != nil {
+			return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
+
+		for k, v := range mapValues {
+			values.Set(k, v)
+		}
+		uri, _ := url.Parse(urlc)
+		uri.RawQuery = values.Encode()
+		urlc = uri.String()
+		req, err = http.NewRequest("GET", urlc, strings.NewReader(bodyJSON))
+
 	case "JSONTOPOST": // преобразуем параметры в json в тело запроса
-		if err == nil {
-			for k, v := range mapValues {
-				values.Set(k, v)
-			}
-			req, err = http.NewRequest("POST", urlc, strings.NewReader(values.Encode()))
-			req.PostForm = values
-			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		} else {
-			fmt.Println("Error! Fail parsed bodyJSON to POST: ", err)
+		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
+		if err != nil {
+			return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
+
+		for k, v := range mapValues {
+			values.Set(k, v)
+		}
+		req, err = http.NewRequest("POST", urlc, strings.NewReader(values.Encode()))
+		req.PostForm = values
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
 	default:
 		req, err = http.NewRequest(method, urlc, strings.NewReader(bodyJSON))
-	}
-
-	if err != nil {
-		return "", err
 	}
 
 	// дополняем переданными заголовками
@@ -207,7 +203,7 @@ func PortResolver(port string) (status bool) {
 // ProxyPort свободный порт от прокси с проверкой доступности на локальной машине
 // если занято - ретраим согласно заданным параметрам
 func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries time.Duration) (port string, err error) {
-	port, err = Retrier(maxCountRetries, timeRetries, func() (string, error) {
+	port, err = Retrier(maxCountRetries, timeRetries, true, func() (string, error) {
 		port, err = AddressProxy(addressProxy, interval)
 		if err != nil {
 			return "", err

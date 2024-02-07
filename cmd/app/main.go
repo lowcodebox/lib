@@ -215,16 +215,6 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	go ses.Cleaner(ctx)
 
 	if port == "" {
-		port, err = lib.AddressProxy(cfg.ProxyPointsrc, cfg.PortInterval)
-		if err != nil {
-			logger.Error(ctx, "Error: AddressProxy", zap.String("ProxyPointsrc", cfg.ProxyPointsrc), zap.String("ProxyPointsrc", cfg.ProxyPointsrc), zap.Error(err))
-
-			fmt.Println(err)
-			return err
-		}
-	}
-
-	if port == "" {
 		port, err = lib.ProxyPort(cfg.ProxyPointsrc, cfg.PortInterval, cfg.ProxyMaxCountRetries.Value, cfg.ProxyTimeRetries.Value)
 		if err != nil {
 			logger.Error(context.Background(), "port is not resolved", zap.String("proxyPath", cfg.ProxyPointsrc),
