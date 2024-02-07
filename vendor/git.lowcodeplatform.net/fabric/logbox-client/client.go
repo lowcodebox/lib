@@ -3,6 +3,8 @@ package logbox_client
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"git.lowcodeplatform.net/packages/grpcbalancer"
@@ -15,14 +17,18 @@ import (
 )
 
 const (
-	requestIDField string = "request-id"
+	requestIDField   string = "request-id"
+	headerServiceKey        = "X-Service-Key"
+	tokenInterval           = 1 * time.Minute
 )
 
 var timeoutDefault = 1 * time.Second
 
 type client struct {
-	client *grpcbalancer.Client
-	cb     *gobreaker.CircuitBreaker
+	client     *grpcbalancer.Client
+	cb         *gobreaker.CircuitBreaker
+	domain     string
+	projectKey string
 }
 
 type Client interface {
@@ -43,12 +49,12 @@ func (c *client) Close() error {
 	return c.client.Close()
 }
 
-func New(ctx context.Context, url string, reqTimeout time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration) (Client, error) {
+func New(ctx context.Context, urlstr string, reqTimeout time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration, projectKey string) (Client, error) {
 	if reqTimeout == 0 {
 		reqTimeout = timeoutDefault
 	}
 	b, err := grpcbalancer.New(
-		grpcbalancer.WithUrls(url),
+		grpcbalancer.WithUrls(urlstr),
 		grpcbalancer.WithInsecure(),
 		grpcbalancer.WithTimeout(reqTimeout),
 		grpcbalancer.WithChainUnaryInterceptors(GRPCUnaryClientInterceptor),
@@ -92,9 +98,21 @@ func New(ctx context.Context, url string, reqTimeout time.Duration, cbMaxRequest
 		},
 	)
 
+	u, err := url.Parse(urlstr)
+	if err != nil {
+		return nil, err
+	}
+	splitUrl := strings.Split(u.Path, "/")
+	if len(splitUrl) < 3 {
+		return nil, fmt.Errorf("error path: %s", urlstr)
+	}
+	domain := splitUrl[1:3]
+
 	return &client{
-		client: b,
-		cb:     cb,
+		client:     b,
+		cb:         cb,
+		domain:     strings.Join(domain, "/"),
+		projectKey: projectKey,
 	}, err
 }
 

@@ -35,15 +35,15 @@ type LogboxConfig struct {
 	RequestTimeout                   time.Duration
 	CbMaxRequests                    uint32
 	CbTimeout, CbInterval            time.Duration
+	ProjectKey                       string
 }
 
-func (l *LogboxConfig) client(ctx context.Context) (client logboxclient.Client) {
-	var err error
-	client, err = logboxclient.New(ctx, l.Endpoint, l.RequestTimeout, l.CbMaxRequests, l.CbTimeout, l.CbInterval)
+func (l *LogboxConfig) client(ctx context.Context) (client logboxclient.Client, err error) {
+	client, err = logboxclient.New(ctx, l.Endpoint, l.RequestTimeout, l.CbMaxRequests, l.CbTimeout, l.CbInterval, l.ProjectKey)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return client
+	return client, nil
 }
 
 type logboxSender struct {
@@ -93,15 +93,20 @@ func (v *logboxSender) Sync() error {
 }
 
 // SetupDefaultLogboxLogger инициируем логирование в сервис Logbox
-func SetupDefaultLogboxLogger(namespace string, cfg LogboxConfig, options map[string]string) error {
+func SetupDefaultLogboxLogger(namespace string, cfg LogboxConfig, options map[string]string) (err error) {
 	if len(cfg.Endpoint) == 0 {
 		return errors.New("logbox address must be specified")
+	}
+
+	cl, err := cfg.client(context.Background())
+	if err != nil {
+		return err
 	}
 
 	// инициализировать лог и его ротацию
 	ws := &logboxSender{
 		requestTimeout: cfg.RequestTimeout,
-		logboxClient:   cfg.client(context.Background()),
+		logboxClient:   cl,
 	}
 
 	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())

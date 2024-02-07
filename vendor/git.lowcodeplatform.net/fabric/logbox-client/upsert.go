@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/lib"
 	pb "git.lowcodeplatform.net/fabric/logbox/pkg/model/sdk"
 )
 
 func (c *client) upsert(ctx context.Context, in upsertReq) (out upsertRes, err error) {
+	token, err := lib.GenXServiceKey(c.domain, []byte(c.projectKey), tokenInterval)
+	ctx = AddToGRPCHeader(ctx, headerServiceKey, token)
+
 	conn, err := c.client.Conn(ctx)
 	if err != nil {
 		err = fmt.Errorf("cannot get grpc connection. err: %s, client: %+v", err, c.client)
