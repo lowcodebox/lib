@@ -134,7 +134,7 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	if response != nil {
 		err = json.Unmarshal([]byte(responseString), &response)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error Unmarshal to obj. responseString. responseString: %s, err: %s", responseString, err)
 		}
 	}
 
