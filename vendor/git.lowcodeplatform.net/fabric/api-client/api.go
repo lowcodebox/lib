@@ -304,7 +304,7 @@ func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result 
 	_, err = a.cb.Execute(func() (interface{}, error) {
 		result, err = a.objCreate(ctx, bodymap)
 		if err != nil {
-			err = fmt.Errorf("error create obj, bodymap: %+v, err: %v", bodymap, err)
+			err = fmt.Errorf("error create obj, bodymap: %+v", bodymap)
 		}
 		return result, err
 	})
