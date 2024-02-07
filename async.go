@@ -31,11 +31,16 @@ func Recover(ctx context.Context) (flag bool, msg string) {
 func Retrier[T any](
 	maxCountRetries int,
 	timeRetries time.Duration,
+	disableProgressCalc bool,
 	f func() (T, error),
 ) (res T, err error) {
 	for i := 0; i < maxCountRetries; i++ {
 		if i > 0 {
-			time.Sleep(sleepCalc(i, timeRetries))
+			if disableProgressCalc {
+				time.Sleep(timeRetries)
+			} else {
+				time.Sleep(sleepCalc(i, timeRetries))
+			}
 		}
 
 		res, err = f()
