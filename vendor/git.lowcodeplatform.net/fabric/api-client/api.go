@@ -80,14 +80,15 @@ func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string
 
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
-		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.Query(ctx, query, method, bodyJSON)
 			return res, err
 		}, a.cacheUpdateInterval)
-
-		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("get value is fail. err: %s", err)
+			return "", fmt.Errorf("error from cache update. err: %s", err)
+		}
+		if value == nil {
+			return "", fmt.Errorf("returned result from cache update is empty")
 		}
 
 		return fmt.Sprint(value), err
@@ -131,14 +132,15 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
-		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.ObjGet(ctx, uids)
 			return res, err
 		}, a.cacheUpdateInterval)
-
-		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("[ObjGetWithCache] get value is fail. err: %s", err)
+			return nil, fmt.Errorf("error from cache update. err: %s", err)
+		}
+		if value == nil {
+			return nil, fmt.Errorf("returned result from cache update is empty")
 		}
 
 		res, ok := value.(models.ResponseData)
@@ -188,14 +190,15 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
-		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.LinkGet(ctx, tpl, obj, mode, short)
 			return res, err
 		}, a.cacheUpdateInterval)
-
-		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("[LinkGetWithCache] get value is fail. err: %s", err)
+			return result, fmt.Errorf("error from cache update. err: %s", err)
+		}
+		if value == nil {
+			return result, fmt.Errorf("returned result from cache update is empty")
 		}
 
 		result, ok = value.(models.ResponseData)
@@ -274,14 +277,15 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
-		err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
 			res, err = a.Element(ctx, action, body)
 			return res, err
 		}, a.cacheUpdateInterval)
-
-		value, err = cache.Cache().Get(key)
 		if err != nil {
-			err = fmt.Errorf("[ElementWithCache] get value is fail. err: %s", err)
+			return result, fmt.Errorf("error from cache update. err: %s", err)
+		}
+		if value == nil {
+			return result, fmt.Errorf("returned result from cache update is empty")
 		}
 
 		result, ok = value.(models.ResponseData)

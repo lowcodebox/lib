@@ -52,7 +52,7 @@ func Cache() *cache {
 }
 
 // Upsert регистрируем новый/обновляем кеш (указываем фукнцию, кр будет возвращать нужное значение)
-func (c *cache) Upsert(key string, source func() (res interface{}, err error), refreshInterval time.Duration) (err error) {
+func (c *cache) Upsert(key string, source func() (res interface{}, err error), refreshInterval time.Duration) (result interface{}, err error) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -64,8 +64,8 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 	if found {
 		item.reader = source
 		item.refreshInterval = refreshInterval
-		_, err = c.updateCacheValue(key, item)
-		return err
+		result, err = c.updateCacheValue(key, item)
+		return result, err
 	}
 
 	cache := ttlcache.NewCache()
@@ -85,9 +85,9 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 	}
 
 	c.items[key] = &ci
-	_, err = c.updateCacheValue(key, &ci)
+	result, err = c.updateCacheValue(key, &ci)
 
-	return err
+	return result, err
 }
 
 // Delete удаляем значение из кеша
