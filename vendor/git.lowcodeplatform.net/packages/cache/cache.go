@@ -102,13 +102,13 @@ func (c *cache) Delete(key string) (err error) {
 // Get возвращает текущее значение параметра в сервисе keeper.
 // Нужно учитывать, что значения на время кешируются и обновляются с заданной периодичностью.
 func (c *cache) Get(key string) (value interface{}, err error) {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
-
 	var item *cacheItem
 	var found bool
 
+	c.mx.RLock()
 	item, found = c.items[key]
+	c.mx.RUnlock()
+
 	if !found {
 		return nil, ErrorKeyNotFound
 	}
@@ -163,7 +163,10 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	var item *cacheItem
 	var found bool
 
+	c.mx.RLock()
 	item, found = c.items[key]
+	c.mx.RUnlock()
+
 	if !found {
 		return nil, fmt.Errorf("error. key is not found")
 	}
@@ -209,7 +212,7 @@ type locks struct {
 	// keys хранит информацию о локах по каждому отдельному ключу.
 	// Если значение установлено в true, в данный момент обновление кеша захвачено одной из горутин.
 	keys map[string]bool
-	mx   sync.RWMutex
+	mx   *sync.RWMutex
 }
 
 // Get возвращает информацию о том идет ли в данный момент обновление конкретного ключа.
