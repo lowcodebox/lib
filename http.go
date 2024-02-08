@@ -231,6 +231,9 @@ func ReadUserIP(r *http.Request) string {
 
 // httpClientHeaders устанавливает заголовки реквеста из контекста и headers
 func httpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
+	if req == nil {
+		return
+	}
 	for ctxField, headerField := range models.ProxiedHeaders {
 		if value := getFieldCtx(ctx, ctxField); value != "" {
 			req.Header.Add(headerField, value)
@@ -245,6 +248,9 @@ func httpClientHeaders(ctx context.Context, req *http.Request, headers map[strin
 }
 
 func getFieldCtx(ctx context.Context, name string) string {
+	if ctx == nil {
+		return ""
+	}
 	nameKey := "logger." + name
 	a := ctx.Value(nameKey)
 	if a == nil {
