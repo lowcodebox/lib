@@ -690,9 +690,9 @@ func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseD
 
 func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
 	ctx := context.Background()
-	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
-	}
+	//if apiURL != "" {
+	//	return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
+	//}
 
 	return t.api.ObjCreate(ctx, bodymap)
 }

@@ -53,8 +53,18 @@ func WithFieldsContext(ctx context.Context, fields ...Field) context.Context {
 }
 
 func GetFieldCtx(ctx context.Context, name string) string {
-	nameKey := key("logger." + name)
-	requestID, _ := ctx.Value(nameKey).(string)
+	if ctx == nil {
+		return ""
+	}
+	nameKey := "logger." + name
+	a := ctx.Value(nameKey)
+	if a == nil {
+		return ""
+	}
+	requestID, ok := a.(string)
+	if !ok {
+		return ""
+	}
 
 	return requestID
 }

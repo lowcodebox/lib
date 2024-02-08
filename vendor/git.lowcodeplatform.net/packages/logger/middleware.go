@@ -98,6 +98,10 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 // HttpClientHeaders устанавливает заголовки реквеста из контекста и headers
 func HttpClientHeaders(ctx context.Context, req *http.Request, headers map[string]string) {
+	if req == nil {
+		return
+	}
+
 	for ctxField, headerField := range models.ProxiedHeaders {
 		if value := GetFieldCtx(ctx, ctxField); value != "" {
 			req.Header.Add(headerField, value)

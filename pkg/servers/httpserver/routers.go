@@ -128,7 +128,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 
 	// проверяем на защищенный доступ через авторизацию
 	if h.cfg.Signin == "checked" && h.cfg.SigninUrl != "" {
-		router.Use(h.AuthProcessor)
+		//router.Use(h.AuthProcessor)
 	}
 
 	// добавление request-id в логер

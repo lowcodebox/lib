@@ -177,6 +177,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		cfg.ProjectKey,
 	)
 
+	//fmt.Println(api.ObjCreate(ctx, map[string]string{"data-uid": "test-2024-02-08T08-27-09Z-2c4piB"}))
+	fmt.Printf("%s Enabled API (url: %s)\n", done, cfg.UrlApi)
+
 	// инициализация FuncMap
 	applib.NewFuncMap(vfs, api, cfg.ProjectKey)
 

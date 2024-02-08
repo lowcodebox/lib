@@ -56,6 +56,8 @@ git.lowcodeplatform.net/fabric/api-client v0.1.43 h1:MPBWuLwIekBN1FtC6frKWPAzjly
 git.lowcodeplatform.net/fabric/api-client v0.1.43/go.mod h1:UZIX0UUxOc4gRw3osE8ZOR85ogTM8ey+9+Zmt7Tlu8A=
 git.lowcodeplatform.net/fabric/api-client v0.1.45 h1:+vv78bYGXYGw713c3E7C1OiLM020Fu+od6LFL13+1c8=
 git.lowcodeplatform.net/fabric/api-client v0.1.45/go.mod h1:UZIX0UUxOc4gRw3osE8ZOR85ogTM8ey+9+Zmt7Tlu8A=
+git.lowcodeplatform.net/fabric/api-client v0.1.46 h1:/FS8sNPFt+hWwNm07SLZIv6UUYjWVEo/7u9/4V7HAYE=
+git.lowcodeplatform.net/fabric/api-client v0.1.46/go.mod h1:Puwp4+VLbr1c7GzgwpFjS39mb9NKOKS9OITlG9qsGVk=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.1.11 h1:MkRhdz6A6RS19vntsrmO4QYieI9qu+1FWTEyMjwQznY=
@@ -70,6 +72,8 @@ git.lowcodeplatform.net/fabric/lib v0.2.20 h1:UO2EwxA5Irmz30DPyzwedT12UkoEj7d54d
 git.lowcodeplatform.net/fabric/lib v0.2.20/go.mod h1:bDQ/TDL5Gzb+y2J4s2K7is5601DzyteDJu7nqSdTI/I=
 git.lowcodeplatform.net/fabric/lib v0.2.21 h1:7swjQs7OAjWJ7N0Nd/85rLs78Aj+JELP+7SXR/b/jKI=
 git.lowcodeplatform.net/fabric/lib v0.2.21/go.mod h1:bDQ/TDL5Gzb+y2J4s2K7is5601DzyteDJu7nqSdTI/I=
+git.lowcodeplatform.net/fabric/lib v0.2.23 h1:SCLxVubzzcQZvyFHKbZNIybcPAYKJBYy4E0Y0reAb7k=
+git.lowcodeplatform.net/fabric/lib v0.2.23/go.mod h1:bDQ/TDL5Gzb+y2J4s2K7is5601DzyteDJu7nqSdTI/I=
 git.lowcodeplatform.net/fabric/logbox v0.2.15 h1:ov5DCgfdVJlqIartr7Cydqr4rcEnioZDggnZGhMog+w=
 git.lowcodeplatform.net/fabric/logbox v0.2.15/go.mod h1:o/aE6IT6NlQMVuhSKCsUBt7QswFIqKkylSaGGRCvmW4=
 git.lowcodeplatform.net/fabric/logbox-client v0.1.16 h1:7qeQrmqYqI1M4W77AMER+AnKHDS1wmwqxSmzWpkTuPk=
@@ -88,6 +92,8 @@ git.lowcodeplatform.net/packages/logger v0.1.21 h1:jIfEqURkkg+dROJSMZDTH7mQkjJGl
 git.lowcodeplatform.net/packages/logger v0.1.21/go.mod h1:TPYiizHJLGEe+isQOu0Hne8CjvHRkuQo7q7LNNw+C2U=
 git.lowcodeplatform.net/packages/logger v0.1.22 h1:dF4jvbhIb3m2IQ/6Awku73mQfbCz6HE7Adwxw8Aa0lA=
 git.lowcodeplatform.net/packages/logger v0.1.22/go.mod h1:2Vf4M2rO/j6v7rixEzl6mAjVABOxPBMeuKN2SQw/nB4=
+git.lowcodeplatform.net/packages/logger v0.1.24 h1:j2oca5ZSe750TDGkEMJ9unMcbw8a3bM1BYnR5qyba18=
+git.lowcodeplatform.net/packages/logger v0.1.24/go.mod h1:RpGvSrmWlQJV2EJHRVqDLjcBzxAwrb0ksvxTYVUlmS0=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v66.0.0+incompatible h1:bmmC38SlE8/E81nNADlgmVGurPWMHDX2YNXVQMrBpEE=
 github.com/Azure/azure-sdk-for-go v66.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
