@@ -246,7 +246,14 @@ func httpClientHeaders(ctx context.Context, req *http.Request, headers map[strin
 
 func getFieldCtx(ctx context.Context, name string) string {
 	nameKey := "logger." + name
-	requestID, _ := ctx.Value(nameKey).(string)
+	a := ctx.Value(nameKey)
+	if a == nil {
+		return ""
+	}
+	requestID, ok := a.(string)
+	if !ok {
+		return ""
+	}
 
 	return requestID
 }
