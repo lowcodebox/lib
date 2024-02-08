@@ -69,6 +69,9 @@ func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 // QueryWithCache результат выводим в объект как при вызове Curl
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
+
+	return a.Query(ctx, query, method, bodyJSON)
+
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 	if a.observeLog {
@@ -114,6 +117,10 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 }
 
 func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.ResponseData, err error) {
+
+	t, e := a.ObjGet(ctx, uids)
+	return &t, e
+
 	//t := time.Now()
 	//defer func() {
 	//	fmt.Printf("\nDEFER Время выполнения общее ObjGetWithCache: %fc\n", time.Since(t).Seconds())
@@ -178,6 +185,9 @@ func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 // LinkGetWithCache - получение связанных объектов
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+
+	return a.LinkGet(ctx, tpl, obj, mode, short)
+
 	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
@@ -261,6 +271,9 @@ func (a *api) Element(ctx context.Context, action, body string) (result models.R
 // кешируем только операции получения данных, остальные без кеша
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) ElementWithCache(ctx context.Context, action, body string) (result models.ResponseData, err error) {
+
+	return a.Element(ctx, action, body)
+
 	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
