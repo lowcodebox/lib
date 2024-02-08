@@ -52,7 +52,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 
-	err = cache.Cache().Upsert("prometheus", func() (res interface{}, err error) {
+	_, err = cache.Cache().Upsert("prometheus", func() (res interface{}, err error) {
 		mf, err := prometheus.DefaultGatherer.Gather()
 		if err != nil {
 			err = fmt.Errorf("error prometheus Gather. err: %s", err)
