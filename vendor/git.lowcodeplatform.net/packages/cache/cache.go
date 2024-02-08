@@ -78,7 +78,10 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 	ci := cacheItem{
 		cache:           cache,
 		persistentCache: ttlcache.NewCache(),
-		locks:           locks{keys: map[string]bool{}},
+		locks: locks{
+			keys: map[string]bool{},
+			mx:   &sync.RWMutex{},
+		},
 		reader:          source,
 		refreshInterval: refreshInterval,
 		expiredTime:     expiredTime,
