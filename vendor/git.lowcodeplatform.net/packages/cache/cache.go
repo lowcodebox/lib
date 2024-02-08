@@ -28,7 +28,7 @@ var (
 type cache struct {
 	ctx             context.Context
 	items           map[string]*cacheItem
-	mx              sync.RWMutex
+	mx              *sync.RWMutex
 	expiredInterval time.Duration // интервал, через который GС удалит запись
 	runGCInterval   time.Duration // интервал запуска GC
 }
@@ -102,6 +102,9 @@ func (c *cache) Delete(key string) (err error) {
 // Get возвращает текущее значение параметра в сервисе keeper.
 // Нужно учитывать, что значения на время кешируются и обновляются с заданной периодичностью.
 func (c *cache) Get(key string) (value interface{}, err error) {
+	c.mx.RLock()
+	defer c.mx.RUnlock()
+
 	var item *cacheItem
 	var found bool
 
@@ -192,7 +195,7 @@ func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
 	d := cache{
 		ctx:             ctx,
 		items:           map[string]*cacheItem{},
-		mx:              sync.RWMutex{},
+		mx:              &sync.RWMutex{},
 		runGCInterval:   runGCInterval,
 		expiredInterval: expiredInterval,
 	}

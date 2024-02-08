@@ -58,6 +58,8 @@ git.lowcodeplatform.net/fabric/api-client v0.1.45 h1:+vv78bYGXYGw713c3E7C1OiLM02
 git.lowcodeplatform.net/fabric/api-client v0.1.45/go.mod h1:UZIX0UUxOc4gRw3osE8ZOR85ogTM8ey+9+Zmt7Tlu8A=
 git.lowcodeplatform.net/fabric/api-client v0.1.46 h1:/FS8sNPFt+hWwNm07SLZIv6UUYjWVEo/7u9/4V7HAYE=
 git.lowcodeplatform.net/fabric/api-client v0.1.46/go.mod h1:Puwp4+VLbr1c7GzgwpFjS39mb9NKOKS9OITlG9qsGVk=
+git.lowcodeplatform.net/fabric/api-client v0.1.47 h1:zU7Hl1auUgl5nkUkWwbrVsi2Efaem63JY9SqjL67rBo=
+git.lowcodeplatform.net/fabric/api-client v0.1.47/go.mod h1:tx1tsYN/oX5Wnio6SzPDRZHx1KG66kjrUlhhSih7+nA=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe h1:xYwyVVc+6CTQX6qenCYxLx2ocMHH2hE3mWiPte5Pki0=
 git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe/go.mod h1:8dXXaCDOju0k9FrWnENluOaH/KQJByrrxoGwZvJAQqs=
 git.lowcodeplatform.net/fabric/iam-client v0.1.11 h1:MkRhdz6A6RS19vntsrmO4QYieI9qu+1FWTEyMjwQznY=
@@ -86,6 +88,8 @@ git.lowcodeplatform.net/fabric/models v0.1.27 h1:LXS9y6/NWyDwBlb59kZLYxviHNAfY99
 git.lowcodeplatform.net/fabric/models v0.1.27/go.mod h1:RSR+ysusHS7bhYOCDuWbkuGQkFL0Mum4r/FXPzStUQQ=
 git.lowcodeplatform.net/packages/cache v0.1.11 h1:zUB4MqyPNn6nSaP32UYSOGqq8h/BHl5vPNmtdxTVrTo=
 git.lowcodeplatform.net/packages/cache v0.1.11/go.mod h1:+w6N8ipAhpEw0FzTQFQ56JY4OgcIjk1HP9SsYQuajyQ=
+git.lowcodeplatform.net/packages/cache v0.1.12 h1:ThpH4iELaVaCTvG2EzEbKzX5i2Txs9rMMLaMwETybbM=
+git.lowcodeplatform.net/packages/cache v0.1.12/go.mod h1:+w6N8ipAhpEw0FzTQFQ56JY4OgcIjk1HP9SsYQuajyQ=
 git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 h1:yFpe7oU/WLDdhESLIMMLDj2VNDqQBa7eGXP1AMKz4GA=
 git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1/go.mod h1:09gPZ6xP6+st9ZDu52jc8Vw6QUIy3x9OFcf5sFt3yzU=
 git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 h1:bQ4r7z77sROu4I4Ra/ja30AQeAINL7YQdcynOPBxA0s=
