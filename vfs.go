@@ -366,7 +366,7 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 		file = strings.Replace(file, sep+sep, sep, -1)
 	}
 
-	fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
+	//fmt.Printf("file: %s, bucket: %s, container: %-v\n", file, bucket, v.container)
 
 	urlPath.Host = bucket
 	urlPath.Path = file
