@@ -667,11 +667,8 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 		h[k] = fmt.Sprint(v)
 	}
 
-	raw, err := lib.Curl(context.Background(), method, urlc, bodyJSON, responseData, h, cookies)
+	raw, _ := lib.Curl(context.Background(), method, urlc, bodyJSON, responseData, h, cookies)
 	if len(responseData.Data) == 0 {
-		if err != nil {
-			return fmt.Sprint(err)
-		}
 		return raw
 	}
 
