@@ -133,6 +133,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"sliceset":            Funcs.sliceset,
 		"sliceappend":         Funcs.sliceappend,
 		"slicedelete":         Funcs.slicedelete,
+		"sliceuint8delete":    Funcs.sliceuint8delete,
 		"slicestringnew":      Funcs.slicestringnew,
 		"slicestringset":      Funcs.slicestringset,
 		"slicestringappend":   Funcs.slicestringappend,
@@ -1257,6 +1258,15 @@ func (t *funcMap) slicestringappend(d []string, value string) []string {
 func (t *funcMap) slicedelete(d []interface{}, index int) []interface{} {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
+	d = d[:len(d)-1]
+
+	return d
+}
+
+// sliceuint8delete - удаляет из слайса
+func (t *funcMap) sliceuint8delete(d []uint8, index int) []uint8 {
+	copy(d[index:], d[index+1:])
+	d[len(d)-1] = 0
 	d = d[:len(d)-1]
 
 	return d

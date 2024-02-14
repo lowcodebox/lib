@@ -25,7 +25,7 @@ var config struct {
 func Test_csvtosliсemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 
-	NewFuncMap(nil, nil)
+	NewFuncMap(nil, nil, "")
 	res, err := Funcs.csvtosliсemap([]byte(in))
 	if err != nil {
 		t.Errorf("Should not produce an error")
@@ -52,7 +52,7 @@ func Test_unzip(t *testing.T) {
 
 	in := "logo_ep_l_g.png"
 
-	NewFuncMap(vfs, nil)
+	NewFuncMap(vfs, nil, "")
 	status := Funcs.unzip(in, "")
 
 	fmt.Println(status)
@@ -74,7 +74,7 @@ func Test_imgResize(t *testing.T) {
 
 	in := "landing/ludam.png"
 
-	NewFuncMap(vfs, nil)
+	NewFuncMap(vfs, nil, "")
 
 	res := Funcs.imgResize(in, 100, 100)
 
@@ -97,7 +97,7 @@ func Test_imgCrop(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil)
+	NewFuncMap(vfs, nil, "")
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 
@@ -120,10 +120,33 @@ func Test_imgCropAndResize(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil)
+	NewFuncMap(vfs, nil, "")
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 	res = Funcs.imgResize(res, 100, 100)
+
+	fmt.Println("result:", res)
+}
+
+func Test_sliceuint8delete(t *testing.T) {
+	cfg := config
+	cfg.VfsBucket = "buildbox"
+	cfg.VfsKind = "s3"
+	cfg.VfsEndpoint = "http://127.0.0.1:9000"
+	cfg.VfsAccessKeyId = "minioadmin"
+	cfg.VfsSecretKey = "minioadmin"
+	cfg.VfsRegion = ""
+	cfg.VfsComma = ""
+	cfg.VfsCertCA = ""
+
+	// подключаемся к файловому хранилищу
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
+
+	in := []uint8{1, 2, 3, 4, 5, 6}
+
+	NewFuncMap(vfs, nil, "")
+
+	res := Funcs.sliceuint8delete(in, 2)
 
 	fmt.Println("result:", res)
 }
@@ -1896,7 +1919,7 @@ func Test_sortbyfield(t *testing.T) {
 
 	fmt.Println("-----------------")
 
-	NewFuncMap(nil, nil)
+	NewFuncMap(nil, nil, "")
 	res, err := Funcs.sortbyfield(obj, "", "rev", true)
 	if err != nil {
 		t.Errorf("Should not produce an error, err: %s", err)
