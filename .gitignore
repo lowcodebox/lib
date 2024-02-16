@@ -7,3 +7,4 @@
 /public
 .env
 cmd/cli
+app_linux_386
