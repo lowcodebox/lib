@@ -32,7 +32,7 @@ type Route struct {
 
 type Routes []Route
 
-func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
+func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	router := mux.NewRouter().StrictSlash(true)
 	handler := handlers.New(h.src, h.cfg)
 
@@ -62,7 +62,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 		return res, nil
 	}, h.cfg.MetricIntervalCached.Value)
 	if err != nil {
-		logger.Panic(h.ctx, "cache collection is not init", zap.Error(err))
+		logger.Error(h.ctx, "cache collection is not init", zap.Error(err))
+		return nil, fmt.Errorf("error init cache")
 	}
 
 	//apiRouter := rt.PathPrefix("/gui/v1").Subrouter()
@@ -139,5 +140,5 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) *mux.Router {
 	//router.PathPrefix("/upload/").Handler(http.StripPrefix("/upload/", http.FileServer(http.Dir(h.cfg.Workingdir + "/upload"))))
 	//router.PathPrefix("/templates/").Handler(http.StripPrefix("/templates/", http.FileServer(http.Dir(h.cfg.Workingdir + "/templates"))))
 
-	return router
+	return router, err
 }
