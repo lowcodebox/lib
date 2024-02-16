@@ -16,21 +16,22 @@ import (
 
 const cacheKeyPrefix = "cache."
 
-var ErrorCacheNotInit = errors.New("cache is not inited")
-var ErrorCachePersistentNotInit = errors.New("persistent cache is not inited")
+var ErrorCacheNotInit = errors.New("cache is not initialized")
+var ErrorCachePersistentNotInit = errors.New("persistent cache is not initialized")
 var ErrorKeyNotFound = errors.New("key is not found")
+var ErrorValueNotCase = errors.New("failed to cast value")
 var ErrorItemExpired = errors.New("item expired")
 
 var (
 	cacheCollection cache
+	isCacheInit     bool // Добавляем флаг инициализации
 )
 
 type cache struct {
 	ctx             context.Context
-	items           map[string]*cacheItem
-	mx              *sync.RWMutex
-	expiredInterval time.Duration // интервал, через который GС удалит запись
-	runGCInterval   time.Duration // интервал запуска GC
+	items           sync.Map
+	expiredInterval time.Duration // Интервал, через который GС удалит запись
+	runGCInterval   time.Duration // Интервал запуска GC
 }
 
 type cacheItem struct {
@@ -39,29 +40,42 @@ type cacheItem struct {
 	cache           *ttlcache.Cache
 	persistentCache *ttlcache.Cache
 	locks           locks
-	refreshInterval time.Duration // интервал обновления кеша
-	expiredTime     time.Time     // время протухания кеша (когда GС удалит запись)
+	refreshInterval time.Duration // Интервал обновления кеша
+	expiredTime     time.Time     // Время протухания кеша (когда GС удалит запись)
+}
+
+// Init инициализировали глобальную переменную defaultCache
+// expiredInterval - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
+func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
+	d := cache{
+		ctx:             ctx,
+		items:           sync.Map{},
+		runGCInterval:   runGCInterval,
+		expiredInterval: expiredInterval,
+	}
+	cacheCollection = d
+	isCacheInit = true // Устанавливаем флаг при инициализации
+
+	go d.gc()
 }
 
 func Cache() *cache {
-	if &cacheCollection == nil {
-		panic("cache has not been initialized, call CacheRegister() before use")
+	if !isCacheInit { // Используем флаг для проверки инициализации
+		return nil
 	}
 
 	return &cacheCollection
 }
 
-// Upsert регистрируем новый/обновляем кеш (указываем фукнцию, кр будет возвращать нужное значение)
+// Upsert регистрируем новый/обновляем кеш (указываем функцию, кр будет возвращать нужное значение)
 func (c *cache) Upsert(key string, source func() (res interface{}, err error), refreshInterval time.Duration) (result interface{}, err error) {
-	c.mx.Lock()
-	defer c.mx.Unlock()
+	actual, loaded := c.items.Load(key)
+	if loaded {
+		item, ok := actual.(*cacheItem)
+		if !ok {
+			return nil, ErrorValueNotCase
+		}
 
-	if c.items == nil {
-		c.items = map[string]*cacheItem{}
-	}
-
-	item, found := c.items[key]
-	if found {
 		item.reader = source
 		item.refreshInterval = refreshInterval
 		result, err = c.updateCacheValue(key, item)
@@ -79,41 +93,37 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 		cache:           cache,
 		persistentCache: ttlcache.NewCache(),
 		locks: locks{
-			keys: map[string]bool{},
-			mx:   &sync.RWMutex{},
+			keys: sync.Map{},
 		},
 		reader:          source,
 		refreshInterval: refreshInterval,
 		expiredTime:     expiredTime,
 	}
 
-	c.items[key] = &ci
+	c.items.Store(key, &ci)
 	result, err = c.updateCacheValue(key, &ci)
 
 	return result, err
 }
 
 // Delete удаляем значение из кеша
-func (c *cache) Delete(key string) (err error) {
-	c.mx.Lock()
-	defer c.mx.Unlock()
-
-	delete(c.items, key)
-	return err
+func (c *cache) Delete(key string) {
+	c.items.Delete(key)
 }
 
 // Get возвращает текущее значение параметра в сервисе keeper.
 // Нужно учитывать, что значения на время кешируются и обновляются с заданной периодичностью.
 func (c *cache) Get(key string) (value interface{}, err error) {
 	var item *cacheItem
-	var found bool
 
-	c.mx.RLock()
-	item, found = c.items[key]
-	c.mx.RUnlock()
-
-	if !found {
+	actual, loaded := c.items.Load(key)
+	if !loaded {
 		return nil, ErrorKeyNotFound
+	}
+
+	item, ok := actual.(*cacheItem)
+	if !ok {
+		return nil, ErrorValueNotCase
 	}
 
 	if item.cache == nil {
@@ -164,14 +174,15 @@ func (c *cache) updateCacheValue(key string, item *cacheItem) (result interface{
 // tryToGetOldValue пытается получить старое значение, если в момент запроса на актуальном стоит блокировка.
 func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	var item *cacheItem
-	var found bool
 
-	c.mx.RLock()
-	item, found = c.items[key]
-	c.mx.RUnlock()
+	actual, loaded := c.items.Load(key)
+	if !loaded {
+		return nil, ErrorKeyNotFound
+	}
 
-	if !found {
-		return nil, fmt.Errorf("error. key is not found")
+	item, ok := actual.(*cacheItem)
+	if !ok {
+		return nil, ErrorValueNotCase
 	}
 
 	fnGetPersistentCacheValue := func() (interface{}, error) {
@@ -195,42 +206,30 @@ func (c *cache) tryToGetOldValue(key string) (interface{}, error) {
 	return oldValue, err
 }
 
-// Init инициализировали глобальную переменную defaultCache
-// expiredInterval - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
-func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
-	d := cache{
-		ctx:             ctx,
-		items:           map[string]*cacheItem{},
-		mx:              &sync.RWMutex{},
-		runGCInterval:   runGCInterval,
-		expiredInterval: expiredInterval,
-	}
-	cacheCollection = d
-
-	go d.gc()
-}
-
 // locks выполняет функции блокировки при одновременном обновлении значений в кеше.
 type locks struct {
 	// keys хранит информацию о локах по каждому отдельному ключу.
 	// Если значение установлено в true, в данный момент обновление кеша захвачено одной из горутин.
-	keys map[string]bool
-	mx   *sync.RWMutex
+	keys sync.Map
 }
 
 // Get возвращает информацию о том идет ли в данный момент обновление конкретного ключа.
 func (l *locks) Get(key string) bool {
-	l.mx.RLock()
-	defer l.mx.RUnlock()
+	value, ok := l.keys.Load(key)
+	if !ok {
+		return false
+	}
 
-	return l.keys[key]
+	valueBool, ok := value.(bool)
+	if !ok {
+		return false
+	}
+	return valueBool
 }
 
 // Set устанавливает блокировку на обновление конкретного ключа другими горутинами.
 func (l *locks) Set(key string, value bool) {
-	l.mx.Lock()
-	l.keys[key] = value
-	l.mx.Unlock()
+	l.keys.Store(key, value)
 }
 
 // Balancer запускаем балансировщик реплик для сервисов
@@ -262,18 +261,17 @@ func (c *cache) gc() {
 }
 
 func (c *cache) cleaner() (err error) {
-	c.mx.Lock()
-	defer c.mx.Unlock()
-
-	// удаляем значение ключа из хранилища (чтобы не копились старые хеши)
-	for key, item := range c.items {
-		if item.expiredTime != time.UnixMicro(0) && !item.expiredTime.After(time.Now()) {
-			err = c.Delete(key)
-			if err != nil {
-				return err
-			}
+	c.items.Range(func(key, value any) bool {
+		item, ok := value.(*cacheItem)
+		if !ok {
+			return false
 		}
-	}
 
-	return err
+		if item.expiredTime != time.UnixMicro(0) && !item.expiredTime.After(time.Now()) {
+			c.items.Delete(key)
+		}
+
+		return true
+	})
+	return nil
 }
