@@ -46,9 +46,13 @@ func (h *httpserver) Run() error {
 	//if err != nil {
 	//	panic(err)
 	//}
+	router, err := h.NewRouter(false)
+	if err != nil {
+		return err
+	}
 	srv := &http.Server{
 		Addr:         ":" + h.cfg.PortApp,
-		Handler:      h.NewRouter(false), // переадресация будет работать, если сам севрис будет стартовать https-сервер (для этого надо получать сертфикаты)
+		Handler:      router, // переадресация будет работать, если сам севрис будет стартовать https-сервер (для этого надо получать сертфикаты)
 		ReadTimeout:  h.cfg.ReadTimeout.Value,
 		WriteTimeout: h.cfg.WriteTimeout.Value,
 	}
