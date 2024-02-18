@@ -127,6 +127,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"split":               Funcs.split,
 		"splittostring":       Funcs.splittostring,
 		"set":                 Funcs.set,
+		"setstring":           Funcs.setstring,
 		"get":                 Funcs.get,
 		"delete":              Funcs.deletekey,
 		"slicenew":            Funcs.slicenew,
@@ -1282,6 +1283,11 @@ func (t *funcMap) slicestringdelete(d []string, index int) []string {
 }
 
 func (t *funcMap) set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
+	d[key] = value
+	return d
+}
+
+func (t *funcMap) setstring(d map[string]string, key string, value string) map[string]string {
 	d[key] = value
 	return d
 }
