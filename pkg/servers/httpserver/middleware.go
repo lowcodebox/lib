@@ -56,18 +56,121 @@ func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler
 	})
 }
 
+// AuthProcessor
+// проверяем на наличие токена и если есть то обогащаем контекст (если не валидный - смотрим на разрешенную страницу)
+// если нет, то проверяем на разрешенные страницы
 func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var authKey string
 		var err error
-		var flagPublicPages bool
-		var flagPublicRoutes bool
+		var flagPublicPages, flagPublicRoutes bool
+		var skipRedirect, tokenIsValid bool
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
 
-		//fmt.Printf("\n%t %s %s\n", strings.Contains(refURL, h.cfg.SigninUrl), refURL, h.cfg.SigninUrl)
+		err = r.ParseForm()
+		if err != nil {
+			err = fmt.Errorf("error parse form for url: %s", r.URL)
+			return
+		}
 
-		r.ParseForm()
+		// валидируем токен (всегда, даже если публичная страница)
+		authKeyHeader := r.Header.Get("X-Auth-Key")
+		if authKeyHeader != "" {
+			authKey = authKeyHeader
+		} else {
+			authKeyCookie, err := r.Cookie("X-Auth-Key")
+			if err == nil {
+				authKey = authKeyCookie.Value
+			}
+		}
+
+		// не передали ключ - вход не осуществлен. войди
+		if strings.TrimSpace(authKey) != "" {
+
+			// валидируем токен
+			status, token, refreshToken, err := h.iam.Verify(h.ctx, authKey)
+
+			// пробуем обновить пришедший токен
+			if !status {
+				authKey, _ = h.iam.Refresh(h.ctx, refreshToken, "", false)
+
+				// если токен был обновлен чуть ранее, то текущий запрос надо пропустить
+				// чтобы избежать повторного обновления и дать возможность завершиться отправленным
+				// единовременно нескольким запросам (как правило это интервал 5-10 секунд)
+				if authKey == "skip" {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				if err == nil && authKey != "<nil>" && authKey != "" {
+					// заменяем куку у пользователя в браузере
+					cookie := &http.Cookie{
+						Path:     "/",
+						Name:     "X-Auth-Key",
+						Value:    authKey,
+						MaxAge:   30000,
+						HttpOnly: true,
+						Secure:   true,
+						SameSite: http.SameSiteLaxMode,
+					}
+
+					// после обновления получаем текущий токен
+					status, token, _, err = h.iam.Verify(h.ctx, authKey)
+
+					// переписываем куку у клиента
+					http.SetCookie(w, cookie)
+				}
+			}
+
+			// выкидываем если обновление невозможно
+			if !status || err != nil {
+				if r.FormValue("ref") == "" {
+					http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
+					return
+				}
+			}
+
+			// добавляем значение токена в локальный реестр сесссий (ПЕРЕДЕЛАТЬ)
+			if token != nil {
+				var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
+
+				prof, _ := h.session.GetProfile(token.Session)
+				if prof == nil {
+					flagUpdateRevision = true
+				} else {
+					if prof.Revision != token.SessionRev {
+						flagUpdateRevision = true
+					}
+				}
+
+				// проверяем наличие сессии в локальном хранилище приложения
+				// проверяем соответствие ревизии сессии из токена и в текущем хранилище
+				if !h.session.Found(token.Session) || flagUpdateRevision {
+					err = h.session.Set(token.Session)
+					if err != nil {
+						http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
+						return
+					}
+				}
+			}
+
+			// добавили текущий валидный токен в заголовок запроса
+			ctx := context.WithValue(r.Context(), "token", authKey)
+			if token != nil {
+				currentProfile, _ := h.session.GetProfile(token.Session)
+				ctx = context.WithValue(ctx, "profile", *currentProfile)
+			}
+
+			logger.Info(r.Context(), "auth true")
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+
+		} else {
+			tokenIsValid = false
+		}
+
+		// условия пропуска страницы (публичная)
 		for k, _ := range r.Form {
 			if dps.PublicPages[k] {
 				flagPublicPages = true
@@ -95,106 +198,20 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		// пропускаем разрешенные страницы/пути
 		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
-			next.ServeHTTP(w, r)
-			return
+			skipRedirect = true
 		}
 
-		authKeyHeader := r.Header.Get("X-Auth-Key")
-		if authKeyHeader != "" {
-			authKey = authKeyHeader
-		} else {
-			authKeyCookie, err := r.Cookie("X-Auth-Key")
-			if err == nil {
-				authKey = authKeyCookie.Value
-			}
+		// отдаем ответ в зависимости от состояний
+		if err != nil {
+			http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
 		}
 
-		// не передали ключ - вход не осуществлен. войди
-		if strings.TrimSpace(authKey) == "" {
+		if !skipRedirect && !tokenIsValid {
 			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
-			return
+		} else {
+			next.ServeHTTP(w, r)
 		}
 
-		// валидируем токен
-		status, token, refreshToken, err := h.iam.Verify(h.ctx, authKey)
-
-		// пробуем обновить пришедший токен
-		if !status {
-			authKey, err = h.iam.Refresh(h.ctx, refreshToken, "", false)
-			//if err != nil {
-			//	return
-			//}
-			//fmt.Printf("h.iam.Refresh. authKey: %s\nrefreshToken: %s\nerr: %s\n\n", authKey, refreshToken, err)
-
-			// если токен был обновлен чуть ранее, то текущий запрос надо пропустить
-			// чтобы избежать повторного обновления и дать возможность завершиться отправленным
-			// единовременно нескольким запросам (как правило это интервал 5-10 секунд)
-			if authKey == "skip" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			if err == nil && authKey != "<nil>" && authKey != "" {
-				// заменяем куку у пользователя в браузере
-				cookie := &http.Cookie{
-					Path:     "/",
-					Name:     "X-Auth-Key",
-					Value:    authKey,
-					MaxAge:   30000,
-					HttpOnly: true,
-					Secure:   true,
-					SameSite: http.SameSiteLaxMode,
-				}
-
-				// после обновления получаем текущий токен
-				status, token, _, err = h.iam.Verify(h.ctx, authKey)
-
-				// переписываем куку у клиента
-				http.SetCookie(w, cookie)
-			}
-		}
-
-		// выкидываем если обновление невозможно
-		if !status || err != nil {
-			if r.FormValue("ref") == "" {
-				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
-				return
-			}
-		}
-
-		// добавляем значение токена в локальный реестр сесссий (ПЕРЕДЕЛАТЬ)
-		if token != nil {
-			var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
-
-			prof, _ := h.session.GetProfile(token.Session)
-			if prof == nil {
-				flagUpdateRevision = true
-			} else {
-				if prof.Revision != token.SessionRev {
-					flagUpdateRevision = true
-				}
-			}
-
-			// проверяем наличие сессии в локальном хранилище приложения
-			// проверяем соответствие ревизии сессии из токена и в текущем хранилище
-			if !h.session.Found(token.Session) || flagUpdateRevision {
-
-				err = h.session.Set(token.Session)
-				if err != nil {
-					http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
-					return
-				}
-			}
-		}
-
-		// добавили текущий валидный токен в заголовок запроса
-		ctx := context.WithValue(r.Context(), "token", authKey)
-		if token != nil {
-			currentProfile, _ := h.session.GetProfile(token.Session)
-			ctx = context.WithValue(ctx, "profile", *currentProfile)
-		}
-
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
