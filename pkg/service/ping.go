@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/models"
 	dto "github.com/prometheus/client_model/go"
@@ -54,7 +55,11 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	pong.HashCommit = s.cfg.HashCommit
 	pong.Environment = s.cfg.Environment
 	pong.AccessPublic = s.cfg.AccessPublic.Value
-
+	pong.Environment = s.cfg.Environment
+	pong.Cluster = s.cfg.Cluster
+	pong.Uptime = time.Now().Sub(s.cfg.RunTime).String()
+	pong.Runtime = s.cfg.RunTime
+	
 	pong.State = ""
 	pong.Https = https
 

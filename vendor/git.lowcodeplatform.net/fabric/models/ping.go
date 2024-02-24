@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // Pong тип ответа, который сервис отдает прокси при периодическом опросе (ping-е)
 type Pong struct {
 	Uid         string      `json:"uid"`
@@ -15,10 +17,13 @@ type Pong struct {
 	PortMetric  int         `json:"portMetric"`
 	PortHTTPS   int         `json:"portHTTPS"`
 	EnableHttps bool        `json:"enableHttps"`
-	DeadTime    int64       `json:"dead_time"`
 	Follower    string      `json:"follower"`
 	Metrics     interface{} `json:"metrics"`
 	Environment string      `json:"environment"`
+	Cluster     string      `json:"cluster"`
+	DeadTime    int64       `json:"deadtime"`
+	Runtime     time.Time   `json:"runtime"`
+	Uptime      string      `json:"uptime"`
 
 	ServiceVersion string `json:"service_version"`
 	HashCommit     string `json:"hash_commit"`

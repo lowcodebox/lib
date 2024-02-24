@@ -1,13 +1,10 @@
 package httpserver
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"strings"
 
-	"git.lowcodeplatform.net/packages/cache"
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,19 +49,19 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 
-	_, err = cache.Cache().Upsert("prometheus", func() (res interface{}, err error) {
-		mf, err := prometheus.DefaultGatherer.Gather()
-		if err != nil {
-			err = fmt.Errorf("error prometheus Gather. err: %s", err)
-			return
-		}
-		res, err = json.Marshal(mf)
-		return res, nil
-	}, h.cfg.MetricIntervalCached.Value)
-	if err != nil {
-		logger.Error(h.ctx, "cache collection is not init", zap.Error(err))
-		return nil, fmt.Errorf("error init cache")
-	}
+	//_, err = cache.Cache().Upsert("prometheus", func() (res interface{}, err error) {
+	//	mf, err := prometheus.DefaultGatherer.Gather()
+	//	if err != nil {
+	//		err = fmt.Errorf("error prometheus Gather. err: %s", err)
+	//		return
+	//	}
+	//	res, err = json.Marshal(mf)
+	//	return res, nil
+	//}, h.cfg.MetricIntervalCached.Value)
+	//if err != nil {
+	//	logger.Error(h.ctx, "cache collection is not init", zap.Error(err))
+	//	return nil, fmt.Errorf("error init cache")
+	//}
 
 	//apiRouter := rt.PathPrefix("/gui/v1").Subrouter()
 	//router.Use(h.JsonHeaders)

@@ -103,6 +103,15 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.Namespace = cfg.Name + "_" + cfg.Type
 	cfg.ClientPath = "/" + cfg.Name + "/" + cfg.Version
 	cfg.Environment = cfg.EnvironmentPointsrc
+	cfg.HashRun = lib.UUID()
+	cfg.RunTime = time.Now()
+
+	if cfg.Environment == "" {
+		cfg.Environment = cfg.EnvironmentPointsrc
+	}
+	if cfg.Cluster == "" {
+		cfg.Cluster = cfg.ClusterPointsrc
+	}
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
