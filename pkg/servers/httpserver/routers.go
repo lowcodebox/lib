@@ -8,6 +8,8 @@ import (
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/prometheus/common/version"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
@@ -107,6 +109,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 
 		// проверяем адреса для исключения SSRF-уязвимостей
 		handler = h.MiddleSecurity(handler, route.Name)
+
+		router.Path("/metrics").Handler(promhttp.Handler())
 
 		for _, v := range strings.Split(route.Method, ",") {
 			router.
