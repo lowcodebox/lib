@@ -38,9 +38,10 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 	})
 }
 
+// MiddleSecurity проверяем адреса для исключения SSRF-уязвимостей
 func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if name != "ProxyPing" { //&& false == true
+		if name != "ProxyPing" && name != "Metrics" { //&& false == true
 			headerRef := r.Header.Get(headerReferer)
 			if headerRef == "" {
 				next.ServeHTTP(w, r.WithContext(r.Context()))
