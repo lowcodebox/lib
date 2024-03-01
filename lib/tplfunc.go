@@ -34,7 +34,6 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
-	"github.com/satori/go.uuid"
 )
 
 var Funcs funcMap
@@ -393,17 +392,67 @@ func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
 		return "fail"
 	}
 
+	zreader := bytes.NewReader(s) //reader специально для zip.NewReader
+
 	r.s = s
-	res, err := zip.NewReader(&r, int64(r.Len()))
+
+	res, err := zip.NewReader(zreader, int64(r.Len()))
 	if err != nil {
 		return fmt.Sprintf("error zip.NewReader. %v, %s", res, err)
 	}
 
+	var index string
+
 	for _, file := range res.File {
-		fmt.Println("-", file)
+
+		// в макоси создаются файлы с припиской __MACOSX/, например:
+		// somedirectory/somefile.extension
+		// __MACOSX/somedirectory/._somefile.extension
+		// где нужен только первый файл
+		if strings.HasPrefix(file.Name, "__MACOSX/") {
+			continue
+		}
+
+		rc, err := file.Open()
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+		defer rc.Close()
+
+		d, err := io.ReadAll(rc)
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+
+		//fmt.Printf("filename: %s\n", file.Name)
+
+		//в файле imsmanifest.xml содержится инфа о стартовом html
+		if strings.Contains(file.Name, "imsmanifest.xml") {
+			fmt.Println("contains")
+
+			//var manifest Manifest
+
+			//парсим xml
+			//err = xml.Unmarshal(d, &manifest)
+			//if err != nil {
+			//	return fmt.Sprint(err)
+			//}
+			//fmt.Printf("xml: %+v", manifest)
+
+			/*
+				for _, resource := range manifest.Resource {
+					fmt.Printf("index: %s\n", resource.Href)
+				}
+			*/
+		}
+
+		err = r.v.Write(r.ctx, file.Name, d)
+		if err != nil {
+			return fmt.Sprint(err)
+		}
 	}
 
-	return status
+	return index
 }
 
 // randinterfaceslice перемешивает полученный слайс
