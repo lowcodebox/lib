@@ -403,7 +403,7 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 
 	zipFile, err := zip.NewReader(zreader, int64(r.Len()))
 	if err != nil {
-		return fmt.Sprintf("error zip.NewReader. %v, %s", zipFile, err)
+		return fmt.Sprintf("error unzip zip.NewReader. %v, %s", zipFile, err)
 	}
 
 	for _, file := range zipFile.File {
@@ -418,23 +418,26 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 
 		rc, err := file.Open()
 		if err != nil {
-			return fmt.Sprint(err)
+			return fmt.Sprintf("error unzip file.Open, err: %s", err)
 		}
 		defer rc.Close()
 
 		d, err := io.ReadAll(rc)
 		if err != nil {
-			return fmt.Sprint(err)
+			return fmt.Sprintf("error unzip io.ReadAll, err: %s", err)
 		}
+
+		var writePath string
 
 		if destPath != "" {
-			err = r.v.Write(r.ctx, destPath+"/"+strings.Replace(zipFilename, ".zip", "", 1)+"/"+strings.ReplaceAll(file.Name, " ", "_"), d)
+			writePath = destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1) + "/" + strings.ReplaceAll(file.Name, " ", "_")
 		} else {
-			err = r.v.Write(r.ctx, strings.Replace(zipFilename, ".zip", "", 1)+"/"+strings.ReplaceAll(file.Name, " ", "_"), d)
+			writePath = strings.Replace(zipFilename, ".zip", "", 1) + "/" + strings.ReplaceAll(file.Name, " ", "_")
 		}
 
+		err = r.v.Write(r.ctx, writePath, d)
 		if err != nil {
-			return fmt.Sprint(err)
+			return fmt.Sprintf("error unzip vfs.Write, err: %s", err)
 		}
 	}
 	if destPath != "" {
@@ -475,7 +478,7 @@ func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string)
 
 	files, err := t.vfs.List(context.Background(), folder, math.MaxInt64)
 	if err != nil {
-		return fmt.Sprint(err)
+		return fmt.Sprintf("error parsescorm vfs.List, err: %s", err)
 	}
 
 	for _, file := range files {
@@ -492,19 +495,19 @@ func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string)
 		if strings.Contains(file.Name(), "imsmanifest.xml") {
 			rc, err := file.Open()
 			if err != nil {
-				return fmt.Sprint(err)
+				return fmt.Sprintf("error parsescorm file.Open, err: %s", err)
 			}
 			defer rc.Close()
 
 			d, err := io.ReadAll(rc)
 			if err != nil {
-				return fmt.Sprint(err)
+				return fmt.Sprintf("error parsecorm io.ReadAll, err: %s", err)
 			}
 
 			var manifest Manifest
 			err = xml.Unmarshal(d, &manifest)
 			if err != nil {
-				return fmt.Sprint(err)
+				return fmt.Sprintf("error parsescorm xml.Unmarshal, err: %s", err)
 			}
 
 			resourceId := manifest.Organizations.Organization[0].Item.Identifierref
