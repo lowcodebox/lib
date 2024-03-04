@@ -32,9 +32,9 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
+	"github.com/gofrs/uuid"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
-	"github.com/satori/go.uuid"
 )
 
 var Funcs funcMap
@@ -46,6 +46,7 @@ type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
 	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
 	Write(ctx context.Context, file string, data []byte) (err error)
+	List(ctx context.Context, prefix string, pageSize int) (files []lib.Item, err error)
 }
 
 type Api interface {
@@ -189,10 +190,11 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"readfile":      Funcs.readfile,
 		"csvtosliсemap": Funcs.csvtosliсemap,
 
-		"objFromID": Funcs.objFromID,
-		"unzip":     Funcs.unzip,
-		"imgresize": Funcs.imgResize,
-		"imgcup":    Funcs.imgCrop,
+		"objFromID":  Funcs.objFromID,
+		"unzip":      Funcs.unzip,
+		"parsescorm": Funcs.parsescorm,
+		"imgresize":  Funcs.imgResize,
+		"imgcup":     Funcs.imgCrop,
 
 		"profile":    Funcs.profile,
 		"profileuid": Funcs.profileuid,
@@ -375,8 +377,9 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
-func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
+func (t *funcMap) unzip(zipFilename, destPath string) (folder string) {
 	var err error
+	var writePath string
 
 	r := readerAt{
 		context.Background(),
@@ -387,23 +390,54 @@ func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
 
 	s, _, err := r.v.Read(r.ctx, r.file)
 	if err != nil {
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			return "fail"
-		}
-		return "fail"
+		return fmt.Sprintf("error unzip vfs.Read, err: %s", err)
 	}
+
+	zreader := bytes.NewReader(s) //reader специально для zip.NewReader
 
 	r.s = s
-	res, err := zip.NewReader(&r, int64(r.Len()))
+
+	zipFile, err := zip.NewReader(zreader, int64(r.Len()))
 	if err != nil {
-		return fmt.Sprintf("error zip.NewReader. %v, %s", res, err)
+		return fmt.Sprintf("error unzip zip.NewReader. %v, %s", zipFile, err)
 	}
 
-	for _, file := range res.File {
-		fmt.Println("-", file)
-	}
+	for _, file := range zipFile.File {
 
-	return status
+		// в макоси создаются файлы с припиской __MACOSX/, например:
+		// somedirectory/somefile.extension
+		// __MACOSX/somedirectory/._somefile.extension
+		// где нужен только первый файл
+		if strings.HasPrefix(file.Name, "__MACOSX/") {
+			continue
+		}
+
+		rc, err := file.Open()
+		if err != nil {
+			return fmt.Sprintf("error unzip file.Open, err: %s", err)
+		}
+		defer rc.Close()
+
+		d, err := io.ReadAll(rc)
+		if err != nil {
+			return fmt.Sprintf("error unzip io.ReadAll, err: %s", err)
+		}
+
+		if destPath != "" {
+			writePath = destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1) + "/" + strings.ReplaceAll(file.Name, " ", "_")
+		} else {
+			writePath = strings.Replace(zipFilename, ".zip", "", 1) + "/" + strings.ReplaceAll(file.Name, " ", "_")
+		}
+
+		err = r.v.Write(r.ctx, writePath, d)
+		if err != nil {
+			return fmt.Sprintf("error unzip vfs.Write, err: %s", err)
+		}
+	}
+	if destPath != "" {
+		return destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1)
+	}
+	return strings.Replace(zipFilename, ".zip", "", 1)
 }
 
 // randinterfaceslice перемешивает полученный слайс
@@ -935,7 +969,10 @@ func (t *funcMap) addfloat(i ...interface{}) (result float64) {
 }
 
 func (t *funcMap) UUID() string {
-	stUUID := uuid.NewV4()
+	stUUID, err := uuid.NewV4()
+	if err != nil {
+		return fmt.Sprintf("error uuid.NewV4, err: %s", err)
+	}
 	return stUUID.String()
 }
 
