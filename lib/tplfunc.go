@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"html/template"
@@ -17,7 +16,6 @@ import (
 	_ "image/png"
 	"io"
 	"io/ioutil"
-	"math"
 	"math/rand"
 	"net/http"
 	"net/smtp"
@@ -441,66 +439,6 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 		return destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1)
 	}
 	return strings.Replace(zipFilename, ".zip", "", 1)
-}
-
-func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string) {
-	folder := t.unzip(zipFilename, destPath)
-
-	files, err := t.vfs.List(context.Background(), folder, math.MaxInt64)
-	if err != nil {
-		return fmt.Sprintf("error parsescorm vfs.List, err: %s", err)
-	}
-
-	for _, file := range files {
-
-		// в макоси создаются файлы с припиской __MACOSX/, например:
-		// somedirectory/somefile.extension
-		// __MACOSX/somedirectory/._somefile.extension
-		// где нужен только первый файл
-		if strings.HasPrefix(file.Name(), "__MACOSX/") {
-			continue
-		}
-
-		//в файле imsmanifest.xml содержится инфа о стартовом html
-		if strings.Contains(file.Name(), "imsmanifest.xml") {
-			rc, err := file.Open()
-			if err != nil {
-				return fmt.Sprintf("error parsescorm file.Open, err: %s", err)
-			}
-			defer rc.Close()
-
-			d, err := io.ReadAll(rc)
-			if err != nil {
-				return fmt.Sprintf("error parsecorm io.ReadAll, err: %s", err)
-			}
-
-			var manifest Manifest
-			err = xml.Unmarshal(d, &manifest)
-			if err != nil {
-				return fmt.Sprintf("error parsescorm xml.Unmarshal, err: %s", err)
-			}
-
-			resourceId := manifest.Organizations.Organization[0].Item.Identifierref
-
-			for _, resource := range manifest.Resources.Resource {
-				if resource.Identifier == resourceId {
-					index = resource.Href
-				}
-			}
-
-			break
-		}
-	}
-
-	//до этого нашли название файла, а теперь ищем полный путь до него
-	for _, file := range files {
-		if strings.Contains(file.Name(), index) {
-			index = file.Name()
-			return index
-		}
-	}
-
-	return "404"
 }
 
 // randinterfaceslice перемешивает полученный слайс
