@@ -391,10 +391,7 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 
 	s, _, err := r.v.Read(r.ctx, r.file)
 	if err != nil {
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			return "fail"
-		}
-		return "fail"
+		return fmt.Sprintf("error unzip vfs.Read, err: %s", err)
 	}
 
 	zreader := bytes.NewReader(s) //reader специально для zip.NewReader
