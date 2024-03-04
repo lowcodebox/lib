@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"html/template"
@@ -32,6 +33,7 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
+	"github.com/gofrs/uuid"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
 )
@@ -372,9 +374,36 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 	return resultFile
 }
 
+type Item struct {
+	Identifierref string `xml:"identifierref,attr"`
+}
+
+type Organization struct {
+	Item       Item   `xml:"item"`
+	Identifier string `xml:"identifier,attr"`
+}
+
+type Organizations struct {
+	Organization []Organization `xml:"organization"`
+}
+
+type Resource struct {
+	Identifier string `xml:"identifier,attr"`
+	Href       string `xml:"href,attr"`
+}
+
+type Resources struct {
+	Resource []Resource `xml:"resource"`
+}
+
+type Manifest struct {
+	Resources     Resources     `xml:"resources"`
+	Organizations Organizations `xml:"organizations"`
+}
+
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
-func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
+func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 	var err error
 
 	r := readerAt{
@@ -396,14 +425,12 @@ func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
 
 	r.s = s
 
-	res, err := zip.NewReader(zreader, int64(r.Len()))
+	zipFile, err := zip.NewReader(zreader, int64(r.Len()))
 	if err != nil {
-		return fmt.Sprintf("error zip.NewReader. %v, %s", res, err)
+		return fmt.Sprintf("error zip.NewReader. %v, %s", zipFile, err)
 	}
 
-	var index string
-
-	for _, file := range res.File {
+	for _, file := range zipFile.File {
 
 		// в макоси создаются файлы с припиской __MACOSX/, например:
 		// somedirectory/somefile.extension
@@ -424,29 +451,24 @@ func (t *funcMap) unzip(zipFilename, destPath string) (status string) {
 			return fmt.Sprint(err)
 		}
 
-		//fmt.Printf("filename: %s\n", file.Name)
-
 		//в файле imsmanifest.xml содержится инфа о стартовом html
 		if strings.Contains(file.Name, "imsmanifest.xml") {
-			fmt.Println("contains")
+			var manifest Manifest
+			err := xml.Unmarshal(d, &manifest)
+			if err != nil {
+				return fmt.Sprint(err)
+			}
 
-			//var manifest Manifest
+			resourceId := manifest.Organizations.Organization[0].Item.Identifierref
 
-			//парсим xml
-			//err = xml.Unmarshal(d, &manifest)
-			//if err != nil {
-			//	return fmt.Sprint(err)
-			//}
-			//fmt.Printf("xml: %+v", manifest)
-
-			/*
-				for _, resource := range manifest.Resource {
-					fmt.Printf("index: %s\n", resource.Href)
+			for _, resource := range manifest.Resources.Resource {
+				if resource.Identifier == resourceId {
+					index = resource.Href
 				}
-			*/
+			}
 		}
 
-		err = r.v.Write(r.ctx, file.Name, d)
+		err = r.v.Write(r.ctx, destPath+strings.ReplaceAll(file.Name, " ", "_"), d)
 		if err != nil {
 			return fmt.Sprint(err)
 		}
@@ -984,7 +1006,10 @@ func (t *funcMap) addfloat(i ...interface{}) (result float64) {
 }
 
 func (t *funcMap) UUID() string {
-	stUUID := uuid.NewV4()
+	stUUID, err := uuid.NewV4()
+	if err != nil {
+		return fmt.Sprintf("error uuid.NewV4, err: %s", err)
+	}
 	return stUUID.String()
 }
 

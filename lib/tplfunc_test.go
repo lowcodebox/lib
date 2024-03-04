@@ -38,7 +38,7 @@ func Test_csvtosliсemap(t *testing.T) {
 
 func Test_unzip(t *testing.T) {
 	cfg := config
-	cfg.VfsBucket = "buildbox"
+	cfg.VfsBucket = "lms"
 	cfg.VfsKind = "s3"
 	cfg.VfsEndpoint = "http://127.0.0.1:9000"
 	cfg.VfsAccessKeyId = "minioadmin"
@@ -50,7 +50,7 @@ func Test_unzip(t *testing.T) {
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
-	in := "logo_ep_l_g.png"
+	in := "WMS.zip"
 
 	NewFuncMap(vfs, nil, "")
 	status := Funcs.unzip(in, "")
