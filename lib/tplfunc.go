@@ -446,33 +446,6 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 	return strings.Replace(zipFilename, ".zip", "", 1)
 }
 
-type ItemXML struct {
-	Identifierref string `xml:"identifierref,attr"`
-}
-
-type Organization struct {
-	Item       ItemXML `xml:"item"`
-	Identifier string  `xml:"identifier,attr"`
-}
-
-type Organizations struct {
-	Organization []Organization `xml:"organization"`
-}
-
-type Resource struct {
-	Identifier string `xml:"identifier,attr"`
-	Href       string `xml:"href,attr"`
-}
-
-type Resources struct {
-	Resource []Resource `xml:"resource"`
-}
-
-type Manifest struct {
-	Resources     Resources     `xml:"resources"`
-	Organizations Organizations `xml:"organizations"`
-}
-
 func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string) {
 	folder := t.unzip(zipFilename, destPath)
 
