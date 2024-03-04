@@ -49,13 +49,31 @@ func Test_unzip(t *testing.T) {
 
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
-
 	in := "WMS.zip"
 
 	NewFuncMap(vfs, nil, "")
 	status := Funcs.unzip(in, "")
 
 	fmt.Println(status)
+}
+
+func Test_parsescorm(t *testing.T) {
+	cfg := config
+	cfg.VfsBucket = "lms"
+	cfg.VfsKind = "s3"
+	cfg.VfsEndpoint = "http://127.0.0.1:9000"
+	cfg.VfsAccessKeyId = "minioadmin"
+	cfg.VfsSecretKey = "minioadmin"
+	cfg.VfsRegion = ""
+	cfg.VfsComma = ""
+	cfg.VfsCertCA = ""
+	in := "WMS.zip"
+
+	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
+
+	NewFuncMap(vfs, nil, "")
+	index := Funcs.parsescorm(in, "")
+	fmt.Printf("index: %s", index)
 }
 
 func Test_imgResize(t *testing.T) {

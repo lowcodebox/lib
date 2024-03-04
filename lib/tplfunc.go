@@ -17,6 +17,7 @@ import (
 	_ "image/png"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/smtp"
@@ -47,6 +48,7 @@ type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
 	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
 	Write(ctx context.Context, file string, data []byte) (err error)
+	List(ctx context.Context, prefix string, pageSize int) (files []lib.Item, err error)
 }
 
 type Api interface {
@@ -190,10 +192,11 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"readfile":      Funcs.readfile,
 		"csvtosliсemap": Funcs.csvtosliсemap,
 
-		"objFromID": Funcs.objFromID,
-		"unzip":     Funcs.unzip,
-		"imgresize": Funcs.imgResize,
-		"imgcup":    Funcs.imgCrop,
+		"objFromID":  Funcs.objFromID,
+		"unzip":      Funcs.unzip,
+		"parsescorm": Funcs.parsescorm,
+		"imgresize":  Funcs.imgResize,
+		"imgcup":     Funcs.imgCrop,
 
 		"profile":    Funcs.profile,
 		"profileuid": Funcs.profileuid,
@@ -374,33 +377,6 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 	return resultFile
 }
 
-type Item struct {
-	Identifierref string `xml:"identifierref,attr"`
-}
-
-type Organization struct {
-	Item       Item   `xml:"item"`
-	Identifier string `xml:"identifier,attr"`
-}
-
-type Organizations struct {
-	Organization []Organization `xml:"organization"`
-}
-
-type Resource struct {
-	Identifier string `xml:"identifier,attr"`
-	Href       string `xml:"href,attr"`
-}
-
-type Resources struct {
-	Resource []Resource `xml:"resource"`
-}
-
-type Manifest struct {
-	Resources     Resources     `xml:"resources"`
-	Organizations Organizations `xml:"organizations"`
-}
-
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
 func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
@@ -451,10 +427,82 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 			return fmt.Sprint(err)
 		}
 
+		if destPath != "" {
+			err = r.v.Write(r.ctx, destPath+"/"+strings.Replace(zipFilename, ".zip", "", 1)+"/"+strings.ReplaceAll(file.Name, " ", "_"), d)
+		} else {
+			err = r.v.Write(r.ctx, strings.Replace(zipFilename, ".zip", "", 1)+"/"+strings.ReplaceAll(file.Name, " ", "_"), d)
+		}
+
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+	}
+	if destPath != "" {
+		return destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1)
+	}
+	return strings.Replace(zipFilename, ".zip", "", 1)
+}
+
+type ItemXML struct {
+	Identifierref string `xml:"identifierref,attr"`
+}
+
+type Organization struct {
+	Item       ItemXML `xml:"item"`
+	Identifier string  `xml:"identifier,attr"`
+}
+
+type Organizations struct {
+	Organization []Organization `xml:"organization"`
+}
+
+type Resource struct {
+	Identifier string `xml:"identifier,attr"`
+	Href       string `xml:"href,attr"`
+}
+
+type Resources struct {
+	Resource []Resource `xml:"resource"`
+}
+
+type Manifest struct {
+	Resources     Resources     `xml:"resources"`
+	Organizations Organizations `xml:"organizations"`
+}
+
+func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string) {
+	folder := t.unzip(zipFilename, destPath)
+
+	files, err := t.vfs.List(context.Background(), folder, math.MaxInt64)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	for _, file := range files {
+
+		// в макоси создаются файлы с припиской __MACOSX/, например:
+		// somedirectory/somefile.extension
+		// __MACOSX/somedirectory/._somefile.extension
+		// где нужен только первый файл
+		if strings.HasPrefix(file.Name(), "__MACOSX/") {
+			continue
+		}
+
 		//в файле imsmanifest.xml содержится инфа о стартовом html
-		if strings.Contains(file.Name, "imsmanifest.xml") {
+		if strings.Contains(file.Name(), "imsmanifest.xml") {
+			rc, err := file.Open()
+			if err != nil {
+				return fmt.Sprint(err)
+			}
+			defer rc.Close()
+
+			d, err := io.ReadAll(rc)
+			if err != nil {
+				return fmt.Sprint(err)
+			}
+
 			var manifest Manifest
-			err := xml.Unmarshal(d, &manifest)
+			err = xml.Unmarshal(d, &manifest)
 			if err != nil {
 				return fmt.Sprint(err)
 			}
@@ -466,15 +514,20 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 					index = resource.Href
 				}
 			}
-		}
 
-		err = r.v.Write(r.ctx, destPath+strings.ReplaceAll(file.Name, " ", "_"), d)
-		if err != nil {
-			return fmt.Sprint(err)
+			break
 		}
 	}
 
-	return index
+	//до этого нашли название файла, а теперь ищем полный путь до него
+	for _, file := range files {
+		if strings.Contains(file.Name(), index) {
+			index = file.Name()
+			return index
+		}
+	}
+
+	return "404"
 }
 
 // randinterfaceslice перемешивает полученный слайс
