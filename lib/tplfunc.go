@@ -377,8 +377,9 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
-func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
+func (t *funcMap) unzip(zipFilename, destPath string) (folder string) {
 	var err error
+	var writePath string
 
 	r := readerAt{
 		context.Background(),
@@ -421,8 +422,6 @@ func (t *funcMap) unzip(zipFilename, destPath string) (index string) {
 		if err != nil {
 			return fmt.Sprintf("error unzip io.ReadAll, err: %s", err)
 		}
-
-		var writePath string
 
 		if destPath != "" {
 			writePath = destPath + "/" + strings.Replace(zipFilename, ".zip", "", 1) + "/" + strings.ReplaceAll(file.Name, " ", "_")
