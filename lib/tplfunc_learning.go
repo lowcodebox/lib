@@ -41,7 +41,7 @@ type Manifest struct {
 func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string) {
 	folder := t.unzip(zipFilename, destPath)
 
-	files, err := t.vfs.List(context.Background(), folder, math.MaxInt64)
+	files, err := t.vfs.List(context.Background(), folder, math.MaxInt32)
 	if err != nil {
 		return fmt.Sprintf("error parsescorm vfs.List, err: %s", err)
 	}
