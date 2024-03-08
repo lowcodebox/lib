@@ -6,8 +6,8 @@ import "strings"
 // opt0 - сколько символов оставить сначала строки (по-умолчанию 3)
 // opt1 - сколько символов оставить в конце строки (по-умолчанию 3)
 func HideExceptFirstAndLast(str string, opt ...int) string {
-	prefCount := 3
-	postCount := 3
+	prefCount := 1
+	postCount := 1
 
 	if len(opt) > 0 {
 		prefCount = opt[0]
@@ -28,6 +28,10 @@ func HideExceptFirstAndLast(str string, opt ...int) string {
 		default:
 			builder.WriteString("*")
 		}
+	}
+
+	if builder.Len() > 16 {
+		return builder.String()[:15]
 	}
 	return builder.String()
 }
