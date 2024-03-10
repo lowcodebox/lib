@@ -75,6 +75,11 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			return
 		}
 
+		if strings.Contains(r.RequestURI, "assets") || strings.Contains(r.RequestURI, "templates") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// валидируем токен (всегда, даже если публичная страница)
 		authKeyHeader := r.Header.Get("X-Auth-Key")
 		if authKeyHeader != "" {
@@ -190,7 +195,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		// обращение к публичному урлу
 		if !flagPublicPages {
 			for k, _ := range dps.PublicRoutes {
-				if strings.Contains(r.URL.Path, k) {
+				if strings.Contains(r.URL.Path, "/"+k) {
 					flagPublicRoutes = true
 					break
 				}

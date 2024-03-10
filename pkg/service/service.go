@@ -24,12 +24,13 @@ const queryPublicPages = "sys_public_pages"
 
 // список роутеров, для который пропускается авторизация клиента
 var constPublicLink = map[string]bool{
-	"/ping":      true,
-	"/templates": true,
-	"/upload":    true,
-	"/logout":    true,
-	"/login":     true,
-	"/metrics":   true,
+	"ping":      true,
+	"assets":    true,
+	"templates": true,
+	"upload":    true,
+	"logout":    true,
+	"login":     true,
+	"metrics":   true,
 }
 
 // динамические параметры, которые могут меняться через асинхронные шедулеры (повышение производительности)

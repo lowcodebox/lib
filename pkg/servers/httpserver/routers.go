@@ -45,6 +45,9 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	}
 
 	router.Handle("/upload/{params:.+}", proxy).Methods(http.MethodGet)
+	router.Name("Metrics").Path("/metrics").Handler(promhttp.Handler())
+	router.Name("Storage").Path("/assets/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
+	router.Name("Storage").Path("/templates/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
 
 	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
 	version.Version = h.serviceVersion
@@ -79,8 +82,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},
 
 		//Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
-		Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
-		Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
+		//Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
+		//Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
 
 		Route{"Page", "GET", "/", handler.Page},
 		Route{"Page", "GET", "/{page}", handler.Page},
@@ -105,8 +108,6 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		var handler http.Handler
 		handler = route.HandlerFunc
 		handler = h.MiddleLogger(handler, route.Name)
-
-		router.Name("Metrics").Path("/metrics").Handler(promhttp.Handler())
 
 		// проверяем адреса для исключения SSRF-уязвимостей
 		handler = h.MiddleSecurity(handler, route.Name)
