@@ -12,6 +12,7 @@ type Config struct {
 
 	RunTime time.Time `envconfig:"RUN_TIME" default:""`
 	UpTime  string    `envconfig:"UP_TIME" default:""`
+	Pid     string    `envconfig:"PID" default:""`
 
 	ServiceVersion      string `envconfig:"SERVICE_VERSION" default:""`
 	HashCommit          string `envconfig:"HASH_COMMIT" default:""`

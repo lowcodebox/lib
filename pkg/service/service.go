@@ -40,7 +40,7 @@ type dynamicParams struct {
 
 type service struct {
 	ctx      context.Context
-	cfg      model.Config
+	cfg      *model.Config
 	cache    cache.Cache
 	block    block.Block
 	function function.Function
@@ -69,7 +69,7 @@ type Service interface {
 
 func New(
 	ctx context.Context,
-	cfg model.Config,
+	cfg *model.Config,
 	cache cache.Cache,
 	msg i18n.I18n,
 	session session.Session,
@@ -82,9 +82,9 @@ func New(
 		PublicRoutes: constPublicLink,
 	}
 
-	var tplfunc = function.NewTplFunc(cfg, api)
-	var function = function.New(cfg, api)
-	var blocks = block.New(cfg, function, tplfunc, api, vfs, cache)
+	var tplfunc = function.NewTplFunc(*cfg, api)
+	var function = function.New(*cfg, api)
+	var blocks = block.New(*cfg, function, tplfunc, api, vfs, cache)
 
 	// асинхронно обновляем список публичный страниц/блоков
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)

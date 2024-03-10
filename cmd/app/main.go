@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -104,6 +105,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.ClientPath = "/" + cfg.Name + "/" + cfg.Version
 	cfg.HashRun = lib.UUID()
 	cfg.RunTime = time.Now()
+	cfg.Pid = strconv.Itoa(os.Getpid())
 
 	if cfg.Environment == "" {
 		cfg.Environment = cfg.EnvironmentPointsrc
@@ -111,6 +113,13 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	if cfg.Cluster == "" {
 		cfg.Cluster = cfg.ClusterPointsrc
 	}
+
+	go func() {
+		for {
+			cfg.UpTime = time.Now().Sub(cfg.RunTime).String()
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
@@ -245,7 +254,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	// собираем сервис
 	src := service.New(
 		ctx,
-		cfg,
+		&cfg,
 		cache,
 		msg,
 		ses,

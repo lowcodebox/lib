@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"os"
 	"strconv"
-	"time"
 
 	"git.lowcodeplatform.net/fabric/models"
 	dto "github.com/prometheus/client_model/go"
@@ -45,7 +43,7 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	pong.Status = "run"
 	pong.PortHTTP, pong.Port = pg, pg
 	pong.Config = s.cfg.ConfigName
-	pong.Pid = strconv.Itoa(os.Getpid())
+	pong.Pid = s.cfg.Pid
 	pong.Replicas = s.cfg.Replicas.Value
 	pong.EnableHttps = false
 	pong.PortGrpc = 0
@@ -57,9 +55,9 @@ func (s *service) Ping(ctx context.Context) (result []models.Pong, err error) {
 	pong.AccessPublic = s.cfg.AccessPublic.Value
 	pong.Environment = s.cfg.Environment
 	pong.Cluster = s.cfg.Cluster
-	pong.Uptime = time.Now().Sub(s.cfg.RunTime).String()
+	pong.Uptime = s.cfg.UpTime
 	pong.Runtime = s.cfg.RunTime
-	
+
 	pong.State = ""
 	pong.Https = https
 
