@@ -106,6 +106,8 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 	}
 
 	FuncMap = template.FuncMap{
+		"detectencoding":      Funcs.detectEncoding,
+		"convert":             Funcs.convert,
 		"separator":           Funcs.separator,
 		"cookie":              Funcs.cookieGet,
 		"cookieget":           Funcs.cookieGet,
