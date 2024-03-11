@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
 )
@@ -65,6 +66,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		var authKey string
 		var err error
 		var flagPublicPages, flagPublicRoutes bool
+		var currentProfile *models.ProfileData
 		var skipRedirect bool
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
@@ -137,6 +139,8 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				// чтобы избежать повторного обновления и дать возможность завершиться отправленным
 				// единовременно нескольким запросам (как правило это интервал 5-10 секунд)
 				if authKey == "skip" {
+					logger.Error(r.Context(), "auth skip after refresh", zap.String("authKey", fmt.Sprintf("%+v", authKey)), zap.Error(err))
+
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -176,10 +180,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				prof, _ := h.session.GetProfile(token.Session)
 				if prof == nil {
 					flagUpdateRevision = true
-				} else {
-					if prof.Revision != token.SessionRev {
-						flagUpdateRevision = true
-					}
+					//} else {
+					//if prof.Revision != token.SessionRev {
+					//	flagUpdateRevision = true
+					//}
 				}
 
 				// проверяем наличие сессии в локальном хранилище приложения
@@ -196,11 +200,18 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			// добавили текущий валидный токен в заголовок запроса
 			ctx := context.WithValue(r.Context(), "token", authKey)
 			if token != nil {
-				currentProfile, _ := h.session.GetProfile(token.Session)
+				currentProfile, err = h.session.GetProfile(token.Session)
+				if err != nil {
+					logger.Error(r.Context(), "auth error", zap.String("currentProfile", fmt.Sprintf("%+v", currentProfile)), zap.Error(err))
+				}
 				ctx = context.WithValue(ctx, "profile", *currentProfile)
 			}
 
-			logger.Info(r.Context(), "auth true")
+			if currentProfile.Uid == "" {
+				logger.Info(r.Context(), "auth false",
+					zap.String("authKey", authKey),
+					zap.String("currentProfile", fmt.Sprintf("%+v", currentProfile)))
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}

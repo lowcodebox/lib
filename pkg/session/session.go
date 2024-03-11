@@ -13,8 +13,8 @@ import (
 )
 
 func (s *session) Found(sessionID string) (status bool) {
-	s.Registry.Mx.Lock()
-	defer s.Registry.Mx.Unlock()
+	s.Registry.Mx.RLock()
+	defer s.Registry.Mx.RUnlock()
 
 	if _, found := s.Registry.M[sessionID]; found {
 		return true
@@ -24,8 +24,8 @@ func (s *session) Found(sessionID string) (status bool) {
 }
 
 func (s *session) GetProfile(sessionID string) (profile *models.ProfileData, err error) {
-	s.Registry.Mx.Lock()
-	defer s.Registry.Mx.Unlock()
+	s.Registry.Mx.RLock()
+	defer s.Registry.Mx.RUnlock()
 
 	if _, found := s.Registry.M[sessionID]; found {
 		prf := s.Registry.M[sessionID].Profile
@@ -66,7 +66,7 @@ func (s *session) Set(sessionID string) (err error) {
 		return err
 	}
 
-	json.Unmarshal([]byte(b1), &profile)
+	err = json.Unmarshal([]byte(b1), &profile)
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (s *session) Set(sessionID string) (err error) {
 
 // List список всех токенов для всех пользователей доступных для сервиса
 func (s *session) List() (result map[string]SessionRec) {
-	s.Registry.Mx.Lock()
-	defer s.Registry.Mx.Unlock()
+	s.Registry.Mx.RLock()
+	defer s.Registry.Mx.RUnlock()
 
 	result = s.Registry.M
 

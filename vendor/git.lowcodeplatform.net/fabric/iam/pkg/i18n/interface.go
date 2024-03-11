@@ -7,20 +7,20 @@ type Localization struct {
 }
 
 type I18n struct {
-	RegError Localization
-	UserNotExist Localization
-	PassFail Localization
-	UserRolesIsEmpty Localization
+	RegError          Localization
+	UserNotExist      Localization
+	PassFail          Localization
+	UserRolesIsEmpty  Localization
 	TokenValidateFail Localization
-	TokenValidateOK Localization
+	TokenValidateOK   Localization
 }
 
-func (l * Localization) Text() (result string) {
+func (l *Localization) Text() (result string) {
 	return l.Value["RU"]
 }
 
-func (l * Localization) Error() (result error) {
-	return fmt.Errorf("%s", l.Value["RU"])
+func (l *Localization) Error(payload string) (result error) {
+	return fmt.Errorf("%s (%s)", l.Value["RU"], payload)
 }
 
 func New() I18n {
@@ -49,7 +49,6 @@ func New() I18n {
 	i.TokenValidateOK = Localization{map[string]string{}}
 	i.TokenValidateOK.Value["RU"] = "Токен валиден"
 	i.TokenValidateOK.Value["EN"] = "Token validation successful"
-
 
 	return i
 }

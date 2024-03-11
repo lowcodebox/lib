@@ -35,7 +35,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
-	git.lowcodeplatform.net/fabric/iam v0.0.0-20221023080344-ec4c9a6ba7fe // indirect
+	git.lowcodeplatform.net/fabric/iam v0.2.34 // indirect
 	git.lowcodeplatform.net/fabric/logbox v0.2.15 // indirect
 	git.lowcodeplatform.net/fabric/logbox-client v0.1.17 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect

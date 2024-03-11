@@ -20,7 +20,7 @@ type session struct {
 }
 
 type SessionRegistry struct {
-	Mx sync.Mutex
+	Mx *sync.RWMutex
 	M  map[string]SessionRec
 }
 
@@ -40,7 +40,9 @@ type Session interface {
 }
 
 func New(ctx context.Context, cfg model.Config, api api.Api, iam iam.IAM) Session {
-	registrySession := SessionRegistry{}
+	registrySession := SessionRegistry{
+		Mx: &sync.RWMutex{},
+	}
 
 	return &session{
 		ctx,
