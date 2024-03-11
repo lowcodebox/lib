@@ -131,10 +131,18 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 
 	// 2 запрос на объекты блоков страницы
 	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
+	if err != nil {
+		return result, fmt.Errorf("error. blocks is not found for this page: %s, err: %s", pageUID, err)
+	}
+	//if len(objBlocks.Data) != 0 {
+	//	return result, fmt.Errorf("error. blocks is not found for this page: %s, tpl: %s", pageUID, s.cfg.TplAppBlocksPointsrc)
+	//}
 
 	// 3 запрос на объект макета
 	objMaket, err = s.api.ObjGetWithCache(ctx, maketUID)
-
+	if objMaket == nil {
+		return result, fmt.Errorf("%s (uid: %s)", "Error. Object maket is empty.", maketUID)
+	}
 	if len(objMaket.Data) == 0 {
 		return result, fmt.Errorf("%s (uid: %s)", "Error. Object maket is empty.", maketUID)
 	}

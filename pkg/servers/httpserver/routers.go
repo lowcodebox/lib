@@ -121,7 +121,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		}
 	}
 
-	//router.Use(h.Recover)
+	router.Use(h.Recover)
 
 	// проверяем на возможность переадресации только для HTTP запросов
 	if checkHttpsOnly && h.cfg.HttpsOnly != "" {

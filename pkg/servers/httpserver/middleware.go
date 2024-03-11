@@ -65,13 +65,45 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		var authKey string
 		var err error
 		var flagPublicPages, flagPublicRoutes bool
-		var skipRedirect, tokenIsValid bool
+		var skipRedirect bool
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
 
 		err = r.ParseForm()
 		if err != nil {
 			err = fmt.Errorf("error parse form for url: %s", r.URL)
+			return
+		}
+
+		// условия пропуска страницы (публичная)
+		for k, _ := range r.Form {
+			if dps.PublicPages[k] {
+				flagPublicPages = true
+				break
+			}
+		}
+		// возможно передача параметров была через /
+		if !flagPublicPages {
+			for _, k := range strings.Split(r.RequestURI, "/") {
+				if dps.PublicPages[k] {
+					flagPublicPages = true
+					break
+				}
+			}
+		}
+		// обращение к публичному урлу
+		if !flagPublicPages {
+			for k, _ := range dps.PublicRoutes {
+				if strings.Contains(r.URL.Path, "/"+k) {
+					flagPublicRoutes = true
+					break
+				}
+			}
+		}
+
+		// пропускаем разрешенные страницы/пути
+		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -171,40 +203,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			logger.Info(r.Context(), "auth true")
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
-
-		} else {
-			tokenIsValid = false
-		}
-
-		// условия пропуска страницы (публичная)
-		for k, _ := range r.Form {
-			if dps.PublicPages[k] {
-				flagPublicPages = true
-				break
-			}
-		}
-		// возможно передача параметров была через /
-		if !flagPublicPages {
-			for _, k := range strings.Split(r.RequestURI, "/") {
-				if dps.PublicPages[k] {
-					flagPublicPages = true
-					break
-				}
-			}
-		}
-		// обращение к публичному урлу
-		if !flagPublicPages {
-			for k, _ := range dps.PublicRoutes {
-				if strings.Contains(r.URL.Path, "/"+k) {
-					flagPublicRoutes = true
-					break
-				}
-			}
-		}
-
-		// пропускаем разрешенные страницы/пути
-		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
-			skipRedirect = true
 		}
 
 		// отдаем ответ в зависимости от состояний
@@ -212,7 +210,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
 		}
 
-		if !skipRedirect && !tokenIsValid {
+		if !skipRedirect {
 			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
 		} else {
 			next.ServeHTTP(w, r)
