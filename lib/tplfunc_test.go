@@ -3,6 +3,7 @@ package app_lib
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"git.lowcodeplatform.net/fabric/lib"
@@ -1952,5 +1953,116 @@ func Test_sortbyfield(t *testing.T) {
 
 	for _, v := range obj2.Data {
 		println(v.Attr("", "rev"))
+	}
+}
+
+func Test_funcMap_convert(t1 *testing.T) {
+	// Создание фейковых данных для тестирования
+	contentUTF8 := []byte("Пример текста на русском языке")
+	contentUTF8BOM := append([]byte{0xEF, 0xBB, 0xBF}, contentUTF8...)
+	contentWindows1251 := []byte{207, 240, 232, 236, 229, 240, 32, 242, 229, 234, 241, 242, 224, 32, 237, 224, 32, 240, 243, 241, 241, 234, 238, 236, 32, 255, 231, 251, 234, 229}
+
+	type args struct {
+		content        []byte
+		targetEncoding string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantEncodedData []byte
+	}{
+		// UTF-8
+		{
+			name: "UTF-8 to UTF-8",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "UTF-8 to UTF-8 BOM",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "UTF-8 to windows-1251",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+
+		// UTF-8 BOM
+		{
+			name: "UTF-8 BOM to UTF-8",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "UTF-8 BOM to UTF-8 BOM",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "UTF-8 BOM to windows-1251",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+		// windows-1251
+		{
+			name: "windows-1251 to UTF-8",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "windows-1251 to UTF-8 BOM",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "windows-1251 to windows-1251",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+
+		{
+			name: "err",
+			args: args{
+				content:        []byte(""),
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: []byte(""),
+		},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := &funcMap{}
+			if gotEncodedData := t.convert(tt.args.content, tt.args.targetEncoding); !reflect.DeepEqual(gotEncodedData, tt.wantEncodedData) {
+				t1.Errorf("convert() = %v, want %v", gotEncodedData, tt.wantEncodedData)
+			}
+		})
 	}
 }
