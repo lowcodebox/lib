@@ -130,10 +130,16 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 			// валидируем токен
 			status, token, refreshToken, err := h.iam.Verify(h.ctx, authKey)
+			if err != nil {
+				logger.Error(r.Context(), "middleware iam verify before refresh", zap.Error(err), zap.String("auth key", authKey))
+			}
 
 			// пробуем обновить пришедший токен
 			if !status {
-				authKey, _ = h.iam.Refresh(h.ctx, refreshToken, "", false)
+				authKey, err = h.iam.Refresh(h.ctx, refreshToken, "", false)
+				if err != nil {
+					logger.Error(r.Context(), "middleware iam refresh", zap.Error(err), zap.String("refresh token", refreshToken))
+				}
 
 				// если токен был обновлен чуть ранее, то текущий запрос надо пропустить
 				// чтобы избежать повторного обновления и дать возможность завершиться отправленным
@@ -159,6 +165,9 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 					// после обновления получаем текущий токен
 					status, token, _, err = h.iam.Verify(h.ctx, authKey)
+					if err != nil {
+						logger.Error(r.Context(), "middleware iam verify after refresh", zap.Error(err), zap.String("authKey", authKey))
+					}
 
 					// переписываем куку у клиента
 					http.SetCookie(w, cookie)
@@ -177,7 +186,11 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			if token != nil {
 				var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
 
-				prof, _ := h.session.GetProfile(token.Session)
+				prof, err := h.session.GetProfile(token.Session)
+				if err != nil {
+					logger.Error(r.Context(), "middleware session GetProfile", zap.Error(err), zap.String("session", token.Session))
+				}
+
 				if prof == nil {
 					flagUpdateRevision = true
 					//} else {
@@ -190,6 +203,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				// проверяем соответствие ревизии сессии из токена и в текущем хранилище
 				if !h.session.Found(token.Session) || flagUpdateRevision {
 					err = h.session.Set(token.Session)
+					logger.Info(r.Context(), "middleware session set", zap.String("token session", token.Session))
 					if err != nil {
 						http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
 						return
@@ -199,12 +213,14 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 			// добавили текущий валидный токен в заголовок запроса
 			ctx := context.WithValue(r.Context(), "token", authKey)
+			logger.Info(r.Context(), "middleware context", zap.String("new token", authKey))
 			if token != nil {
 				currentProfile, err = h.session.GetProfile(token.Session)
 				if err != nil {
 					logger.Error(r.Context(), "auth error", zap.String("currentProfile", fmt.Sprintf("%+v", currentProfile)), zap.Error(err))
 				}
 				ctx = context.WithValue(ctx, "profile", *currentProfile)
+				logger.Info(r.Context(), "middleware context", zap.String("new profile", fmt.Sprintf("%+v", currentProfile)))
 			}
 
 			if currentProfile.Uid == "" {
