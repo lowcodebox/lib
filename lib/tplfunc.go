@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/text/transform"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -35,6 +36,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
+	"github.com/saintfish/chardet"
+	"golang.org/x/text/encoding/charmap"
 )
 
 var Funcs funcMap
@@ -103,6 +106,8 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 	}
 
 	FuncMap = template.FuncMap{
+		"detectencoding":      Funcs.detectEncoding,
+		"convert":             Funcs.convert,
 		"separator":           Funcs.separator,
 		"cookie":              Funcs.cookieGet,
 		"cookieget":           Funcs.cookieGet,
@@ -1635,4 +1640,76 @@ func (t *funcMap) hash(str string) string {
 	var lb *app
 
 	return lb.hash(str)
+}
+
+// detectEncoding NotDetectedError = errors.New("Charset not detected.")
+// detectEncoding определяет кодировку слайса байтов
+func (t *funcMap) detectEncoding(content []byte) string {
+	detector := chardet.NewTextDetector()
+	result, err := detector.DetectBest(content)
+	if err != nil {
+		return err.Error()
+	}
+
+	// либа chardet не распознает UTF-8 BOM, поэтому ручным способом проверяем наличие спецсимволов
+	if result.Charset == "UTF-8" {
+		if len(content) >= 3 && content[0] == 0xEF && content[1] == 0xBB && content[2] == 0xBF {
+			result.Charset = "UTF-8 BOM"
+		}
+	}
+
+	return result.Charset
+}
+
+// convert конвертирует слайс байтов в нужную кодировку (UTF-8, UTF-8 BOM, windows-1251).
+// convert Если слайс байтов не соответствует ни одной из этих кодировок, то возвращается nil
+func (t *funcMap) convert(content []byte, targetEncoding string) (encodedData []byte) {
+	// Определение текущей кодировки
+	currentEncoding := t.detectEncoding(content)
+
+	// Если не удалось определить кодировку, возвращаем nil
+	if currentEncoding == chardet.NotDetectedError.Error() {
+		return nil
+	}
+
+	if currentEncoding != "UTF-8 BOM" && currentEncoding != "UTF-8" && currentEncoding != "windows-1251" {
+		return nil
+	}
+
+	// Преобразование содержимого файла в нужную кодировку
+	switch targetEncoding {
+	case "UTF-8 BOM":
+		if currentEncoding == "UTF-8 BOM" {
+			encodedData = content
+		} else if currentEncoding == "UTF-8" {
+			encodedData = append([]byte{0xEF, 0xBB, 0xBF}, content...)
+		} else {
+			decoder := charmap.Windows1251.NewDecoder()
+			decodedContent, _, _ := transform.Bytes(decoder, content)
+			encodedData = append([]byte{0xEF, 0xBB, 0xBF}, decodedContent...)
+		}
+	case "UTF-8":
+		if currentEncoding == "UTF-8" {
+			encodedData = content
+		} else if currentEncoding == "UTF-8 BOM" {
+			encodedData = content[3:]
+		} else if currentEncoding == "windows-1251" {
+			decoder := charmap.Windows1251.NewDecoder()
+			decodedContent, _, _ := transform.Bytes(decoder, content)
+			encodedData = decodedContent
+		}
+	case "windows-1251":
+		if currentEncoding == "windows-1251" {
+			encodedData = content
+		} else {
+			if currentEncoding == "UTF-8 BOM" {
+				content = content[3:]
+			}
+
+			encoder := charmap.Windows1251.NewEncoder()
+			encodedData, _, _ = transform.Bytes(encoder, content)
+		}
+	}
+
+	return
 }

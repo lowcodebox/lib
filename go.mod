@@ -12,6 +12,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.12.0
+	github.com/gofrs/uuid v4.3.0+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/labstack/gommon v0.4.1
 	github.com/lib/pq v1.10.9
@@ -22,11 +23,13 @@ require (
 	github.com/prometheus/client_model v0.5.0
 	github.com/prometheus/common v0.45.0
 	github.com/restream/reindexer v4.6.0+incompatible
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/satori/go.uuid v1.2.0
 	github.com/swaggo/http-swagger v1.3.3
 	github.com/swaggo/swag v1.8.7
 	go.uber.org/multierr v1.10.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/text v0.14.0
 )
 
 require (
@@ -62,7 +65,6 @@ require (
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/spec v0.20.6 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
-	github.com/gofrs/uuid v4.3.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -106,7 +108,6 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
