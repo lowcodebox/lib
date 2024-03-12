@@ -130,9 +130,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 			// валидируем токен
 			status, token, refreshToken, err := h.iam.Verify(h.ctx, authKey)
-			if err != nil {
-				logger.Error(r.Context(), "middleware iam verify before refresh", zap.Error(err), zap.String("auth key", authKey))
-			}
+			logger.Info(r.Context(), "middleware iam verify before refresh",
+				zap.String("token", fmt.Sprintf("%+v", token)),
+				zap.String("auth key", authKey),
+				zap.Bool("status", status))
 
 			// пробуем обновить пришедший токен
 			if !status {
@@ -167,6 +168,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					status, token, _, err = h.iam.Verify(h.ctx, authKey)
 					if err != nil {
 						logger.Error(r.Context(), "middleware iam verify after refresh", zap.Error(err), zap.String("authKey", authKey))
+					} else {
+						logger.Info(r.Context(), "middleware iam verify after refresh",
+							zap.String("token", fmt.Sprintf("%+v", token)),
+							zap.Bool("status", status))
 					}
 
 					// переписываем куку у клиента
@@ -182,6 +187,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				}
 			}
 
+			logger.Info(r.Context(), "token before set to session", zap.String("token", fmt.Sprintf("%+v", token)))
 			// добавляем значение токена в локальный реестр сесссий (ПЕРЕДЕЛАТЬ)
 			if token != nil {
 				var flagUpdateRevision bool // флаг того, что надо обновить сессию в хранилище через запрос к IAM
@@ -204,6 +210,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				if !h.session.Found(token.Session) || flagUpdateRevision {
 					err = h.session.Set(token.Session)
 					logger.Info(r.Context(), "middleware session set", zap.String("token session", token.Session))
+
 					if err != nil {
 						http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
 						return

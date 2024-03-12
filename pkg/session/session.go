@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -70,6 +71,7 @@ func (s *session) Set(sessionID string) (err error) {
 	if err != nil {
 		return err
 	}
+	logger.Info(s.ctx, "session iam profileGet", zap.String("profile from iam", fmt.Sprintf("%+v", profile)))
 
 	// сохраняем значение сессии в локальном хранилище приложения
 	f.Profile = profile
