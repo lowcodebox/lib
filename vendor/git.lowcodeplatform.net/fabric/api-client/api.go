@@ -24,6 +24,8 @@ import (
 const headerRequestId = "X-Request-Id"
 const headerServiceKey = "X-Service-Key"
 const tokenInterval = 1 * time.Minute
+const constOperationDelete = "delete"
+const constOperationAdd = "add"
 
 type api struct {
 	url                 string
@@ -45,6 +47,8 @@ type Obj interface {
 	ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error)
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
 	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	LinkAdd(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
+	LinkDelete(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
 	LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error)
@@ -166,6 +170,44 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 	//fmt.Printf("\nберем объект из кеша. общее время: %fc, err: %s reqID: %s\n\n", time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
 
 	return &res, err
+}
+
+// LinkDelete - удаление линки
+func (a *api) LinkDelete(ctx context.Context, element, from, to string) (result models.ResponseData, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.linkOperation(ctx, constOperationDelete, element, from, to)
+		return result, err
+	})
+	if err != nil {
+		logger.Error(ctx, "error LinkDelete primary haproxy",
+			zap.String("operation", constOperationDelete),
+			zap.String("element", element),
+			zap.String("from", from),
+			zap.String("to", to),
+			zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request LinkDelete (primary route). check apiCircuitBreaker. err: %s", err)
+	}
+
+	return result, err
+}
+
+// LinkAdd - добавление линки в объект
+func (a *api) LinkAdd(ctx context.Context, element, from, to string) (result models.ResponseData, err error) {
+	_, err = a.cb.Execute(func() (interface{}, error) {
+		result, err = a.linkOperation(ctx, constOperationAdd, element, from, to)
+		return result, err
+	})
+	if err != nil {
+		logger.Error(ctx, "error LinkAdd primary haproxy",
+			zap.String("operation", constOperationAdd),
+			zap.String("element", element),
+			zap.String("from", from),
+			zap.String("to", to),
+			zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+		return result, fmt.Errorf("error request LinkAdd (primary route). check apiCircuitBreaker. err: %s", err)
+	}
+
+	return result, err
 }
 
 // LinkGet - получение связанных объектов

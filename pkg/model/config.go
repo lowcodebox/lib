@@ -163,8 +163,9 @@ type Config struct {
 	ReplicasApp Int    `envconfig:"REPLICAS_APP" default:""`
 	Robot       string `envconfig:"ROBOT" default:""`
 
-	Signin    string `envconfig:"SIGNIN" default:""`
-	SigninUrl string `envconfig:"SIGNIN_URL" default:""`
+	Signin                 string `envconfig:"SIGNIN" default:""`
+	SigninUrl              string `envconfig:"SIGNIN_URL" default:""`
+	SkipSecurityMiddleware string `envconfig:"SKIP_SECURITY_MIDDLEWARE" default:""`
 
 	Title                   string `envconfig:"TITLE" default:""`
 	ToBuild                 string `envconfig:"TO_BUILD" default:""`

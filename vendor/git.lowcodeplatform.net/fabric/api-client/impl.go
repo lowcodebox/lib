@@ -10,8 +10,6 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/curl"
-	"git.lowcodeplatform.net/packages/logger"
-	"go.uber.org/zap"
 )
 
 // Query результат выводим в объект как при вызове Curl
@@ -79,6 +77,33 @@ func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string) (result
 
 	urlc := a.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short
 	urlc = strings.Replace(urlc, "//link", "/link", 1)
+
+	_, err = lib.Curl(ctx, "GET", urlc, "", &result, handlers, nil)
+	if err != nil {
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
+	}
+
+	return result, err
+}
+
+func (a *api) linkOperation(ctx context.Context, operation, element, from, to string) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
+	handlers[headerServiceKey] = token
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "linkAdd", err, element, from, to)
+	}
+
+	urlc := a.url + "/link/" + operation + "?element=" + element + "&from=" + from + "&to=" + to
+	urlc = strings.Replace(urlc, "//link", "/link", 1)
+
+	if operation != "add" && operation != "delete" {
+		err = fmt.Errorf("operation '%s' is not resolved. (url: %s)", operation, urlc)
+		return result, err
+	}
 
 	_, err = lib.Curl(ctx, "GET", urlc, "", &result, handlers, nil)
 	if err != nil {
@@ -227,10 +252,10 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 }
 
 func (a *api) observeLogger(ctx context.Context, start time.Time, method string, err error, arguments ...interface{}) {
-	logger.Info(ctx, "timing api query",
-		zap.String("method", method),
-		zap.Float64("timing", time.Since(start).Seconds()),
-		zap.String("arguments", fmt.Sprint(arguments)),
-		zap.Error(err),
-	)
+	//logger.Info(ctx, "timing api query",
+	//	zap.String("method", method),
+	//	zap.Float64("timing", time.Since(start).Seconds()),
+	//	zap.String("arguments", fmt.Sprint(arguments)),
+	//	zap.Error(err),
+	//)
 }

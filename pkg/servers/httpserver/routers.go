@@ -110,7 +110,10 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		handler = h.MiddleLogger(handler, route.Name)
 
 		// проверяем адреса для исключения SSRF-уязвимостей
-		handler = h.MiddleSecurity(handler, route.Name)
+		// проверяем на защищенный доступ через авторизацию
+		if h.cfg.SkipSecurityMiddleware != "checked" {
+			handler = h.MiddleSecurity(handler, route.Name)
+		}
 
 		for _, v := range strings.Split(route.Method, ",") {
 			router.

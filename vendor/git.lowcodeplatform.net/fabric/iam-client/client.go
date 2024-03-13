@@ -128,7 +128,7 @@ func (o *iam) verify(ctx context.Context, tokenString string) (status bool, body
 	})
 
 	if !token.Valid {
-		return false, nil, refreshToken, o.msg.TokenValidateFail.Error("")
+		return false, nil, refreshToken, o.msg.TokenValidateFail.Error()
 	}
 	tbody := token.Claims.(*models.Token)
 
