@@ -4,8 +4,8 @@ go 1.20
 
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.1.56
-	git.lowcodeplatform.net/fabric/iam-client v0.1.12
-	git.lowcodeplatform.net/fabric/lib v0.2.23
+	git.lowcodeplatform.net/fabric/iam-client v0.1.13
+	git.lowcodeplatform.net/fabric/lib v0.2.27
 	git.lowcodeplatform.net/fabric/models v0.1.32
 	git.lowcodeplatform.net/packages/cache v0.1.19
 	git.lowcodeplatform.net/packages/logger v0.1.24
@@ -38,7 +38,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
-	git.lowcodeplatform.net/fabric/iam v0.2.34 // indirect
+	git.lowcodeplatform.net/fabric/iam v0.2.35 // indirect
 	git.lowcodeplatform.net/fabric/logbox v0.2.15 // indirect
 	git.lowcodeplatform.net/fabric/logbox-client v0.1.17 // indirect
 	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect

@@ -140,6 +140,11 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool
 	if xsKey.Domain == domain && xsKey.Expired > time.Now().Unix() {
 		xsKeyValid = true
 	}
+	if !xsKeyValid {
+		if xsKey.Domain == string(projectKey) && xsKey.Expired > time.Now().Unix() {
+			xsKeyValid = true
+		}
+	}
 
 	return xsKeyValid
 }
