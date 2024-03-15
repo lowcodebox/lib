@@ -2066,3 +2066,15 @@ func Test_funcMap_convert(t1 *testing.T) {
 		})
 	}
 }
+
+func Test_decodebase64(t *testing.T) {
+	in := "user1:passw0rd"
+
+	NewFuncMap(nil, nil, "")
+	res := Funcs.decodebase64(in)
+
+	fmt.Println(res)
+	res = Funcs.encodebase64(res)
+
+	fmt.Println(res)
+}

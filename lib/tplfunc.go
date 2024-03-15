@@ -5,11 +5,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/text/transform"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -28,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/text/transform"
 
 	"git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/lib"
@@ -207,10 +209,32 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"iterate": Funcs.iterate,
 		"decrypt": Funcs.decrypt,
 		"encrypt": Funcs.encrypt,
+
+		"decodebase64": Funcs.decodebase64,
+		"encodebase64": Funcs.encodebase64,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// decodebase64 зашифровывает тело в base64 из строки
+func (t *funcMap) decodebase64(payload string) string {
+	// кодируем в base64 тело файла конфигурации
+	bodyBase64 := base64.StdEncoding.EncodeToString([]byte(payload))
+
+	return bodyBase64
+}
+
+// encodebase64 расшифровываем тело из base64 в строку
+func (t *funcMap) encodebase64(payload string) string {
+	// декодируем из base64 тело
+	bodyDecode, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return fmt.Sprintf("error. Load converted base64 to DecodeString %s", err)
+	}
+
+	return string(bodyDecode)
+}
 
 // decrypt расшифровываем тело ключом (совместимо с lib.Decrypt)
 func (t *funcMap) decrypt(key, payload string) string {
