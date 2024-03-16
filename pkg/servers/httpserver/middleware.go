@@ -71,6 +71,17 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
 
+		// берем токен (всегда, даже если публичная страница)
+		authKeyHeader := r.Header.Get("X-Auth-Key")
+		if authKeyHeader != "" {
+			authKey = authKeyHeader
+		} else {
+			authKeyCookie, err := r.Cookie("X-Auth-Key")
+			if err == nil {
+				authKey = authKeyCookie.Value
+			}
+		}
+
 		err = r.ParseForm()
 		if err != nil {
 			err = fmt.Errorf("error parse form for url: %s", r.URL)
@@ -105,6 +116,12 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 		// пропускаем разрешенные страницы/пути
 		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
+
+			// пытаемся обновить профиль, прочитав из токена (если он есть)
+			if strings.TrimSpace(authKey) != "" {
+				
+			}
+
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -112,17 +129,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		if strings.Contains(r.RequestURI, "assets") || strings.Contains(r.RequestURI, "templates") {
 			next.ServeHTTP(w, r)
 			return
-		}
-
-		// валидируем токен (всегда, даже если публичная страница)
-		authKeyHeader := r.Header.Get("X-Auth-Key")
-		if authKeyHeader != "" {
-			authKey = authKeyHeader
-		} else {
-			authKeyCookie, err := r.Cookie("X-Auth-Key")
-			if err == nil {
-				authKey = authKeyCookie.Value
-			}
 		}
 
 		// не передали ключ - вход не осуществлен. войди
