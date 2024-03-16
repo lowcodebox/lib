@@ -68,8 +68,44 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		var flagPublicPages, flagPublicRoutes bool
 		var currentProfile *models.ProfileData
 		var skipRedirect bool
+		var action = ""
 		dps := h.src.GetDynamicParams()
 		refURL := h.cfg.ClientPath + r.RequestURI
+
+		if strings.Contains(r.RequestURI, "assets") || strings.Contains(r.RequestURI, "templates") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		err = r.ParseForm()
+		if err != nil {
+			err = fmt.Errorf("error parse form for url: %s", r.URL)
+			return
+		}
+
+		defer func() {
+			if authKey == "skip" {
+				logger.Error(r.Context(), "auth skip after refresh", zap.String("authKey", fmt.Sprintf("%+v", authKey)), zap.Error(err))
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// пропускаем разрешенные страницы/пути
+			if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			if action == "redirect302" || !skipRedirect {
+				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
+			}
+
+			if action == "redirect500" {
+				http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
+			}
+
+			next.ServeHTTP(w, r)
+		}()
 
 		// берем токен (всегда, даже если публичная страница)
 		authKeyHeader := r.Header.Get("X-Auth-Key")
@@ -80,12 +116,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			if err == nil {
 				authKey = authKeyCookie.Value
 			}
-		}
-
-		err = r.ParseForm()
-		if err != nil {
-			err = fmt.Errorf("error parse form for url: %s", r.URL)
-			return
 		}
 
 		// условия пропуска страницы (публичная)
@@ -114,23 +144,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			}
 		}
 
-		// пропускаем разрешенные страницы/пути
-		if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
-
-			// пытаемся обновить профиль, прочитав из токена (если он есть)
-			if strings.TrimSpace(authKey) != "" {
-				
-			}
-
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		if strings.Contains(r.RequestURI, "assets") || strings.Contains(r.RequestURI, "templates") {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// не передали ключ - вход не осуществлен. войди
 		if strings.TrimSpace(authKey) != "" {
 
@@ -152,9 +165,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				// чтобы избежать повторного обновления и дать возможность завершиться отправленным
 				// единовременно нескольким запросам (как правило это интервал 5-10 секунд)
 				if authKey == "skip" {
-					logger.Error(r.Context(), "auth skip after refresh", zap.String("authKey", fmt.Sprintf("%+v", authKey)), zap.Error(err))
-
-					next.ServeHTTP(w, r)
 					return
 				}
 
@@ -188,7 +198,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			// выкидываем если обновление невозможно
 			if !status || err != nil {
 				if r.FormValue("ref") == "" {
-					http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
+					action = "redirect302"
 					return
 				}
 			}
@@ -214,11 +224,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 				// проверяем наличие сессии в локальном хранилище приложения
 				// проверяем соответствие ревизии сессии из токена и в текущем хранилище
 				if !h.session.Found(token.Session) || flagUpdateRevision {
-					err = h.session.Set(token.Session)
 					logger.Info(r.Context(), "middleware session set", zap.String("token session", token.Session))
-
+					err = h.session.Set(token.Session)
 					if err != nil {
-						http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
+						action = "redirect500"
 						return
 					}
 				}
@@ -241,21 +250,15 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					zap.String("authKey", authKey),
 					zap.String("currentProfile", fmt.Sprintf("%+v", currentProfile)))
 			}
-			next.ServeHTTP(w, r.WithContext(ctx))
+			r = r.WithContext(ctx)
+			//next.ServeHTTP(w, r)
 			return
 		}
 
 		// отдаем ответ в зависимости от состояний
 		if err != nil {
-			http.Redirect(w, r, h.cfg.Error500+"?err="+fmt.Sprint(err), 500)
+			action = "redirect500"
 		}
-
-		if !skipRedirect {
-			http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
-		} else {
-			next.ServeHTTP(w, r)
-		}
-
 	})
 }
 
