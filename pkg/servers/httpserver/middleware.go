@@ -84,6 +84,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		defer func() {
+			if action == "exit" {
+				return
+			}
+
 			if authKey == "skip" {
 				logger.Error(r.Context(), "auth skip after refresh", zap.String("authKey", fmt.Sprintf("%+v", authKey)), zap.Error(err))
 				next.ServeHTTP(w, r)
@@ -251,7 +255,9 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					zap.String("currentProfile", fmt.Sprintf("%+v", currentProfile)))
 			}
 			r = r.WithContext(ctx)
-			//next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r)
+			action = "exit"
+
 			return
 		}
 
