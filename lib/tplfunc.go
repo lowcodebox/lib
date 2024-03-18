@@ -741,58 +741,70 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 }
 
 // ObjGet операции с объектами через клиента API
-func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData, err string) {
 	ctx := context.Background()
 	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjGet(ctx, uids)
+		res, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjGet(ctx, uids)
+		return res, fmt.Sprint(err)
 	}
 
-	return t.api.ObjGet(ctx, uids)
+	res, er := t.api.ObjGet(ctx, uids)
+	return res, fmt.Sprint(er)
 }
 
-func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err error) {
-	ctx := context.Background()
-	//if apiURL != "" {
-	//	return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
-	//}
-
-	return t.api.ObjCreate(ctx, bodymap)
-}
-
-func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) (result models.ResponseData, err string) {
 	ctx := context.Background()
 	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjDelete(ctx, uids)
+		r, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
+		return r, fmt.Sprintln(err)
 	}
 
-	return t.api.ObjDelete(ctx, uids)
+	r, er := t.api.ObjCreate(ctx, bodymap)
+	return r, fmt.Sprint(er)
 }
 
-func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjDelete(apiURL string, uids string) (result models.ResponseData, err string) {
 	ctx := context.Background()
 	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+		res, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjDelete(ctx, uids)
+		return res, fmt.Sprint(err)
 	}
 
-	return t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
+	res, er := t.api.ObjDelete(ctx, uids)
+	return res, fmt.Sprint(er)
 }
 
-func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (result models.ResponseData, err string) {
 	ctx := context.Background()
 	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).LinkGet(ctx, tpl, obj, mode, short)
+		res, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjAttrUpdate(ctx, uid, name, value, src, editor)
+		return res, fmt.Sprint(err)
 	}
 
-	return t.api.LinkGet(ctx, tpl, obj, mode, short)
+	res, er := t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
+	return res, fmt.Sprint(er)
 }
 
-func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err error) {
+func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (result models.ResponseData, err string) {
 	ctx := context.Background()
 	if apiURL != "" {
-		return api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
+		res, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).LinkGet(ctx, tpl, obj, mode, short)
+		return res, fmt.Sprint(err)
 	}
 
-	return t.api.Query(ctx, query, method, bodyJSON)
+	res, er := t.api.LinkGet(ctx, tpl, obj, mode, short)
+	return res, fmt.Sprint(er)
+}
+
+func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (result string, err string) {
+	ctx := context.Background()
+	if apiURL != "" {
+		res, err := api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
+		return res, fmt.Sprint(err)
+	}
+
+	res, er := t.api.Query(ctx, query, method, bodyJSON)
+	return res, fmt.Sprint(er)
 }
 
 // формируем сепаратор для текущей ОС
