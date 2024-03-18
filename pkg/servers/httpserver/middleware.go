@@ -192,6 +192,12 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					return
 				}
 
+				// выкидываем если обновление невозможно
+				if err != nil {
+					action = "redirect302"
+					return
+				}
+
 				if err == nil && authKey != "<nil>" && authKey != "" {
 					// заменяем куку у пользователя в браузере
 					cookie := &http.Cookie{
