@@ -103,7 +103,11 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					Usage: "Доп.режимы запуска: debug (логирования stdout в файл)",
 					Value: "",
 				},
-
+				cli.StringFlag{
+					Name:  "dc",
+					Usage: "Дата-центр, в котором запущен сервис",
+					Value: "false",
+				},
 				cli.StringFlag{
 					Name:  "service, s",
 					Usage: "Запуск сервиса (для запуска нескольких сервисов укажите их через запятую)",
@@ -114,6 +118,7 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 				configfile := c.String("config")
 				port := c.String("port")
 				dir := c.String("dir")
+				dc := c.String("dc")
 				mode := c.String("mode")
 
 				service := c.String("service")
@@ -122,7 +127,7 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					dir, err = RootDir()
 				}
 
-				err = funcCLI(ctx, configfile, dir, port, mode, service, "", "", "", "", "start", "")
+				err = funcCLI(ctx, configfile, dir, port, mode, service, dc, "", "", "", "start", "")
 				return err
 			},
 		},
