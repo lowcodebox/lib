@@ -132,6 +132,13 @@ func reloadPublicPages(ctx context.Context, d *dynamicParams, api api.Api, inter
 
 			resD := map[string]bool{}
 			for _, v := range objs.Data {
+
+				// если стартовая страница публичная, то надо добавить еще и /
+				def, _ := v.Attr("default", "value")
+				if def == "checked" {
+					resD["/"] = true
+				}
+
 				resD[v.Uid] = true
 				if v.Id != "" {
 					resD[v.Id] = true

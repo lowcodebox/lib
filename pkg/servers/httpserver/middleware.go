@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
@@ -84,6 +85,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		defer func() {
+			rnd := lib.UUID()
 			if action == "exit" {
 				return
 			}
@@ -96,11 +98,25 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 			// пропускаем разрешенные страницы/пути
 			if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
+				logger.Error(r.Context(), "auth skip after public pages/block",
+					zap.String("URL", fmt.Sprintf("%+v", r.RequestURI)),
+					zap.String("flagPublicPages", fmt.Sprintf("%+v", flagPublicPages)),
+					zap.String("flagPublicRoutes", fmt.Sprintf("%+v", flagPublicRoutes)),
+					zap.String("rnd", rnd),
+					zap.Error(err))
 				next.ServeHTTP(w, r)
 				return
 			}
 
 			if action == "redirect302" || !skipRedirect {
+				logger.Error(r.Context(), "redirect302",
+					zap.String("URL", fmt.Sprintf("%+v", r.RequestURI)),
+					zap.String("dps", fmt.Sprintf("%+v", dps)),
+					zap.String("flagPublicPages", fmt.Sprintf("%+v", flagPublicPages)),
+					zap.String("flagPublicRoutes", fmt.Sprintf("%+v", flagPublicRoutes)),
+					zap.String("rnd", rnd),
+					zap.Error(err))
+
 				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
 			}
 
@@ -136,6 +152,10 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					flagPublicPages = true
 					break
 				}
+			}
+			// фикс для открытой корневой страницы
+			if dps.PublicPages[r.RequestURI] {
+				flagPublicPages = true
 			}
 		}
 		// обращение к публичному урлу
