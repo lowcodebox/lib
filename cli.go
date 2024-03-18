@@ -10,7 +10,7 @@ import (
 const sep = string(os.PathSeparator)
 
 // RunServiceFuncCLI обраатываем параметры с консоли и вызываем переданую функцию
-func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, configfile, dir, port, mode, service, param1, param2, param3, sourcedb, action, version string) error) error {
+func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, configfile, dir, port, mode, service, dc, param2, param3, sourcedb, action, version string) error) error {
 	var err error
 
 	appCLI := cli.NewApp()
@@ -141,7 +141,7 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					Value: "latest",
 				},
 				cli.StringFlag{
-					Name:  "param1, p1",
+					Name:  "dc",
 					Usage: "Зарезервировано",
 					Value: "false",
 				},
@@ -168,7 +168,7 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 			},
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
-				param1 := c.String("param1")
+				dc := c.String("dc")
 				param2 := c.String("param2")
 				param3 := c.String("param3")
 				dir := c.String("dir")
@@ -179,7 +179,7 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					dir, err = RootDir()
 				}
 
-				err = funcCLI(ctx, "", dir, "", "", service, param1, param2, param3, sourcedb, "init", version)
+				err = funcCLI(ctx, "", dir, "", "", service, dc, param2, param3, sourcedb, "init", version)
 				return err
 			},
 		},
