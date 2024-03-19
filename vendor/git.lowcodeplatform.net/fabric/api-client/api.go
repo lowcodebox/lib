@@ -58,10 +58,10 @@ type Obj interface {
 
 // Query результат выводим в объект как при вызове Curl
 func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.query(ctx, query, method, bodyJSON)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.query(ctx, query, method, bodyJSON)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return "", fmt.Errorf("error request Query (primary route). check apiCircuitBreaker. err: %s", err)
@@ -108,10 +108,10 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 	if uids == "" {
 		return result, fmt.Errorf("error ObjGet. uids is empty")
 	}
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.objGet(ctx, uids)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.objGet(ctx, uids)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ObjGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request ObjGet (primary route). check apiCircuitBreaker. err: %s", err)
@@ -174,10 +174,10 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 
 // LinkDelete - удаление линки
 func (a *api) LinkDelete(ctx context.Context, element, from, to string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.linkOperation(ctx, constOperationDelete, element, from, to)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.linkOperation(ctx, constOperationDelete, element, from, to)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error LinkDelete primary haproxy",
 			zap.String("operation", constOperationDelete),
@@ -193,10 +193,10 @@ func (a *api) LinkDelete(ctx context.Context, element, from, to string) (result 
 
 // LinkAdd - добавление линки в объект
 func (a *api) LinkAdd(ctx context.Context, element, from, to string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.linkOperation(ctx, constOperationAdd, element, from, to)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.linkOperation(ctx, constOperationAdd, element, from, to)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error LinkAdd primary haproxy",
 			zap.String("operation", constOperationAdd),
@@ -212,10 +212,10 @@ func (a *api) LinkAdd(ctx context.Context, element, from, to string) (result mod
 
 // LinkGet - получение связанных объектов
 func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.linkGet(ctx, tpl, obj, mode, short)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.linkGet(ctx, tpl, obj, mode, short)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error LinkGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request LinkGet (primary route). check apiCircuitBreaker. err: %s", err)
@@ -274,10 +274,10 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 	if uid == "" {
 		return result, fmt.Errorf("[ObjAttrUpdate] error ObjAttrUpdate. uid is empty")
 	}
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.objAttrUpdate(ctx, uid, name, value, src, editor)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.objAttrUpdate(ctx, uid, name, value, src, editor)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ObjAttrUpdate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("[ObjAttrUpdate] error request ObjAttrUpdate (primary route). check apiCircuitBreaker. err: %s", err)
@@ -297,10 +297,10 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 // all (elements) - Получаем поля, по заданному в параметрах типу
 // "" - без действия - получаем все поля для объекта
 func (a *api) Element(ctx context.Context, action, body string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.element(ctx, action, body)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.element(ctx, action, body)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error Element primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("[Element] error request Element (primary route). check apiCircuitBreaker. err: %s", err)
@@ -360,13 +360,13 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 }
 
 func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.objCreate(ctx, bodymap)
-		if err != nil {
-			err = fmt.Errorf("error ObjCreate, bodymap: %+v, err: %s)", bodymap, err)
-		}
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.objCreate(ctx, bodymap)
+	//if err != nil {
+	//	err = fmt.Errorf("error ObjCreate, bodymap: %+v, err: %s)", bodymap, err)
+	//}
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ObjCreate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request ObjCreate (primary route). check apiCircuitBreaker. err: %s", err)
@@ -376,10 +376,10 @@ func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result 
 }
 
 func (a *api) ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.objDelete(ctx, uids)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.objDelete(ctx, uids)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ObjDelete primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request ObjDelete (primary route). check apiCircuitBreaker. err: %s", err)

@@ -38,10 +38,10 @@ type IAM interface {
 }
 
 func (a *iam) Refresh(ctx context.Context, token, profile string, expire bool) (result string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.refresh(ctx, token, profile, expire)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.refresh(ctx, token, profile, expire)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error Refresh primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request Refresh (primary route). check iamCircuitBreaker. err: %s", err)
@@ -51,10 +51,10 @@ func (a *iam) Refresh(ctx context.Context, token, profile string, expire bool) (
 }
 
 func (a *iam) ProfileGet(ctx context.Context, sessionID string) (result string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.profileGet(ctx, sessionID)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.profileGet(ctx, sessionID)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ProfileGet primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request ProfileGet (primary route). check iamCircuitBreaker. err: %s", err)
@@ -64,10 +64,10 @@ func (a *iam) ProfileGet(ctx context.Context, sessionID string) (result string, 
 }
 
 func (a *iam) ProfileList(ctx context.Context) (result string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		result, err = a.profileList(ctx)
-		return result, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.profileList(ctx)
+	//return result, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error ProfileList primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request ProfileList (primary route). check iamCircuitBreaker. err: %s", err)
@@ -77,10 +77,10 @@ func (a *iam) ProfileList(ctx context.Context) (result string, err error) {
 }
 
 func (a *iam) Auth(ctx context.Context, payload, ref string) (status bool, token string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		status, token, err = a.auth(ctx, payload, ref)
-		return status, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	status, token, err = a.auth(ctx, payload, ref)
+	//return status, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error Auth primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return status, token, fmt.Errorf("error request Auth (primary route). check iamCircuitBreaker. err: %s", err)
@@ -90,10 +90,10 @@ func (a *iam) Auth(ctx context.Context, payload, ref string) (status bool, token
 }
 
 func (a *iam) Verify(ctx context.Context, tokenString string) (status bool, body *models.Token, refreshToken string, err error) {
-	_, err = a.cb.Execute(func() (interface{}, error) {
-		status, body, refreshToken, err = a.verify(ctx, tokenString)
-		return status, err
-	})
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	status, body, refreshToken, err = a.verify(ctx, tokenString)
+	//return status, err
+	//})
 	if err != nil {
 		logger.Error(ctx, "error Verify primary iam", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return status, body, refreshToken, fmt.Errorf("error request Verify (primary route). check iamCircuitBreaker. err: %s", err)
