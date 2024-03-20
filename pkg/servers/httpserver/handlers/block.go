@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
@@ -20,6 +21,7 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/block [get]
 func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
+	var serviceResult model.ServiceBlockOut
 	var err error
 	defer func() {
 		if err != nil {
@@ -33,8 +35,11 @@ func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceResult, er := h.service.Block(r.Context(), in)
-	if er != nil {
+	serviceResult, err = lib.Retrier(h.cfg.MaxCountRetries.Value, h.cfg.TimeRetries.Value, true, func() (model.ServiceBlockOut, error) {
+		serviceResult, er = h.service.Block(r.Context(), in)
+		return serviceResult, err
+	})
+	if err != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec service.Block")
 		return
 	}

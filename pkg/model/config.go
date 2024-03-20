@@ -167,6 +167,9 @@ type Config struct {
 	SigninUrl              string `envconfig:"SIGNIN_URL" default:""`
 	SkipSecurityMiddleware string `envconfig:"SKIP_SECURITY_MIDDLEWARE" default:""`
 
+	MaxCountRetries Int      `envconfig:"PROXY_MAX_COUNT_RETRIES" default:"2"`
+	TimeRetries     Duration `envconfig:"PROXY_TIME_RETRIES" default:"1s"`
+
 	Title                   string `envconfig:"TITLE" default:""`
 	ToBuild                 string `envconfig:"TO_BUILD" default:""`
 	ToUpdate                string `envconfig:"TO_UPDATE" default:""`

@@ -101,6 +101,13 @@ func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string
 		return fmt.Sprint(value), err
 	}
 
+	if err != nil {
+		cacheValue, err = a.Query(ctx, query, method, bodyJSON)
+		if err != nil {
+			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		}
+	}
+
 	return fmt.Sprint(cacheValue), err
 }
 
@@ -162,9 +169,16 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 		return &res, err
 	}
 
+	if err != nil {
+		cacheValue, err = a.ObjGet(ctx, uids)
+		if err != nil {
+			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		}
+	}
+
 	res, ok := cacheValue.(models.ResponseData)
 	if !ok {
-		return result, fmt.Errorf("[ObjGetWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
+		return result, fmt.Errorf("[ObjGetWithCache] error. cast get cache type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
 	//fmt.Printf("\nберем объект из кеша. общее время: %fc, err: %s reqID: %s\n\n", time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
@@ -261,6 +275,13 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 		return result, err
 	}
 
+	if err != nil {
+		cacheValue, err = a.LinkGet(ctx, tpl, obj, mode, short)
+		if err != nil {
+			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		}
+	}
+
 	result, ok = cacheValue.(models.ResponseData)
 	if !ok {
 		return result, fmt.Errorf("[LinkGetWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
@@ -349,6 +370,13 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 		}
 
 		return result, err
+	}
+
+	if err != nil {
+		cacheValue, err = a.Element(ctx, action, body)
+		if err != nil {
+			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		}
 	}
 
 	result, ok = cacheValue.(models.ResponseData)

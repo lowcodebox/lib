@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/gorilla/mux"
@@ -22,6 +23,7 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/page [get]
 func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
+	var serviceResult model.ServicePageOut
 	var err error
 	//t := time.Now()
 	defer func() {
@@ -36,9 +38,10 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceResult, er := h.service.Page(r.Context(), in)
-	//log.Printf("\n\nservice.Page %v", time.Since(t).Seconds())
-
+	serviceResult, err = lib.Retrier(h.cfg.MaxCountRetries.Value, h.cfg.TimeRetries.Value, true, func() (model.ServicePageOut, error) {
+		serviceResult, err = h.service.Page(r.Context(), in)
+		return serviceResult, err
+	})
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
 		return
