@@ -24,6 +24,15 @@ var reCrLf = regexp.MustCompile(`[\r\n]+`)
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
 func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
+	r, _, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	return r, err
+}
+
+func CurlCookies(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, err error) {
+	return curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+}
+
+func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -74,7 +83,7 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	case "JSONTOGET": // преобразуем параметры в json в строку запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -88,7 +97,7 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	case "JSONTOPOST": // преобразуем параметры в json в тело запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -115,14 +124,14 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 	resp, err := client.Do(req)
 	if err != nil {
 		//fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
-		return "", err
+		return "", nil, err
 	} else {
 		defer resp.Body.Close()
 	}
 
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	responseString := string(responseData)
 
@@ -138,7 +147,7 @@ func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface
 		err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.Status, method, req, responseString)
 	}
 
-	return responseString, err
+	return responseString, resp.Cookies(), err
 }
 
 func AddressProxy(addressProxy, interval string) (port string, err error) {

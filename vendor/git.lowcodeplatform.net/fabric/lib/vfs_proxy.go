@@ -1,11 +1,13 @@
 package lib
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -82,6 +84,23 @@ func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		Rewrite: func(r *httputil.ProxyRequest) {
 			r.SetXForwarded()
 			r.SetURL(parsedUrl)
+		},
+		ModifyResponse: func(resp *http.Response) error {
+			resp.Header.Del("Server")
+			for k := range resp.Header {
+				if strings.HasPrefix(k, "X-Amz-") {
+					resp.Header.Del(k)
+				}
+			}
+
+			if resp.StatusCode == http.StatusNotFound {
+				resp.Body = io.NopCloser(bytes.NewReader(nil))
+				resp.Header.Del("Content-Type")
+				resp.Header.Set("Content-Length", "0")
+				resp.ContentLength = 0
+			}
+
+			return nil
 		},
 	}
 

@@ -66,7 +66,7 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 }
 
 // RunProcess стартуем сервис из конфига
-func RunProcess(path, config, command, mode string) (pid int, err error) {
+func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
@@ -79,7 +79,7 @@ func RunProcess(path, config, command, mode string) (pid int, err error) {
 
 	path = strings.Replace(path, "//", "/", -1)
 
-	cmd = exec.Command(path, command, "--config", config, "--mode", mode)
+	cmd = exec.Command(path, command, "--config", config, "--mode", mode, "--dc", dc)
 	if mode == "debug" {
 		t := time.Now().Format("2006.01.02-15-04-05")
 		s := strings.Split(path, sep)
