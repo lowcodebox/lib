@@ -147,14 +147,15 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 		// возможно передача параметров была через /
 		if !flagPublicPages {
-			for _, k := range strings.Split(r.RequestURI, "/") {
+			p := strings.Split(r.RequestURI, "?")[0] // чистим от параметров в урле
+			for _, k := range strings.Split(p, "/") {
 				if dps.PublicPages[k] {
 					flagPublicPages = true
 					break
 				}
 			}
 			// фикс для открытой корневой страницы
-			if dps.PublicPages[r.RequestURI] {
+			if dps.PublicPages[p] {
 				flagPublicPages = true
 			}
 		}

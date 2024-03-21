@@ -246,10 +246,17 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}
 	cfg.PortApp = port
 
-	cache := implCache.New(
+	cache, err := implCache.New(
 		cfg,
 		fnc,
 	)
+	if err == nil {
+		fmt.Printf("%s Cache-service is running\n", done)
+		logger.Info(ctx, "cache is running")
+	} else {
+		fmt.Printf("%s Cache-service is not running\n (cfg.CachePointsrc: %s, err: %s)\n", fail, cfg.CachePointsrc, err)
+		logger.Info(ctx, "cache running is failed")
+	}
 
 	// собираем сервис
 	src := service.New(

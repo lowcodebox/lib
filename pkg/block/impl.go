@@ -46,7 +46,8 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 		key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addConditionPath, addConditionURL)
 		result, _, flagExpired, err = s.cache.Read(key)
 
-		fmt.Printf("s.cache.GenKey result: ", key, result)
+		logger.Info(ctx, "get block from cache", zap.Float64("timing", time.Since(t1).Seconds()),
+			zap.String("block", block.Uid), zap.String("block (id)", block.Id))
 
 		// 1 кеша нет (срабатывает только при первом формировании)
 		if err != nil {
@@ -77,7 +78,12 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 		}
 
 	} else {
+		t2 := time.Now()
 		mResult, err := s.generate(ctx, in, block, page, values)
+		logger.Info(ctx, "gen block (no cache)", zap.String("step", "s.block generate"),
+			zap.String("block", block.Uid), zap.String("block (id)", block.Id),
+			zap.Float64("timing", time.Since(t2).Seconds()))
+
 		if err != nil {
 			moduleResult.Result = ""
 			moduleResult.Err = err
