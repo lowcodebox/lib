@@ -91,20 +91,18 @@ func (a *api) QueryWithCache(ctx context.Context, query, method, bodyJSON string
 			res, err = a.Query(ctx, query, method, bodyJSON)
 			return res, err
 		}, a.cacheUpdateInterval)
-		if err != nil {
-			return "", fmt.Errorf("error from cache update. err: %s", err)
+		if err == nil && value != nil {
+			return fmt.Sprint(value), nil
+		} else {
+			err = fmt.Errorf("error exec cache query (Query). err: %s, value is empty: %t, value: %+v", err, value == nil, value)
 		}
-		if value == nil {
-			return "", fmt.Errorf("returned result from cache update is empty")
-		}
-
-		return fmt.Sprint(value), err
 	}
 
 	if err != nil {
+		logger.Error(ctx, "error exec cache query", zap.String("func", "QueryWithCache"), zap.String("key", key), zap.Error(err))
 		cacheValue, err = a.Query(ctx, query, method, bodyJSON)
 		if err != nil {
-			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+			return result, fmt.Errorf("error get cache (Query). err: %s", err)
 		}
 	}
 
@@ -128,16 +126,6 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 }
 
 func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.ResponseData, err error) {
-
-	//t, e := a.ObjGet(ctx, uids)
-	//return &t, e
-
-	//t := time.Now()
-	//defer func() {
-	//	fmt.Printf("\nDEFER Время выполнения общее ObjGetWithCache: %fc\n", time.Since(t).Seconds())
-	//}()
-
-	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
 	if a.observeLog {
@@ -146,7 +134,6 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 	key := lib.Hash(uids)
 
 	cacheValue, err := cache.Cache().Get(key)
-	//fmt.Printf("\nберем объект из кеша. cacheValue uids: %s len %s, время: %fc, err: %s, reqID: %s", uids, len(fmt.Sprint(cacheValue)), time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
 
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
@@ -154,36 +141,33 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 			res, err = a.ObjGet(ctx, uids)
 			return res, err
 		}, a.cacheUpdateInterval)
-		if err != nil {
-			return nil, fmt.Errorf("error from cache update. err: %s", err)
+		if err == nil && value != nil {
+			res, ok := value.(models.ResponseData)
+			if ok {
+				return &res, nil
+			}
+			err = fmt.Errorf("error cast type in cache query (ObjGetWithCache). err: %s, value is empty: %t, result: %+v", err, value == nil, value)
+		} else {
+			err = fmt.Errorf("error exec cache query (ObjGet). err: %s, value is empty: %t", err, value == nil)
 		}
-		if value == nil {
-			return nil, fmt.Errorf("returned result from cache update is empty")
-		}
-
-		res, ok := value.(models.ResponseData)
-		if !ok {
-			err = fmt.Errorf("[ObjGetWithCache] error. cast type (ResponseData) is fail for cache.ErrorKeyNotFound. result: %+v", value)
-		}
-
-		return &res, err
 	}
 
+	// повторяем запрос (без кеша)
 	if err != nil {
+		logger.Error(ctx, "error exec cache query", zap.String("func", "ObjGetWithCache"), zap.String("key", key), zap.Error(err))
 		cacheValue, err = a.ObjGet(ctx, uids)
-		if err != nil {
-			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		if err == nil && cacheValue != nil {
+			res, ok := cacheValue.(models.ResponseData)
+			if ok {
+				return &res, nil
+			}
+			err = fmt.Errorf("error cast type in query (ObjGet). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+		} else {
+			err = fmt.Errorf("error exec query (ObjGet). err: %s, value is empty: %t", err, cacheValue == nil)
 		}
 	}
 
-	res, ok := cacheValue.(models.ResponseData)
-	if !ok {
-		return result, fmt.Errorf("[ObjGetWithCache] error. cast get cache type (ResponseData) is fail. result: %+v", cacheValue)
-	}
-
-	//fmt.Printf("\nберем объект из кеша. общее время: %fc, err: %s reqID: %s\n\n", time.Since(t).Seconds(), err, logger.GetRequestIDCtx(ctx))
-
-	return &res, err
+	return result, err
 }
 
 // LinkDelete - удаление линки
@@ -260,31 +244,30 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 			res, err = a.LinkGet(ctx, tpl, obj, mode, short)
 			return res, err
 		}, a.cacheUpdateInterval)
-		if err != nil {
-			return result, fmt.Errorf("error from cache update. err: %s", err)
+		if err == nil && value != nil {
+			result, ok = value.(models.ResponseData)
+			if ok {
+				return result, nil
+			}
+			err = fmt.Errorf("error cast type in cache query (LinkGetWithCache). err: %s, value is empty: %t, result: %+v", err, value == nil, value)
+		} else {
+			err = fmt.Errorf("error exec cache query (LinkGet). err: %s, value is empty: %t", err, value == nil)
 		}
-		if value == nil {
-			return result, fmt.Errorf("returned result from cache update is empty")
-		}
-
-		result, ok = value.(models.ResponseData)
-		if !ok {
-			err = fmt.Errorf("[LinkGetWithCache] error. cast type (ResponseData) is fail. result: %+v", value)
-		}
-
-		return result, err
 	}
 
+	// повторяем запрос (без кеша)
 	if err != nil {
+		logger.Error(ctx, "error exec cache query", zap.String("func", "LinkGetWithCache"), zap.String("key", key), zap.Error(err))
 		cacheValue, err = a.LinkGet(ctx, tpl, obj, mode, short)
-		if err != nil {
-			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		if err == nil && cacheValue != nil {
+			res, ok := cacheValue.(models.ResponseData)
+			if ok {
+				return res, nil
+			}
+			err = fmt.Errorf("error cast type in query (LinkGet). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+		} else {
+			err = fmt.Errorf("error exec query (LinkGet). err: %s, value is empty: %t", err, cacheValue == nil)
 		}
-	}
-
-	result, ok = cacheValue.(models.ResponseData)
-	if !ok {
-		return result, fmt.Errorf("[LinkGetWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
 	return result, err
@@ -357,31 +340,30 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 			res, err = a.Element(ctx, action, body)
 			return res, err
 		}, a.cacheUpdateInterval)
-		if err != nil {
-			return result, fmt.Errorf("error from cache update. err: %s", err)
+		if err == nil && value != nil {
+			result, ok = value.(models.ResponseData)
+			if ok {
+				return result, nil
+			}
+			err = fmt.Errorf("error cast type in cache query (ElementWithCache). err: %s, value is empty: %t, result: %+v", err, value == nil, value)
+		} else {
+			err = fmt.Errorf("error exec cache query. err: %s, value is empty: %t", err, value == nil)
 		}
-		if value == nil {
-			return result, fmt.Errorf("returned result from cache update is empty")
-		}
-
-		result, ok = value.(models.ResponseData)
-		if !ok {
-			err = fmt.Errorf("[ElementWithCache] error. cast type (ResponseData) is fail. result: %+v", value)
-		}
-
-		return result, err
 	}
 
+	// повторяем запрос (без кеша)
 	if err != nil {
+		logger.Error(ctx, "error exec cache query", zap.String("func", "ElementWithCache"), zap.String("key", key), zap.Error(err))
 		cacheValue, err = a.Element(ctx, action, body)
-		if err != nil {
-			return result, fmt.Errorf("[ObjGetWithCache] error get cache (unknown). err: %s", err)
+		if err == nil && cacheValue != nil {
+			res, ok := cacheValue.(models.ResponseData)
+			if ok {
+				return res, nil
+			}
+			err = fmt.Errorf("error cast type in query (Element). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+		} else {
+			err = fmt.Errorf("error exec query (Element). err: %s, value is empty: %t", err, cacheValue == nil)
 		}
-	}
-
-	result, ok = cacheValue.(models.ResponseData)
-	if !ok {
-		return result, fmt.Errorf("[ElementWithCache] error. cast type (ResponseData) is fail. result: %+v", cacheValue)
 	}
 
 	return result, err

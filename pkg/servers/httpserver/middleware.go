@@ -98,12 +98,12 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 			// пропускаем разрешенные страницы/пути
 			if flagPublicPages || flagPublicRoutes || strings.Contains(refURL, h.cfg.SigninUrl) {
-				logger.Error(r.Context(), "auth skip after public pages/block",
-					zap.String("URL", fmt.Sprintf("%+v", r.RequestURI)),
-					zap.String("flagPublicPages", fmt.Sprintf("%+v", flagPublicPages)),
-					zap.String("flagPublicRoutes", fmt.Sprintf("%+v", flagPublicRoutes)),
-					zap.String("rnd", rnd),
-					zap.Error(err))
+				//logger.Info(r.Context(), "auth skip after public pages/block",
+				//	zap.String("URL", fmt.Sprintf("%+v", r.RequestURI)),
+				//	zap.String("flagPublicPages", fmt.Sprintf("%+v", flagPublicPages)),
+				//	zap.String("flagPublicRoutes", fmt.Sprintf("%+v", flagPublicRoutes)),
+				//	zap.String("rnd", rnd),
+				//	zap.Error(err))
 				next.ServeHTTP(w, r)
 				return
 			}

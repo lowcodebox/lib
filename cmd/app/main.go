@@ -255,7 +255,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		logger.Info(ctx, "cache is running")
 	} else {
 		fmt.Printf("%s Cache-service is not running\n (cfg.CachePointsrc: %s, err: %s)\n", fail, cfg.CachePointsrc, err)
-		logger.Info(ctx, "cache running is failed")
+		logger.Info(ctx, "cache running is failed", zap.String("CachePointsrc", cfg.CachePointsrc), zap.Error(err))
 	}
 
 	// собираем сервис
