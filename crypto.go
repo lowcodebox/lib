@@ -14,6 +14,12 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/models"
+	"golang.org/x/crypto/argon2"
+)
+
+var (
+	ErrInvalidHash         = errors.New("the encoded hash is not in the correct format")
+	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
 
 // Пример использования
@@ -147,4 +153,121 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool
 	}
 
 	return xsKeyValid
+}
+
+type paramsArgon2 struct {
+	memory      uint32
+	iterations  uint32
+	parallelism uint8
+	saltLength  uint32
+	keyLength   uint32
+	salt        []byte
+}
+
+func EncryptArgon2(value string, params *paramsArgon2) (string, error) {
+	p := &paramsArgon2{
+		memory:      64 * 1024,
+		iterations:  3,
+		parallelism: 2,
+		saltLength:  16,
+		keyLength:   32,
+	}
+	if params != nil {
+		if params.memory != 0 {
+			p.memory = params.memory
+		}
+		if params.iterations != 0 {
+			p.iterations = params.iterations
+		}
+		if params.parallelism != 0 {
+			p.parallelism = params.parallelism
+		}
+		if params.keyLength != 0 {
+			p.keyLength = params.keyLength
+		}
+		if params.keyLength != 0 {
+			p.keyLength = params.keyLength
+		}
+		if len(params.salt) != 0 {
+			p.salt = params.salt
+		}
+	}
+
+	salt, err := generateRandomBytes(p.saltLength)
+	if err != nil {
+		return "", err
+	}
+
+	if len(p.salt) != 0 {
+		salt = p.salt
+	}
+
+	hash := argon2.IDKey([]byte(value), salt, p.iterations, p.memory, p.parallelism, p.keyLength)
+	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+	encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
+
+	return base64.RawStdEncoding.EncodeToString([]byte(encodedHash)), nil
+}
+
+func CheckArgon2(rawText, cryptoText string) bool {
+	encodedHash, _ := base64.RawStdEncoding.Strict().DecodeString(cryptoText)
+	p, salt, _, err := decodeHash(string(encodedHash))
+	if err != nil {
+		return false
+	}
+
+	p.salt = salt
+	thisHash, _ := EncryptArgon2(rawText, p)
+	if thisHash == cryptoText {
+		return true
+	}
+
+	return false
+}
+
+func generateRandomBytes(n uint32) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func decodeHash(encodedHash string) (p *paramsArgon2, salt, hash []byte, err error) {
+	vals := strings.Split(encodedHash, "$")
+	if len(vals) != 6 {
+		return nil, nil, nil, ErrInvalidHash
+	}
+
+	var version int
+	_, err = fmt.Sscanf(vals[2], "v=%d", &version)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if version != argon2.Version {
+		return nil, nil, nil, ErrIncompatibleVersion
+	}
+
+	p = &paramsArgon2{}
+	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	salt, err = base64.RawStdEncoding.Strict().DecodeString(vals[4])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.saltLength = uint32(len(salt))
+
+	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.keyLength = uint32(len(hash))
+
+	return p, salt, hash, nil
 }

@@ -25,3 +25,30 @@ func TestXServiceKey(t *testing.T) {
 
 	}
 }
+
+func TestEncryptArgon2(t *testing.T) {
+	cases := []struct {
+		domain        string
+		projectKey    []byte
+		tokenInterval time.Duration
+	}{
+		{"algiva/orm", []byte("LKHlhb899Y09olUi"), 1000 * time.Second},
+	}
+
+	for _, c := range cases {
+		token, err := EncryptArgon2(c.domain, nil)
+		if err != nil {
+			t.Errorf("error %s", err)
+		}
+
+		boolRes := CheckArgon2(c.domain, token)
+		if !boolRes {
+			t.Errorf("Result was incorrect, got: %t, want: %t.", true, false)
+		}
+
+		boolRes = CheckArgon2(c.domain+"randtext", token)
+		if boolRes {
+			t.Errorf("Result was incorrect, got: %t, want: %t.", true, false)
+		}
+	}
+}
