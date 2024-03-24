@@ -11,6 +11,7 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
+	"git.lowcodeplatform.net/packages/logger/types"
 	"go.uber.org/zap"
 )
 
@@ -298,10 +299,21 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 func (h *httpserver) Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func(r *http.Request) {
-			rec := recover()
-			if rec != nil {
-				b := string(debug.Stack())
-				logger.Panic(h.ctx, fmt.Sprintf("Recover panic from path: %s, form: %+v", r.URL.String(), r.Form), zap.String("debug stack", b))
+			if err := recover(); err != nil {
+				if fmt.Sprint(err) == http.ErrAbortHandler.Error() {
+					// клиент закрыл подключение
+					logger.Warn(h.ctx, "net abort handler",
+						zap.Any("error", err),
+						types.URL("url", r.URL.String()),
+						zap.String("form", fmt.Sprintf("%+v", r.Form)))
+				} else {
+					logger.Error(h.ctx, "recovered panic",
+						zap.String("level", "panic"),
+						zap.Any("error", err),
+						types.URL("url", r.URL.String()),
+						zap.String("form", fmt.Sprintf("%+v", r.Form)),
+						zap.ByteString("debug stack", debug.Stack()))
+				}
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}(r)
