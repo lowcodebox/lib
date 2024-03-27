@@ -58,6 +58,11 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 
 	//log.Printf("\n\nполучаем (с кешем) объект страницы) s.api.ObjGetWithCache %fc reqID: %s\n", time.Since(t2).Seconds(), logger.GetRequestIDCtx(ctx))
 
+	if objPage == nil {
+		err = fmt.Errorf("%s (%s)", "Error: Fail GET-request! (response is empty)")
+		return out, err
+	}
+
 	// ФИКС! иногда в разных приложениях называют одинаково страницы.
 	// удаляем из объекта objPage значения не текущего приложения
 	if len(objPage.Data) > 1 {

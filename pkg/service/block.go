@@ -3,28 +3,24 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
-	"go.uber.org/zap"
 )
 
 func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error) {
 	var objBlock *models.ResponseData
 
-	t1 := time.Now()
-	rnd := lib.UUID()
+	//t1 := time.Now()
+	//rnd := lib.UUID()
 
 	dataPage := models.Data{} // пустое значение, используется в блоке для кеширования если он вызывается из страницы
 	objBlock, err = s.api.ObjGetWithCache(ctx, in.Block)
-	logger.Info(ctx, "gen block",
-		zap.String("block", in.Block),
-		zap.String("step", "получение блока (ObjGetWithCache)"),
-		zap.Float64("timing", time.Since(t1).Seconds()),
-		zap.String("rnd", rnd))
+	//logger.Info(ctx, "gen block",
+	//	zap.String("block", in.Block),
+	//	zap.String("step", "получение блока (ObjGetWithCache)"),
+	//	zap.Float64("timing", time.Since(t1).Seconds()),
+	//	zap.String("rnd", rnd))
 
 	if err != nil {
 		return out, fmt.Errorf("error get obj with cache. block: %s, err: %s", in.Block, err)
@@ -33,19 +29,24 @@ func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.Serv
 		return out, fmt.Errorf("error. lenght data from objBlock is 0. block: %s", in.Block)
 	}
 	if len(objBlock.Data) == 0 {
-		return out, fmt.Errorf("error. lenght data from objBlock is 0. block: %s", in.Block)
+		return out, fmt.Errorf("error. lenght data from objBlock.Data is 0. block: %s", in.Block)
 	}
-	t2 := time.Now()
+	//t2 := time.Now()
+
+	//logger.Info(ctx, "gen block",
+	//	zap.Any("objBlock.Data[0]", objBlock.Data[0]),
+	//	zap.String("step", " блока (полная)"),
+	//	zap.Float64("timing", time.Since(t2).Seconds()), zap.String("rnd", rnd))
 
 	moduleResult, err := s.block.Get(ctx, in, objBlock.Data[0], dataPage, nil)
 	if err != nil {
 		return out, fmt.Errorf("error get obj block: %s, err: %s", in.Block, err)
 	}
 
-	logger.Info(ctx, "gen block",
-		zap.String("block", in.Block),
-		zap.String("step", "генерация блока (полная)"),
-		zap.Float64("timing", time.Since(t2).Seconds()), zap.String("rnd", rnd))
+	//logger.Info(ctx, "gen block",
+	//	zap.String("block", in.Block),
+	//	zap.String("step", "генерация блока (полная)"),
+	//	zap.Float64("timing", time.Since(t2).Seconds()), zap.String("rnd", rnd))
 
 	out.Result = moduleResult.Result
 

@@ -22,37 +22,39 @@ import (
 // @Router /api/v1/block [get]
 func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 	var serviceResult model.ServiceBlockOut
+	var in model.ServiceIn
+	var response template.HTML
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Block] Error response execution", zap.Error(err))
 		}
 	}()
 
-	in, er := blockDecodeRequest(r.Context(), r)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockDecodeRequest")
+	in, err = blockDecodeRequest(r.Context(), r)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockDecodeRequest")
 		return
 	}
 
 	serviceResult, err = lib.Retrier(h.cfg.MaxCountRetries.Value, h.cfg.TimeRetries.Value, true, func() (model.ServiceBlockOut, error) {
-		serviceResult, er = h.service.Block(r.Context(), in)
+		serviceResult, err = h.service.Block(r.Context(), in)
 		return serviceResult, err
 	})
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec service.Block")
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec service.Block")
 		return
 	}
 
-	response, _ := blockEncodeResponse(r.Context(), &serviceResult)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockEncodeResponse")
+	response, err = blockEncodeResponse(r.Context(), &serviceResult)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, string(response))
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec transportResponseHTTP")
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec transportResponseHTTP")
 		return
 	}
 

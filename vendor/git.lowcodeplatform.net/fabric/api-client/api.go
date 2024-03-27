@@ -167,6 +167,16 @@ func (a *api) ObjGetWithCache(ctx context.Context, uids string) (result *models.
 		}
 	}
 
+	if err == nil && cacheValue != nil {
+		res, ok := cacheValue.(models.ResponseData)
+		if ok {
+			return &res, nil
+		}
+		err = fmt.Errorf("error cast type in query (ObjGet). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+	} else {
+		err = fmt.Errorf("error exec query (ObjGet). err: %s, value is empty: %t", err, cacheValue == nil)
+	}
+
 	return result, err
 }
 
@@ -225,9 +235,6 @@ func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 // LinkGetWithCache - получение связанных объектов
 // (с кешем если задан TTL кеширования при инициализации кеша)
 func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
-
-	//return a.LinkGet(ctx, tpl, obj, mode, short)
-
 	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
@@ -268,6 +275,16 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 		} else {
 			err = fmt.Errorf("error exec query (LinkGet). err: %s, value is empty: %t", err, cacheValue == nil)
 		}
+	}
+
+	if err == nil && cacheValue != nil {
+		res, ok := cacheValue.(models.ResponseData)
+		if ok {
+			return res, nil
+		}
+		err = fmt.Errorf("error cast type in query (ObjGet). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+	} else {
+		err = fmt.Errorf("error exec query (ObjGet). err: %s, value is empty: %t", err, cacheValue == nil)
 	}
 
 	return result, err
@@ -364,6 +381,16 @@ func (a *api) ElementWithCache(ctx context.Context, action, body string) (result
 		} else {
 			err = fmt.Errorf("error exec query (Element). err: %s, value is empty: %t", err, cacheValue == nil)
 		}
+	}
+
+	if err == nil && cacheValue != nil {
+		res, ok := cacheValue.(models.ResponseData)
+		if ok {
+			return res, nil
+		}
+		err = fmt.Errorf("error cast type in query (ObjGet). err: %s, value is empty: %t, result: %+v", err, cacheValue == nil, cacheValue)
+	} else {
+		err = fmt.Errorf("error exec query (ObjGet). err: %s, value is empty: %t", err, cacheValue == nil)
 	}
 
 	return result, err
