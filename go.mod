@@ -5,7 +5,7 @@ go 1.20
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.2.35
 	git.lowcodeplatform.net/fabric/iam-client v0.1.14
-	git.lowcodeplatform.net/fabric/lib v0.2.32
+	git.lowcodeplatform.net/fabric/lib v0.2.35
 	git.lowcodeplatform.net/fabric/models v0.1.32
 	git.lowcodeplatform.net/packages/cache v0.1.19
 	git.lowcodeplatform.net/packages/logger v0.1.24
@@ -104,10 +104,10 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect

@@ -34,7 +34,7 @@ func ConfigLoad(config string, pointToCfg interface{}) (err error) {
 		if len(config) == 0 {
 			return fmt.Errorf("%s", "Error. Configfile is empty.")
 		}
-		if !strings.Contains(config, "."){
+		if !strings.Contains(config, ".") {
 			config = config + ".cfg"
 		}
 
@@ -52,13 +52,13 @@ func ConfigLoad(config string, pointToCfg interface{}) (err error) {
 		}
 		payload = string(debase)
 	}
-	err = decodeConfig(payload, pointToCfg)
+	err = DecodeConfig(payload, pointToCfg)
 
 	return err
 }
 
-// Читаем конфигурация по заданному полному пути
-func decodeConfig(configfile string, cfg interface{}) (err error) {
+// DecodeConfig Читаем конфигурация из строки
+func DecodeConfig(configfile string, cfg interface{}) (err error) {
 	if _, err = toml.Decode(configfile, cfg); err != nil {
 		fmt.Printf("%s Error: %s (configfile: %s)\n", warning, err, configfile)
 	}
@@ -96,7 +96,7 @@ func searchConfigDir(startDir, configuration string) (configPath string, err err
 		} else {
 			if !strings.Contains(nextPath, "/.") {
 				// проверяем только файлы конфигурации (игнорируем .json)
-				if strings.Contains(obj.Name(), configuration + ".cfg") {
+				if strings.Contains(obj.Name(), configuration+".cfg") {
 					return nextPath, err
 				}
 			}
