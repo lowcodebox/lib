@@ -24,17 +24,21 @@ import (
 // @Router /api/v1/page [get]
 func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 	var serviceResult model.ServicePageOut
+	var in model.ServiceIn
 	var err error
+	var response string
 	//t := time.Now()
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Page] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.Error(err))
 		}
 	}()
 
-	in, er := pageDecodeRequest(r.Context(), r)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageDecodeRequest")
+	in, err = pageDecodeRequest(r.Context(), r)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageDecodeRequest")
 		return
 	}
 
@@ -42,20 +46,20 @@ func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
 		serviceResult, err = h.service.Page(r.Context(), in)
 		return serviceResult, err
 	})
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec service.Page")
 		return
 	}
 
-	response, er := pageEncodeResponse(r.Context(), &serviceResult)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageEncodeResponse")
+	response, err = pageEncodeResponse(r.Context(), &serviceResult)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, response)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec transportResponseHTTP")
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec transportResponseHTTP")
 		return
 	}
 

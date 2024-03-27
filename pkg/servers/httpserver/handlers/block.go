@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -27,7 +28,10 @@ func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Block] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Block] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.String("in", fmt.Sprintf("%+v", in)),
+				zap.Error(err))
 		}
 	}()
 

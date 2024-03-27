@@ -51,7 +51,7 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 
 		// 1 кеша нет (срабатывает только при первом формировании)
 		if err != nil {
-			logger.Error(ctx, "err get cache (GetBlock)", zap.String("step", "err get cache"),
+			logger.Info(ctx, "first generate cache (GetBlock)", zap.String("step", "first cache"),
 				zap.Float64("timing", time.Since(t1).Seconds()),
 				zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 

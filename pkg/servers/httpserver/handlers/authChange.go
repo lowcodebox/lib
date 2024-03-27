@@ -13,7 +13,9 @@ func (h *handlers) AuthChangeRole(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[AuthChangeRole] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.Error(err))
 		}
 	}()
 
