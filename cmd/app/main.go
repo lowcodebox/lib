@@ -6,17 +6,19 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"git.lowcodeplatform.net/fabric/api-client"
-	applib "git.lowcodeplatform.net/fabric/app/lib"
 	iam "git.lowcodeplatform.net/fabric/iam-client"
 	"git.lowcodeplatform.net/packages/cache"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	applib "git.lowcodeplatform.net/fabric/app/lib"
 
 	implCache "git.lowcodeplatform.net/fabric/app/pkg/cache"
 	"git.lowcodeplatform.net/fabric/app/pkg/function"
@@ -208,7 +210,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		api,
 	)
 
-	if ClearSlash(cfg.UrlIam) == "" {
+	if strings.TrimSuffix(cfg.UrlIam, "/") == "" {
 		logger.Error(ctx, "Error: UrlIam is empty", zap.Error(err))
 		fmt.Println("Error: UrlIam is empty")
 		return err
@@ -216,7 +218,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 
 	iam := iam.New(
 		ctx,
-		ClearSlash(cfg.UrlIam),
+		strings.TrimSuffix(cfg.UrlIam, "/"),
 		cfg.ProjectKey,
 		cfg.EnableObserverLogIam,
 		cfg.CbMaxRequests,
@@ -305,15 +307,4 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	case err := <-errChannel:
 		return err
 	}
-}
-
-func ClearSlash(str string) (result string) {
-	if len(str) > 1 {
-		if str[len(str)-1:] == "/" {
-			result = str[:len(str)-1]
-		} else {
-			result = str
-		}
-	}
-	return result
 }
