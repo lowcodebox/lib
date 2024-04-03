@@ -129,6 +129,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"refind":              Funcs.refind,
 		"rereplace":           Funcs.rereplace,
 		"replace":             Funcs.Replace,
+		"tolower":             Funcs.toLower,
 		"contains":            Funcs.contains,
 		"contains1":           Funcs.contains1,
 		"dict":                Funcs.dict,
@@ -220,6 +221,10 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 }
 
 var FuncMapS = sprig.FuncMap()
+
+func (t *funcMap) toLower(str string) string {
+	return strings.ToLower(str)
+}
 
 // decodebase64 зашифровывает тело в base64 из строки
 func (t *funcMap) decodebase64(payload string) string {
