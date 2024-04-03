@@ -61,6 +61,8 @@ type Api interface {
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
 	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
+	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
+	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 }
 
@@ -184,6 +186,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"apiobjdelete":        Funcs.apiObjDelete,
 		"apilinkget":          Funcs.apiLinkGet,
 		"apiquery":            Funcs.apiQuery,
+		"apisearch":           Funcs.apiSearch,
 		"curl":                Funcs.curl,
 		"curlfull":            Funcs.curlfull,
 		"parseform":           Funcs.parseform,
@@ -855,6 +858,37 @@ func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (res s
 		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
 	} else {
 		res, err = t.api.Query(ctx, query, method, bodyJSON)
+	}
+
+	if err != nil {
+		res = fmt.Sprint(err)
+	}
+
+	return res
+}
+
+func (t *funcMap) apiSearch(apiURL string, params map[string]string, withcache bool) (res string) {
+	var err error
+	var b1 []byte
+	ctx := context.Background()
+
+	b1, err = json.Marshal(params)
+	if err != nil {
+		return fmt.Sprintf("error marshal params. err: %s", err)
+	}
+
+	if apiURL != "" {
+		if withcache {
+			res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).SearchWithCache(ctx, "apiSearch", http.MethodPost, string(b1))
+		} else {
+			res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Search(ctx, "apiSearch", http.MethodPost, string(b1))
+		}
+	} else {
+		if withcache {
+			res, err = t.api.SearchWithCache(ctx, "apiSearch", http.MethodPost, string(b1))
+		} else {
+			res, err = t.api.Search(ctx, "apiSearch", http.MethodPost, string(b1))
+		}
 	}
 
 	if err != nil {

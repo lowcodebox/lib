@@ -10,6 +10,8 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/curl"
+	"git.lowcodeplatform.net/packages/logger"
+	"go.uber.org/zap"
 )
 
 // Query результат выводим в объект как при вызове Curl
@@ -33,6 +35,30 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result
 		urlc = a.url + "/" + query
 		urlc = strings.Replace(urlc, a.url+"//", a.url+"/", 1)
 	}
+
+	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, nil)
+	if err != nil {
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
+	}
+
+	return fmt.Sprint(res), err
+}
+
+// search результат выводим в объект как при вызове Curl
+func (a *api) search(ctx context.Context, query, method, bodyJSON string) (resp string, err error) {
+	var handlers = map[string]string{}
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return resp, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
+	handlers[headerServiceKey] = token
+
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "Search", err, query, method, bodyJSON)
+	}
+
+	urlc := a.url + "/search"
+	urlc = strings.Replace(urlc, "//search", "/search", 1)
 
 	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, nil)
 	if err != nil {
@@ -252,10 +278,10 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 }
 
 func (a *api) observeLogger(ctx context.Context, start time.Time, method string, err error, arguments ...interface{}) {
-	//logger.Info(ctx, "timing api query",
-	//	zap.String("method", method),
-	//	zap.Float64("timing", time.Since(start).Seconds()),
-	//	zap.String("arguments", fmt.Sprint(arguments)),
-	//	zap.Error(err),
-	//)
+	logger.Info(ctx, "timing api query",
+		zap.String("method", method),
+		zap.Float64("timing", time.Since(start).Seconds()),
+		//zap.String("arguments", fmt.Sprint(arguments)),
+		zap.Error(err),
+	)
 }

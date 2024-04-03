@@ -17,8 +17,6 @@ import (
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
-	"github.com/sony/gobreaker"
 )
 
 const headerRequestId = "X-Request-Id"
@@ -28,9 +26,9 @@ const constOperationDelete = "delete"
 const constOperationAdd = "add"
 
 type api struct {
-	url                 string
-	observeLog          bool
-	cb                  *gobreaker.CircuitBreaker
+	url        string
+	observeLog bool
+	//cb                  *gobreaker.CircuitBreaker
 	cacheUpdateInterval time.Duration
 	domain              string
 	projectKey          string
@@ -50,10 +48,62 @@ type Obj interface {
 	LinkAdd(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
 	LinkDelete(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
 	LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
+	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 	ElementWithCache(ctx context.Context, action, body string) (result models.ResponseData, err error)
+}
+
+// Search результат выводим в объект как при вызове Curl
+func (a *api) Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error) {
+	resp, err = a.search(ctx, query, method, bodyJSON)
+	if err != nil {
+		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Error(err))
+		return resp, fmt.Errorf("error request Search (primary route). err: %s", err)
+	}
+
+	return resp, nil
+}
+
+// SearchWithCache результат выводим в объект как при вызове Curl
+// (с кешем если задан TTL кеширования при инициализации кеша)
+func (a *api) SearchWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
+
+	//return a.Search(ctx, query, method, bodyJSON)
+
+	var handlers = map[string]string{}
+	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "QueryWithCache", err, query, method, bodyJSON)
+	}
+	key := lib.Hash(fmt.Sprintf("%s%s%s", query, method, bodyJSON))
+
+	cacheValue, err := cache.Cache().Get(key)
+
+	if errors.Is(err, cache.ErrorKeyNotFound) {
+		var value interface{}
+		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
+			res, err = a.Search(ctx, query, method, bodyJSON)
+			return res, err
+		}, a.cacheUpdateInterval)
+		if err == nil && value != nil {
+			return fmt.Sprint(value), nil
+		} else {
+			err = fmt.Errorf("error exec cache query (Query). err: %s, value is empty: %t, value: %+v", err, value == nil, value)
+		}
+	}
+
+	if err != nil {
+		logger.Error(ctx, "error exec cache query", zap.String("func", "QueryWithCache"), zap.String("key", key), zap.Error(err))
+		cacheValue, err = a.Search(ctx, query, method, bodyJSON)
+		if err != nil {
+			return result, fmt.Errorf("error get cache (Query). err: %s", err)
+		}
+	}
+
+	return fmt.Sprint(cacheValue), err
 }
 
 // Query результат выводим в объект как при вызове Curl
@@ -63,8 +113,8 @@ func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return "", fmt.Errorf("error request Query (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Error(err))
+		return "", fmt.Errorf("error request Query (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -118,8 +168,8 @@ func (a *api) ObjGet(ctx context.Context, uids string) (result models.ResponseDa
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error ObjGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request ObjGet (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error ObjGet primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request ObjGet (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -191,8 +241,8 @@ func (a *api) LinkDelete(ctx context.Context, element, from, to string) (result 
 			zap.String("operation", constOperationDelete),
 			zap.String("element", element),
 			zap.String("from", from),
-			zap.String("to", to),
-			zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+			zap.String("to", to))
+		//zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request LinkDelete (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
@@ -210,8 +260,8 @@ func (a *api) LinkAdd(ctx context.Context, element, from, to string) (result mod
 			zap.String("operation", constOperationAdd),
 			zap.String("element", element),
 			zap.String("from", from),
-			zap.String("to", to),
-			zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
+			zap.String("to", to))
+		//zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
 		return result, fmt.Errorf("error request LinkAdd (primary route). check apiCircuitBreaker. err: %s", err)
 	}
 
@@ -225,8 +275,8 @@ func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error LinkGet primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request LinkGet (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error LinkGet primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request LinkGet (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -300,8 +350,8 @@ func (a *api) ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error ObjAttrUpdate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("[ObjAttrUpdate] error request ObjAttrUpdate (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error ObjAttrUpdate primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("[ObjAttrUpdate] error request ObjAttrUpdate (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -323,8 +373,8 @@ func (a *api) Element(ctx context.Context, action, body string) (result models.R
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error Element primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("[Element] error request Element (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error Element primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("[Element] error request Element (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -405,8 +455,8 @@ func (a *api) ObjCreate(ctx context.Context, bodymap map[string]string) (result 
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error ObjCreate primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request ObjCreate (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error ObjCreate primary haproxy", zap.Error(err), zap.Any("bodymap", bodymap))
+		return result, fmt.Errorf("error request ObjCreate (primary route). err: %s", err)
 	}
 
 	return result, err
@@ -418,15 +468,15 @@ func (a *api) ObjDelete(ctx context.Context, uids string) (result models.Respons
 	//return result, err
 	//})
 	if err != nil {
-		logger.Error(ctx, "error ObjDelete primary haproxy", zap.Any("status CircuitBreaker", a.cb.State().String()), zap.Error(err))
-		return result, fmt.Errorf("error request ObjDelete (primary route). check apiCircuitBreaker. err: %s", err)
+		logger.Error(ctx, "error ObjDelete primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request ObjDelete (primary route). err: %s", err)
 	}
 
 	return result, err
 }
 
 func New(ctx context.Context, urlstr string, observeLog bool, cacheUpdateInterval time.Duration, cbMaxRequests uint32, cbTimeout, cbInterval time.Duration, projectKey string) Api {
-	var err error
+	//var err error
 	if cbMaxRequests == 0 {
 		cbMaxRequests = 3
 	}
@@ -437,28 +487,26 @@ func New(ctx context.Context, urlstr string, observeLog bool, cacheUpdateInterva
 		cbInterval = 5 * time.Second
 	}
 
-	cb := gobreaker.NewCircuitBreaker(
-		gobreaker.Settings{
-			Name:        "apiCircuitBreaker",
-			MaxRequests: cbMaxRequests, // максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии
-			Timeout:     cbTimeout,     // период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние
-			Interval:    cbInterval,    // циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков
-			ReadyToTrip: func(counts gobreaker.Counts) bool {
-				logger.Error(ctx, "apiCircuitBreaker is ReadyToTrip", zap.Any("counts.ConsecutiveFailures", counts.ConsecutiveFailures), zap.Error(err))
-				return counts.ConsecutiveFailures > 2
-			},
-			OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-				logger.Error(ctx, "apiCircuitBreaker changed position", zap.Any("name", name), zap.Any("from", from), zap.Any("to", to), zap.Error(err))
-			},
-		},
-	)
+	//cb := gobreaker.NewCircuitBreaker(
+	//	gobreaker.Settings{
+	//		Name:        "apiCircuitBreaker",
+	//		MaxRequests: cbMaxRequests, // максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии
+	//		Timeout:     cbTimeout,     // период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние
+	//		Interval:    cbInterval,    // циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков
+	//		ReadyToTrip: func(counts gobreaker.Counts) bool {
+	//			logger.Error(ctx, "apiCircuitBreaker is ReadyToTrip", zap.Any("counts.ConsecutiveFailures", counts.ConsecutiveFailures), zap.Error(err))
+	//			return counts.ConsecutiveFailures > 2
+	//		},
+	//		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+	//			logger.Error(ctx, "apiCircuitBreaker changed position", zap.Any("name", name), zap.Any("from", from), zap.Any("to", to), zap.Error(err))
+	//		},
+	//	},
+	//)
 
 	u, _ := url.Parse(urlstr)
 	splitUrl := strings.Split(u.Path, "/")
-	if len(splitUrl) < 3 {
-		return nil
-	}
-	domain := splitUrl[1:3]
+
+	domain := splitUrl[:]
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
@@ -466,7 +514,6 @@ func New(ctx context.Context, urlstr string, observeLog bool, cacheUpdateInterva
 	return &api{
 		urlstr,
 		observeLog,
-		cb,
 		cacheUpdateInterval,
 		strings.Join(domain, "/"),
 		projectKey,
