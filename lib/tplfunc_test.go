@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
+	"git.lowcodeplatform.net/packages/logger"
 )
 
 var config struct {
@@ -21,6 +23,17 @@ var config struct {
 	VfsRegion      string `envconfig:"VFS_REGION" default:""`
 	VfsComma       string `envconfig:"VFS_COMMA" default:""`
 	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:""`
+
+	// LOGBOX
+	LogboxEndpoint       string        `envconfig:"LOGBOX_ENDPOINT" default:"http://127.0.0.1:8999"`
+	LogboxAccessKeyId    string        `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
+	LogboxSecretKey      string        `envconfig:"LOGBOX_SECRET_KEY" default:""`
+	LogboxRequestTimeout time.Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+
+	// LOGBOX-client CircuitBreaker
+	CbMaxRequestsLogbox uint32        `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	CbTimeoutLogbox     time.Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	CbIntervalLogbox    time.Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
 }
 
 func Test_csvtosliсemap(t *testing.T) {
@@ -2075,6 +2088,39 @@ func Test_decodebase64(t *testing.T) {
 
 	fmt.Println(res)
 	res = Funcs.encodebase64(res)
+
+	fmt.Println(res)
+}
+
+func Test_loggert(t *testing.T) {
+	cfg := config
+
+	cfg.CbMaxRequestsLogbox = 3
+	cfg.CbTimeoutLogbox = 5 * time.Second
+	cfg.CbIntervalLogbox = 5 * time.Second
+	cfg.LogboxEndpoint = "http://127.0.0.1:8999"
+	cfg.CbMaxRequestsLogbox = 3
+	cfg.CbTimeoutLogbox = 5 * time.Second
+	cfg.CbIntervalLogbox = 5 * time.Second
+
+	err := logger.SetupDefaultLogboxLogger("app/client", logger.LogboxConfig{
+		Endpoint:       cfg.LogboxEndpoint,
+		AccessKeyID:    cfg.LogboxAccessKeyId,
+		SecretKey:      cfg.LogboxSecretKey,
+		RequestTimeout: cfg.LogboxRequestTimeout,
+		CbMaxRequests:  cfg.CbMaxRequestsLogbox,
+		CbTimeout:      cfg.CbTimeoutLogbox,
+		CbInterval:     cfg.CbIntervalLogbox,
+	}, map[string]string{
+		logger.ServiceIDKey:   lib.Hash(lib.UUID()),
+		logger.ConfigIDKey:    "app",
+		logger.ServiceTypeKey: "app",
+	})
+
+	fmt.Println(err)
+
+	NewFuncMap(nil, nil, "")
+	res := Funcs.logger("info", "test", "key1", "value1", "key2", "value2")
 
 	fmt.Println(res)
 }

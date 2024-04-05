@@ -29,6 +29,9 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/packages/logger"
+	"git.lowcodeplatform.net/packages/logger/types"
+	"go.uber.org/zap"
 	"golang.org/x/text/transform"
 
 	"git.lowcodeplatform.net/fabric/api-client"
@@ -216,10 +219,42 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 
 		"decodebase64": Funcs.decodebase64,
 		"encodebase64": Funcs.encodebase64,
+
+		"logger": Funcs.logger,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// logger - через логгер приложения
+// последний параметр для ERROR передается как ошибка
+func (t *funcMap) logger(logtype, msg string, key string, params ...string) bool {
+	var val = map[string]string{}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	for i := 0; i < len(params); i = i + 2 {
+		if i+1 >= len(params) {
+			break
+		}
+		k := params[i]
+		v := params[i+1]
+		val[k] = v
+	}
+	switch strings.ToUpper(logtype) {
+	case "INFO":
+		logger.Info(ctx, msg, types.StringMap(key, val))
+	case "ERROR":
+		err := fmt.Errorf("error: %s", params[len(params)-1])
+		logger.Error(ctx, msg, types.StringMap(key, val), zap.Error(err))
+	case "WARN":
+		logger.Warn(ctx, msg, types.StringMap(key, val))
+	case "DEBUG":
+		logger.Debug(ctx, msg, types.StringMap(key, val))
+	}
+
+	return true
+}
 
 // decodebase64 зашифровывает тело в base64 из строки
 func (t *funcMap) decodebase64(payload string) string {
