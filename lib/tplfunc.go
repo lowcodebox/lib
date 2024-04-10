@@ -132,6 +132,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"refind":              Funcs.refind,
 		"rereplace":           Funcs.rereplace,
 		"replace":             Funcs.Replace,
+		"tolower":             Funcs.toLower,
 		"contains":            Funcs.contains,
 		"contains1":           Funcs.contains1,
 		"dict":                Funcs.dict,
@@ -245,6 +246,10 @@ func (t *funcMap) logger(logtype, msg string, key string, val interface{}) bool 
 	}
 
 	return true
+}
+
+func (t *funcMap) toLower(str string) string {
+	return strings.ToLower(str)
 }
 
 // decodebase64 зашифровывает тело в base64 из строки
