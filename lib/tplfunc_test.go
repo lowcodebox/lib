@@ -2098,12 +2098,12 @@ func Test_loggert(t *testing.T) {
 	cfg.CbMaxRequestsLogbox = 3
 	cfg.CbTimeoutLogbox = 5 * time.Second
 	cfg.CbIntervalLogbox = 5 * time.Second
-	cfg.LogboxEndpoint = "http://127.0.0.1:8999"
+	cfg.LogboxEndpoint = "127.0.0.1:8999"
 	cfg.CbMaxRequestsLogbox = 3
 	cfg.CbTimeoutLogbox = 5 * time.Second
 	cfg.CbIntervalLogbox = 5 * time.Second
 
-	err := logger.SetupDefaultLogboxLogger("app/client", logger.LogboxConfig{
+	err := logger.SetupDefaultLogboxLogger("1/2", logger.LogboxConfig{
 		Endpoint:       cfg.LogboxEndpoint,
 		AccessKeyID:    cfg.LogboxAccessKeyId,
 		SecretKey:      cfg.LogboxSecretKey,
@@ -2117,10 +2117,21 @@ func Test_loggert(t *testing.T) {
 		logger.ServiceTypeKey: "app",
 	})
 
-	fmt.Println(err)
+	time.Sleep(10 * time.Second)
+
+	if err != nil {
+		fmt.Println(err)
+		logger.SetupDefaultLogger("/",
+			logger.WithCustomField(logger.ServiceIDKey, lib.Hash(lib.UUID())),
+			logger.WithCustomField(logger.ConfigIDKey, "cfg.UidService"),
+			logger.WithCustomField(logger.ServiceTypeKey, "cfg.Type"),
+		)
+	}
+
+	//logger.Info(context.Background(), "msg", zap.String("df", "sdf"))
 
 	NewFuncMap(nil, nil, "")
-	res := Funcs.logger("info", "test", "key1", "value1", "key2", "value2")
+	res := Funcs.logger("info", "test", "key", map[string]string{"sdf": "sdf"})
 
 	fmt.Println(res)
 }

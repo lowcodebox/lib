@@ -162,8 +162,10 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}()
 	//////////////////////////////////////////////////
 
+	time.Sleep(5 * time.Second)
+	
 	fmt.Printf("%s Enabled logs (type: %s). LogboxEndpoint:%s, Dir:%s\n", done, initType, cfg.LogboxEndpoint, cfg.LogsDir)
-	logger.Info(ctx, "Запускаем app-сервис: ", zap.String("domain", cfg.Domain))
+	logger.Info(ctx, "Запускаем app-сервис", zap.String("domain", cfg.Domain))
 	//////////////////////////////////////////////////
 
 	// создаем метрики

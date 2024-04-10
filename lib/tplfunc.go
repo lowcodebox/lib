@@ -228,29 +228,20 @@ var FuncMapS = sprig.FuncMap()
 
 // logger - через логгер приложения
 // последний параметр для ERROR передается как ошибка
-func (t *funcMap) logger(logtype, msg string, key string, params ...string) bool {
-	var val = map[string]string{}
+func (t *funcMap) logger(logtype, msg string, key string, val interface{}) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	for i := 0; i < len(params); i = i + 2 {
-		if i+1 >= len(params) {
-			break
-		}
-		k := params[i]
-		v := params[i+1]
-		val[k] = v
-	}
 	switch strings.ToUpper(logtype) {
 	case "INFO":
-		logger.Info(ctx, msg, types.StringMap(key, val))
+		logger.Info(ctx, msg, types.Any(key, val))
 	case "ERROR":
-		err := fmt.Errorf("error: %s", params[len(params)-1])
-		logger.Error(ctx, msg, types.StringMap(key, val), zap.Error(err))
+		err := fmt.Errorf("error: %s", val)
+		logger.Error(ctx, msg, types.Any(key, val), zap.Error(err))
 	case "WARN":
-		logger.Warn(ctx, msg, types.StringMap(key, val))
+		logger.Warn(ctx, msg, types.Any(key, val))
 	case "DEBUG":
-		logger.Debug(ctx, msg, types.StringMap(key, val))
+		logger.Debug(ctx, msg, types.Any(key, val))
 	}
 
 	return true
