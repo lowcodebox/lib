@@ -80,7 +80,7 @@ type Config struct {
 	LogboxEndpoint       string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`
 	LogboxAccessKeyId    string   `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
 	LogboxSecretKey      string   `envconfig:"LOGBOX_SECRET_KEY" default:""`
-	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"5s"`
 
 	// LOGBOX-client CircuitBreaker
 	CbMaxRequestsLogbox uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`

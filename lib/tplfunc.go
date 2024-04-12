@@ -222,10 +222,16 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"encodebase64": Funcs.encodebase64,
 
 		"logger": Funcs.logger,
+		"help":   Funcs.help,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// help
+func (t *funcMap) help() map[string]any {
+	return FuncMap
+}
 
 // logger - через логгер приложения
 // последний параметр для ERROR передается как ошибка
