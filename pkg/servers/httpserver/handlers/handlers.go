@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/api-client"
+	app_lib "git.lowcodeplatform.net/fabric/app/lib"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
+	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"go.uber.org/zap"
@@ -22,6 +25,9 @@ type handlers struct {
 	ctx     context.Context
 	service service.Service
 	cfg     model.Config
+	api     api.Api
+	vfs     lib.Vfs
+	app     app_lib.App
 }
 
 type Handlers interface {
@@ -34,6 +40,7 @@ type Handlers interface {
 	AuthLogIn(w http.ResponseWriter, r *http.Request)
 	AuthLogOut(w http.ResponseWriter, r *http.Request)
 	Storage(w http.ResponseWriter, r *http.Request)
+	FileLoad(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *handlers) transportResponse(w http.ResponseWriter, response interface{}) (err error) {
@@ -163,6 +170,10 @@ func (h *handlers) localization(w http.ResponseWriter, r *http.Request) (err err
 func New(
 	service service.Service,
 	cfg model.Config,
+	api api.Api,
+	vfs lib.Vfs,
+	app app_lib.App,
+
 ) Handlers {
 	ctx := context.Background()
 
@@ -170,5 +181,8 @@ func New(
 		ctx,
 		service,
 		cfg,
+		api,
+		vfs,
+		app,
 	}
 }

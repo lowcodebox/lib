@@ -32,7 +32,7 @@ type Routes []Route
 
 func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	router := mux.NewRouter().StrictSlash(true)
-	handler := handlers.New(h.src, h.cfg)
+	handler := handlers.New(h.src, h.cfg, h.api, h.vfs, h.app_lib)
 
 	router.HandleFunc("/alive", handler.Alive).Methods("GET")
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
@@ -102,6 +102,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"pprofIndex", "GET", "/debug/pprof/profile", pprof.Profile},
 		Route{"pprofIndex", "GET", "/debug/pprof/symbol", pprof.Symbol},
 		Route{"pprofIndex", "GET", "/debug/pprof/trace", pprof.Trace},
+		Route{"CToolsLoadfile", "POST", "/load", handler.FileLoad},
 	}
 
 	for _, route := range routes {
