@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"git.lowcodeplatform.net/fabric/api-client"
 	iam "git.lowcodeplatform.net/fabric/iam-client"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/packages/logger"
@@ -14,6 +15,7 @@ import (
 	"git.lowcodeplatform.net/fabric/app/pkg/service"
 	"git.lowcodeplatform.net/fabric/app/pkg/session"
 
+	applib "git.lowcodeplatform.net/fabric/app/lib"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -28,6 +30,8 @@ type httpserver struct {
 	iam     iam.IAM
 	session session.Session
 	vfs     lib.Vfs
+	api     api.Api
+	app_lib applib.App
 
 	serviceVersion string
 	hashCommit     string
@@ -84,6 +88,8 @@ func New(
 	iam iam.IAM,
 	session session.Session,
 	vfs lib.Vfs,
+	api api.Api,
+	app_lib applib.App,
 	serviceVersion string,
 	hashCommit string,
 ) Server {
@@ -94,6 +100,8 @@ func New(
 		iam,
 		session,
 		vfs,
+		api,
+		app_lib,
 		serviceVersion,
 		hashCommit,
 	}

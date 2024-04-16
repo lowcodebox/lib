@@ -163,7 +163,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	//////////////////////////////////////////////////
 
 	time.Sleep(5 * time.Second)
-	
+
 	fmt.Printf("%s Enabled logs (type: %s). LogboxEndpoint:%s, Dir:%s\n", done, initType, cfg.LogboxEndpoint, cfg.LogsDir)
 	logger.Info(ctx, "Запускаем app-сервис", zap.String("domain", cfg.Domain))
 	//////////////////////////////////////////////////
@@ -274,6 +274,20 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		vfs,
 	)
 
+	//TODO: сделать норм инициализацию, сделано так чтобы использовать DogParse()
+	app_lib := applib.New(
+		nil,
+		"",
+		"",
+		"",
+		nil,
+		"",
+		"",
+		nil,
+		vfs,
+		api,
+	)
+
 	// httpserver
 	httpserver := httpserver.New(
 		ctx,
@@ -282,6 +296,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		iam,
 		ses,
 		vfs,
+		api,
+		app_lib,
+
 		serviceVersion,
 		hashCommit,
 	)
