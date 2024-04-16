@@ -172,6 +172,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 		"timemount":           Funcs.timemount,
 		"timeday":             Funcs.timeday,
 		"timeparse":           Funcs.timeparse,
+		"timeunix":            Funcs.timeUnix,
 		"tomoney":             Funcs.tomoney,
 		"invert":              Funcs.invert,
 		"substring":           Funcs.substring,
@@ -1876,4 +1877,8 @@ func (t *funcMap) convert(content []byte, targetEncoding string) (encodedData []
 	}
 
 	return
+}
+
+func (t *funcMap) timeUnix(date time.Time) int64 {
+	return date.Unix()
 }
