@@ -19,6 +19,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	re = regexp.MustCompile("(?m)^\\s+")
+)
+
 func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
 	var c bytes.Buffer
 	result.Id = block.Id
@@ -304,7 +308,6 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 	blockBody := c.String()
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	blockBody = re.ReplaceAllString(blockBody, "")
 
 	result.Result = template.HTML(blockBody)
