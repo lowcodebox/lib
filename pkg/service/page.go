@@ -18,6 +18,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	re = regexp.MustCompile("(?m)^\\s+")
+)
+
 // Page ...
 func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.ServicePageOut, err error) {
 	var objPages models.ResponseData
@@ -338,7 +342,6 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	result = c.String()
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	result = re.ReplaceAllString(result, "")
 
 	return

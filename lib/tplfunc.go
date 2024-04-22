@@ -1238,14 +1238,22 @@ func (t *funcMap) refind(mask, str string, n int) (res [][]string) {
 	if n == 0 {
 		n = -1
 	}
-	re := regexp.MustCompile(mask)
+	// Тут лучше обыкновенный compile, панику лишний раз ловить не прикольно
+	re, err := regexp.Compile(mask)
+	if err != nil {
+		return
+	}
 	res = re.FindAllStringSubmatch(str, n)
 
 	return
 }
 
 func (t *funcMap) rereplace(str, mask, new string) (res string) {
-	re := regexp.MustCompile(mask)
+	// Тут лучше обыкновенный compile, панику лишний раз ловить не прикольно
+	re, err := regexp.Compile(mask)
+	if err != nil {
+		return
+	}
 	res = re.ReplaceAllString(str, new)
 
 	return
