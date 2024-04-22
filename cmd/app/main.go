@@ -31,6 +31,7 @@ import (
 
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/packages/logger"
+	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
 )
 
 const sep = string(os.PathSeparator)
@@ -185,6 +186,14 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	//	}
 	//}()
 
+	// клиент аналитики
+	analyticsClient, err := analytics.New(ctx, cfg.AnalyticsHost, cfg.LogboxRequestTimeout.Value, "/")
+	if err != nil {
+		fmt.Printf("%s Can't create analitics client\nHost: %s err: %s", fail, cfg.AnalyticsHost, err)
+		logger.Info(ctx, "can't create analitics client", zap.String("host", cfg.AnalyticsHost), zap.Error(err))
+		return err
+	}
+
 	msg := i18n.New()
 
 	api := api.New(
@@ -202,7 +211,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	fmt.Printf("%s Enabled API (url: %s)\n", done, cfg.UrlApi)
 
 	// инициализация FuncMap
-	applib.NewFuncMap(vfs, api, cfg.ProjectKey)
+	applib.NewFuncMap(vfs, api, cfg.ProjectKey, analyticsClient)
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
@@ -261,6 +270,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		fmt.Printf("%s Cache-service is not running\n (cfg.CachePointsrc: %s, err: %s)\n", fail, cfg.CachePointsrc, err)
 		logger.Info(ctx, "cache running is failed", zap.String("CachePointsrc", cfg.CachePointsrc), zap.Error(err))
 	}
+
+	fmt.Printf("%s Analitics client connected", done)
+	logger.Info(ctx, "analitics client connected")
 
 	// собираем сервис
 	src := service.New(

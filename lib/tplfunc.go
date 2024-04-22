@@ -31,6 +31,7 @@ import (
 
 	"git.lowcodeplatform.net/packages/logger"
 	"git.lowcodeplatform.net/packages/logger/types"
+	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
 	"go.uber.org/zap"
 	"golang.org/x/text/transform"
 
@@ -70,9 +71,10 @@ type Api interface {
 }
 
 type funcMap struct {
-	vfs        Vfs
-	api        Api
-	projectKey string
+	vfs             Vfs
+	api             Api
+	projectKey      string
+	analyticsClient analytics.Client
 }
 
 type FuncMaper interface {
@@ -105,11 +107,12 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api, projectKey string) {
+func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.Client) {
 	Funcs = funcMap{
 		vfs,
 		api,
 		projectKey,
+		analyticsClient,
 	}
 
 	FuncMap = template.FuncMap{
@@ -224,6 +227,8 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string) {
 
 		"logger": Funcs.logger,
 		"help":   Funcs.help,
+
+		"analyticsset": Funcs.analyticsSet,
 	}
 }
 
@@ -234,22 +239,54 @@ func (t *funcMap) help() map[string]any {
 	return FuncMap
 }
 
+// analytics - аналитика......
+func (t *funcMap) analytics(storage string, params ...string) bool {
+	return true
+}
+
+// analyticsSet - сборщик
+func (t *funcMap) analyticsSet(storage string, params ...string) error {
+	req := t.analyticsClient.NewSetReq()
+
+	fields := make([]analytics.Field, len(params)/2)
+	for i := 0; i < len(params)/2; i++ {
+		fields[i] = analytics.Field{
+			Name:  params[i*2],
+			Value: params[i*2+1],
+		}
+	}
+
+	ev := t.analyticsClient.NewEvent(storage, fields...)
+	req.AddEvent(ev)
+
+	_, err := t.analyticsClient.Set(context.Background(), req)
+	return err
+}
+
 // logger - через логгер приложения
 // последний параметр для ERROR передается как ошибка
-func (t *funcMap) logger(logtype, msg string, key string, val interface{}) bool {
+func (t *funcMap) logger(logtype, msg string, key string, params ...string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	kv := map[string]string{}
+	for i := 0; i < len(params); i += 2 {
+		if i+1 >= len(params) {
+			break
+		}
+		kv[params[i]] = params[i+1]
+	}
+
 	switch strings.ToUpper(logtype) {
 	case "INFO":
-		logger.Info(ctx, msg, types.Any(key, val))
+		logger.Info(ctx, msg, types.StringMap(key, kv))
 	case "ERROR":
-		err := fmt.Errorf("error: %s", val)
-		logger.Error(ctx, msg, types.Any(key, val), zap.Error(err))
+		err := fmt.Errorf("error: %s", params[len(params)-1])
+		logger.Error(ctx, msg, types.StringMap(key, kv), zap.Error(err))
 	case "WARN":
-		logger.Warn(ctx, msg, types.Any(key, val))
+		logger.Warn(ctx, msg, types.StringMap(key, kv))
 	case "DEBUG":
-		logger.Debug(ctx, msg, types.Any(key, val))
+		logger.Debug(ctx, msg, types.StringMap(key, kv))
 	}
 
 	return true
