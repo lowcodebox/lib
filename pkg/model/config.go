@@ -185,4 +185,7 @@ type Config struct {
 	UrlFs string `envconfig:"URL_FS" default:""`
 
 	Workingdir string `envconfig:"WORKINGDIR" default:""`
+
+	// Analytics
+	AnalyticsHost string `envconfig:"ANALYTICS_HOST" default:"localhost:8999"`
 }

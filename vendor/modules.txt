@@ -56,6 +56,12 @@ git.lowcodeplatform.net/packages/grpcbalancer/multiresolver
 ## explicit; go 1.19
 git.lowcodeplatform.net/packages/logger
 git.lowcodeplatform.net/packages/logger/types
+# git.lowcodeplatform.net/wb/analyticscollector v0.0.0-20240419110236-27278c5a7ccd
+## explicit; go 1.20
+git.lowcodeplatform.net/wb/analyticscollector/pkg/model/sdk
+# git.lowcodeplatform.net/wb/analyticscollector-client v0.0.0-20240422114202-d666b4d2bc83
+## explicit; go 1.18
+git.lowcodeplatform.net/wb/analyticscollector-client
 # github.com/Azure/azure-sdk-for-go v66.0.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/storage

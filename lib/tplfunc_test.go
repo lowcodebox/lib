@@ -1,6 +1,7 @@
 package app_lib
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
+	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
 )
 
 var config struct {
@@ -39,7 +41,7 @@ var config struct {
 func Test_csvtosliсemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 
-	NewFuncMap(nil, nil, "")
+	NewFuncMap(nil, nil, "", nil)
 	res, err := Funcs.csvtosliсemap([]byte(in))
 	if err != nil {
 		t.Errorf("Should not produce an error")
@@ -65,7 +67,7 @@ func Test_unzip(t *testing.T) {
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 	in := "WMS.zip"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 	status := Funcs.unzip(in, "")
 
 	fmt.Println(status)
@@ -85,7 +87,7 @@ func Test_parsescorm(t *testing.T) {
 
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 	index := Funcs.parsescorm(in, "")
 	fmt.Printf("index: %s", index)
 }
@@ -106,7 +108,7 @@ func Test_imgResize(t *testing.T) {
 
 	in := "landing/ludam.png"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 
 	res := Funcs.imgResize(in, 100, 100)
 
@@ -129,7 +131,7 @@ func Test_imgCrop(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 
@@ -152,7 +154,7 @@ func Test_imgCropAndResize(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 	res = Funcs.imgResize(res, 100, 100)
@@ -176,7 +178,7 @@ func Test_sliceuint8delete(t *testing.T) {
 
 	in := []uint8{1, 2, 3, 4, 5, 6}
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, "", nil)
 
 	res := Funcs.sliceuint8delete(in, 2)
 
@@ -1951,7 +1953,7 @@ func Test_sortbyfield(t *testing.T) {
 
 	fmt.Println("-----------------")
 
-	NewFuncMap(nil, nil, "")
+	NewFuncMap(nil, nil, "", nil)
 	res, err := Funcs.sortbyfield(obj, "", "rev", true)
 	if err != nil {
 		t.Errorf("Should not produce an error, err: %s", err)
@@ -2083,7 +2085,7 @@ func Test_funcMap_convert(t1 *testing.T) {
 func Test_decodebase64(t *testing.T) {
 	in := "user1:passw0rd"
 
-	NewFuncMap(nil, nil, "")
+	NewFuncMap(nil, nil, "", nil)
 	res := Funcs.decodebase64(in)
 
 	fmt.Println(res)
@@ -2130,8 +2132,21 @@ func Test_loggert(t *testing.T) {
 
 	//logger.Info(context.Background(), "msg", zap.String("df", "sdf"))
 
-	NewFuncMap(nil, nil, "")
-	res := Funcs.logger("info", "test", "key", map[string]string{"sdf": "sdf"})
+	NewFuncMap(nil, nil, "", nil)
+	res := Funcs.logger("info", "test", "key", "sdf", "sdf")
 
 	fmt.Println(res)
+}
+
+func Test_analyticsSet(t *testing.T) {
+	client, err := analytics.New(context.Background(), "localhost:8999", 5*time.Second, "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	NewFuncMap(nil, nil, "", client)
+	err = Funcs.analyticsSet("attempt", "parent", "test", "other", "idunno")
+	if err != nil {
+		t.Fatal(err)
+	}
 }
