@@ -12,7 +12,7 @@ import (
 	api "git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
-	uuid "github.com/satori/go.uuid"
+	"github.com/segmentio/ksuid"
 )
 
 type function struct {
@@ -212,7 +212,7 @@ func (p *formula) Calculate() (err error) {
 		case "QUERY":
 			result, err = p.dogfunc.Query(p.request.RequestRaw, v.dogfuncs.arguments)
 		case "RAND":
-			uuid := uuid.NewV4().String()
+			uuid := ksuid.New().String()
 			result = uuid[1:6]
 		case "SENDMAIL":
 			result, err = p.dogfunc.DogSendmail(v.dogfuncs.arguments)

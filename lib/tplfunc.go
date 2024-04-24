@@ -39,10 +39,10 @@ import (
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
-	"github.com/gofrs/uuid"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
 	"github.com/saintfish/chardet"
+	"github.com/segmentio/ksuid"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -1176,11 +1176,7 @@ func (t *funcMap) addfloat(i ...interface{}) (result float64) {
 }
 
 func (t *funcMap) UUID() string {
-	stUUID, err := uuid.NewV4()
-	if err != nil {
-		return fmt.Sprintf("error uuid.NewV4, err: %s", err)
-	}
-	return stUUID.String()
+	return ksuid.New().String()
 }
 
 func (t *funcMap) randT() string {

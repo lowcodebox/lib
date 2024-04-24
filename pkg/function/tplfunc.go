@@ -26,7 +26,7 @@ import (
 	"git.lowcodeplatform.net/packages/logger"
 	"github.com/Masterminds/sprig"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
+	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 )
 
@@ -342,8 +342,7 @@ func (t *tplfunc) Attr(name, element string, data interface{}) (result interface
 }
 
 func (t *tplfunc) UUID() string {
-	stUUID := uuid.NewV4()
-	return stUUID.String()
+	return ksuid.New().String()
 }
 
 func (t *tplfunc) Rand() string {
