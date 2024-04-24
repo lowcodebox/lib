@@ -80,7 +80,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"AuthLogOut", "GET", "/auth/logout", handler.AuthLogOut},
 
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},
-		Route{"fileLoad", "POST", "/tools/load", handler.FileLoad},
+		Route{"FileLoad", "POST", "/tools/load", handler.FileLoad},
 
 		//Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
 		//Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
@@ -103,6 +103,9 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"pprofIndex", "GET", "/debug/pprof/profile", pprof.Profile},
 		Route{"pprofIndex", "GET", "/debug/pprof/symbol", pprof.Symbol},
 		Route{"pprofIndex", "GET", "/debug/pprof/trace", pprof.Trace},
+		Route{"pprofIndex", "GET", "/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP},
+		Route{"pprofIndex", "GET", "/debug/pprof/heap", pprof.Handler("heap").ServeHTTP},
+		Route{"CToolsLoadfile", "POST", "/load", handler.FileLoad},
 	}
 
 	for _, route := range routes {
