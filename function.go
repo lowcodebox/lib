@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"git.lowcodeplatform.net/fabric/models"
-	uuid "github.com/satori/go.uuid"
+	"github.com/segmentio/ksuid"
 )
 
 // ResponseJSON если status не из списка, то вставляем статус - 501 и Descraption из статуса
@@ -167,8 +167,7 @@ func PanicOnErr(err error) {
 }
 
 func UUID() (result string) {
-	stUUID := uuid.NewV4()
-	return stUUID.String()
+	return ksuid.New().String()
 }
 
 // RemoveElementFromData удаляем элемент из слайса
