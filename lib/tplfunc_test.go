@@ -2082,6 +2082,15 @@ func Test_funcMap_convert(t1 *testing.T) {
 	}
 }
 
+func Test_funcMap_fastjsonforkey(t1 *testing.T) {
+	body := "{\n    \"first_name\": \"adadad\",\n    \"last_name\": \"awdawda\",\n    \"phone\": \"79063056130\",\n    \"employee_id\": 1234567,\n    \"user_id\": \"1234567\"\n}"
+
+	NewFuncMap(nil, nil, "", nil)
+
+	result1 := Funcs.fastjsonforkey(body, "employee_id")
+	fmt.Println(result1)
+}
+
 func Test_decodebase64(t *testing.T) {
 	in := "user1:passw0rd"
 

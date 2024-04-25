@@ -32,6 +32,7 @@ import (
 	"git.lowcodeplatform.net/packages/logger"
 	"git.lowcodeplatform.net/packages/logger/types"
 	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
+	"github.com/valyala/fastjson"
 	"go.uber.org/zap"
 	"golang.org/x/text/transform"
 
@@ -160,6 +161,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"value":               Funcs.value,
 		"hash":                Funcs.hash,
 		"unmarshal":           Funcs.unmarshal,
+		"fastjsonforkey":      Funcs.fastjsonforkey,
 		"compare":             Funcs.compare,
 		"totree":              Funcs.totree,
 		"tostring":            Funcs.tostring,
@@ -1706,6 +1708,22 @@ func (t *funcMap) unmarshal(i string) (res interface{}) {
 		return res
 	}
 	return conf
+}
+
+func (t *funcMap) fastjsonforkey(i string, key string) (value interface{}) {
+	i = strings.Trim(i, "  ")
+
+	res, err := fastjson.Parse(i)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	resObj := res.Get(key)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+
+	return resObj.String()
 }
 
 // СТАРОЕ! ДЛЯ РАБОТЫ В ШАБЛОНАХ ГУЯ СТАРЫХ (ПЕРЕДЕЛАТЬ И УБРАТЬ)
