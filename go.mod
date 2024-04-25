@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/fabric/app
 go 1.20
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.2.87
+	git.lowcodeplatform.net/fabric/api-client v0.3.0
 	git.lowcodeplatform.net/fabric/iam-client v0.1.14
 	git.lowcodeplatform.net/fabric/lib v0.2.35
 	git.lowcodeplatform.net/fabric/models v0.1.32

@@ -13,6 +13,8 @@ cloud.google.com/go/storage v1.29.0 h1:6weCgzRvMg7lzuUurI4697AqIRPU1SvzHhynwpW31
 cloud.google.com/go/storage v1.29.0/go.mod h1:4puEjyTKnku6gfKoTfNOU/W+a9JyuVNxjpS5GBrB8h4=
 git.lowcodeplatform.net/fabric/api-client v0.2.87 h1:GT3gS9xoYMq9ccYCia8RcNOPjZ7XPFpaC6h8kreLqK4=
 git.lowcodeplatform.net/fabric/api-client v0.2.87/go.mod h1:0K47tW43Xgm/5d0lZpMDF/AqFEaVEc1s98XKGCwdXOM=
+git.lowcodeplatform.net/fabric/api-client v0.3.0 h1:LBUg80TcilHnU/DHUG/AoFInIeXXpltnCEZ1JmTJC3A=
+git.lowcodeplatform.net/fabric/api-client v0.3.0/go.mod h1:RR0EYIkrOLC+Ya4yB0H+nmvna7HtC2n6ODexbPyQYXM=
 git.lowcodeplatform.net/fabric/iam v0.2.35 h1:KvLgpH5/ledsF3pp4yNJgWuhpxQuuXfQtLq+HLXBX9g=
 git.lowcodeplatform.net/fabric/iam v0.2.35/go.mod h1:57zhnc9ERSUA0vy2dr5qF28beqQmhnsBHS01VGZrP1Y=
 git.lowcodeplatform.net/fabric/iam-client v0.1.14 h1:72YXYpFJYXEJenD0enuU/YsKNYqzOGwRGJUmOj0l/Q4=
