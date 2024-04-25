@@ -32,6 +32,7 @@ type cache struct {
 	items           sync.Map
 	expiredInterval time.Duration // Интервал, через который GС удалит запись
 	runGCInterval   time.Duration // Интервал запуска GC
+	ttlcache        *ttlcache.Cache
 }
 
 type cacheItem struct {
@@ -47,11 +48,15 @@ type cacheItem struct {
 // Init инициализировали глобальную переменную defaultCache
 // expiredInterval - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
 func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
+	ttlcache := ttlcache.NewCache()
+	ttlcache.SkipTtlExtensionOnHit(true)
+
 	d := cache{
 		ctx:             ctx,
 		items:           sync.Map{},
 		runGCInterval:   runGCInterval,
 		expiredInterval: expiredInterval,
+		ttlcache:        ttlcache,
 	}
 	cacheCollection = d
 	isCacheInit = true // Устанавливаем флаг при инициализации
@@ -82,16 +87,13 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 		return result, err
 	}
 
-	cache := ttlcache.NewCache()
-	cache.SkipTtlExtensionOnHit(true)
-
 	expiredTime := time.Now().Add(c.expiredInterval)
 	if c.expiredInterval == 0 {
 		expiredTime = time.UnixMicro(0)
 	}
 	ci := cacheItem{
-		cache:           cache,
-		persistentCache: ttlcache.NewCache(),
+		cache:           c.ttlcache,
+		persistentCache: c.ttlcache,
 		locks: locks{
 			keys: sync.Map{},
 		},
