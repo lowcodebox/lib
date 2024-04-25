@@ -36,7 +36,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/transform"
 
-	"git.lowcodeplatform.net/fabric/api-client"
 	"git.lowcodeplatform.net/fabric/lib"
 	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
@@ -849,11 +848,7 @@ func (t *funcMap) curlfull(method, urlc, bodyJSON string, headers map[string]int
 func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData) {
 	var err error
 	ctx := context.Background()
-	if apiURL != "" {
-		result, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjGet(ctx, uids)
-	} else {
-		result, err = t.api.ObjGet(ctx, uids)
-	}
+	result, err = t.api.ObjGet(ctx, uids)
 	if err != nil {
 		result.Status.Error = err
 	}
@@ -865,11 +860,7 @@ func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) models.
 	var err error
 	var res = models.ResponseData{}
 	ctx := context.Background()
-	if apiURL != "" {
-		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjCreate(ctx, bodymap)
-	} else {
-		res, err = t.api.ObjCreate(ctx, bodymap)
-	}
+	res, err = t.api.ObjCreate(ctx, bodymap)
 	if err != nil {
 		res.Status.Error = err
 	}
@@ -881,12 +872,7 @@ func (t *funcMap) apiObjDelete(apiURL string, uids string) (res models.ResponseD
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
-	if apiURL != "" {
-		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjDelete(ctx, uids)
-	} else {
-		res, err = t.api.ObjDelete(ctx, uids)
-	}
-
+	res, err = t.api.ObjDelete(ctx, uids)
 	if err != nil {
 		res.Status.Error = err
 	}
@@ -898,12 +884,7 @@ func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor 
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
-	if apiURL != "" {
-		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).ObjAttrUpdate(ctx, uid, name, value, src, editor)
-	} else {
-		res, err = t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
-	}
-
+	res, err = t.api.ObjAttrUpdate(ctx, uid, name, value, src, editor)
 	if err != nil {
 		res.Status.Error = err
 	}
@@ -915,12 +896,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res m
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
-	if apiURL != "" {
-		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).LinkGet(ctx, tpl, obj, mode, short)
-	} else {
-		res, err = t.api.LinkGet(ctx, tpl, obj, mode, short)
-	}
-
+	res, err = t.api.LinkGet(ctx, tpl, obj, mode, short)
 	if err != nil {
 		res.Status.Error = err
 	}
@@ -931,12 +907,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res m
 func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (res string) {
 	var err error
 	ctx := context.Background()
-	if apiURL != "" {
-		res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Query(ctx, query, method, bodyJSON)
-	} else {
-		res, err = t.api.Query(ctx, query, method, bodyJSON)
-	}
-
+	res, err = t.api.Query(ctx, query, method, bodyJSON)
 	if err != nil {
 		res = fmt.Sprint(err)
 	}
@@ -953,19 +924,10 @@ func (t *funcMap) apiSearch(apiURL string, params map[string]string, withcache b
 	if err != nil {
 		return fmt.Sprintf("error marshal params. err: %s", err)
 	}
-
-	if apiURL != "" {
-		if withcache {
-			res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).SearchWithCache(ctx, "apiSearch", http.MethodPost, string(b1))
-		} else {
-			res, err = api.New(ctx, apiURL, true, ttlCache, 3, 5*time.Second, 5*time.Second, t.projectKey).Search(ctx, "apiSearch", http.MethodPost, string(b1))
-		}
+	if withcache {
+		res, err = t.api.SearchWithCache(ctx, "apiSearch", http.MethodPost, string(b1))
 	} else {
-		if withcache {
-			res, err = t.api.SearchWithCache(ctx, "apiSearch", http.MethodPost, string(b1))
-		} else {
-			res, err = t.api.Search(ctx, "apiSearch", http.MethodPost, string(b1))
-		}
+		res, err = t.api.Search(ctx, "apiSearch", http.MethodPost, string(b1))
 	}
 
 	if err != nil {
