@@ -28,11 +28,12 @@ var (
 )
 
 type cache struct {
-	ctx             context.Context
-	items           sync.Map
-	expiredInterval time.Duration // Интервал, через который GС удалит запись
-	runGCInterval   time.Duration // Интервал запуска GC
-	ttlcache        *ttlcache.Cache
+	ctx                context.Context
+	items              *sync.Map
+	expiredInterval    time.Duration // Интервал, через который GС удалит запись
+	runGCInterval      time.Duration // Интервал запуска GC
+	ttlcache           *ttlcache.Cache
+	ttlPersistentCache *ttlcache.Cache
 }
 
 type cacheItem struct {
@@ -48,15 +49,16 @@ type cacheItem struct {
 // Init инициализировали глобальную переменную defaultCache
 // expiredInterval - время жизни записи в кеше, после удаляется с GC (0 - не удаляется никогда)
 func Init(ctx context.Context, expiredInterval, runGCInterval time.Duration) {
-	ttlcache := ttlcache.NewCache()
-	ttlcache.SkipTtlExtensionOnHit(true)
+	ttlcacheNonPer := ttlcache.NewCache()
+	ttlcacheNonPer.SkipTtlExtensionOnHit(true)
 
 	d := cache{
-		ctx:             ctx,
-		items:           sync.Map{},
-		runGCInterval:   runGCInterval,
-		expiredInterval: expiredInterval,
-		ttlcache:        ttlcache,
+		ctx:                ctx,
+		items:              &sync.Map{},
+		runGCInterval:      runGCInterval,
+		expiredInterval:    expiredInterval,
+		ttlcache:           ttlcacheNonPer,
+		ttlPersistentCache: ttlcache.NewCache(),
 	}
 	cacheCollection = d
 	isCacheInit = true // Устанавливаем флаг при инициализации
@@ -93,7 +95,7 @@ func (c *cache) Upsert(key string, source func() (res interface{}, err error), r
 	}
 	ci := cacheItem{
 		cache:           c.ttlcache,
-		persistentCache: c.ttlcache,
+		persistentCache: c.ttlPersistentCache,
 		locks: locks{
 			keys: sync.Map{},
 		},
@@ -257,23 +259,28 @@ func (c *cache) gc() {
 			if err != nil {
 				logger.Error(c.ctx, "error deleted item (expired time)", zap.Error(err))
 			}
-			ticker = time.NewTicker(c.runGCInterval)
+			ticker.Reset(c.runGCInterval)
 		}
 	}
 }
 
 func (c *cache) cleaner() (err error) {
+	keys := []any{}
 	c.items.Range(func(key, value any) bool {
 		item, ok := value.(*cacheItem)
 		if !ok {
 			return false
 		}
 
-		if item.expiredTime != time.UnixMicro(0) && !item.expiredTime.After(time.Now()) {
-			c.items.Delete(key)
+		if item.expiredTime.Before(time.Now()) {
+			keys = append(keys, key)
 		}
 
 		return true
 	})
+	for _, key := range keys {
+		c.items.Delete(key)
+	}
+
 	return nil
 }
