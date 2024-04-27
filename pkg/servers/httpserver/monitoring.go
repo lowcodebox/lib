@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -31,6 +32,10 @@ func (*httpserver) observeMetric(start time.Time, method, httpMethod, requestURI
 
 // statusCodeMetric собирает информацию о статус кодах ответов на запрос
 func (*httpserver) statusCodeMetric(method, httpMethod, requestURI string, statusCode int) {
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+
 	codeStr := strconv.Itoa(statusCode)
 	codeMetrics.
 		With("method", method, "http_method", httpMethod, "request_uri", requestURI, "status_code", codeStr).
