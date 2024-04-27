@@ -11,8 +11,8 @@ import (
 // Alive ...
 func (s *service) Alive(ctx context.Context) (out model.AliveOut, err error) {
 	//out.Cache = s.cache.Active()
-	defer s.timingService("Alive", time.Now())
-	defer s.errorMetric("Alive", err)
+	defer s.monitoringTimingService("Alive", time.Now())
+	defer s.monitoringError("Alive", err)
 
 	temp := s.cfg
 	temp.VfsCertCA = lib.HideExceptFirstAndLast(temp.VfsCertCA)

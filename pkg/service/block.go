@@ -11,8 +11,8 @@ import (
 
 func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error) {
 	start := time.Now()
-	defer s.timingService("Block", start)
-	defer s.errorMetric("Block", err)
+	defer s.monitoringTimingService("Block", start)
+	defer s.monitoringError("Block", err)
 
 	var objBlock *models.ResponseData
 
@@ -55,6 +55,6 @@ func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.Serv
 
 	out.Result = moduleResult.Result
 
-	s.timingBlock(moduleResult.Id, start)
+	s.monitoringTimingBlock(moduleResult.Id, start)
 	return
 }

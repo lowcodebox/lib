@@ -17,8 +17,8 @@ import (
 // 2. обновляем токен на клиенте через редирект на страницу с новой кукой,
 // в которой полученный от IAM валидный, но завершенный токен
 func (s *service) AuthChangeRole(ctx context.Context, in model.ServiceAuthChangeIn) (out model.ServiceAuthChangeOut, err error) {
-	defer s.timingService("AuthChangeRole", time.Now())
-	defer s.errorMetric("AuthChangeRole", err)
+	defer s.monitoringTimingService("AuthChangeRole", time.Now())
+	defer s.monitoringError("AuthChangeRole", err)
 
 	status, _, refreshToken, err := s.iam.Verify(s.ctx, fmt.Sprint(ctx.Value("token")))
 	if err != nil {

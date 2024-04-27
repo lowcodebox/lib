@@ -32,7 +32,7 @@ func (r *responeWrapper) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
+func (h *httpserver) MiddleLogger(next http.Handler, name, pattern string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -50,8 +50,8 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 				zap.Float64("timing", timeInterval.Seconds()),
 			)
 
-			h.observeMetric(start, name, r.Method, r.RequestURI)
-			h.statusCodeMetric(name, r.Method, r.RequestURI, wrapper.code)
+			h.monitoringTiming(start, pattern, r.Method)
+			h.monitoringStatusCode(pattern, r.Method, wrapper.code)
 		}
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)

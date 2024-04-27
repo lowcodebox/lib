@@ -28,24 +28,24 @@ var (
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, 0.999: 0.0001},
 	}, []string{fieldBlock})
 
-	errorsCounters metrics.Counter = kitprometheus.NewCounterFrom(prometheus.CounterOpts{
+	errorsMetrics metrics.Counter = kitprometheus.NewCounterFrom(prometheus.CounterOpts{
 		Name: "request_http_errors",
 		Help: "error in http server",
 	}, []string{fieldMethod})
 )
 
-func (*service) timingService(method string, start time.Time) {
+func (*service) monitoringTimingService(method string, start time.Time) {
 	timingServiceMetrics.With(fieldMethod, method).Observe(time.Since(start).Seconds())
 }
 
-func (*service) timingBlock(block string, start time.Time) {
+func (*service) monitoringTimingBlock(block string, start time.Time) {
 	timingBlockMetrics.With(fieldBlock, block).Observe(time.Since(start).Seconds())
 }
 
-func (*service) errorMetric(method string, err error) {
+func (*service) monitoringError(method string, err error) {
 	if err == nil {
 		return
 	}
 
-	errorsCounters.With(fieldMethod, method).Add(1)
+	errorsMetrics.With(fieldMethod, method).Add(1)
 }
