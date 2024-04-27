@@ -3,11 +3,11 @@ module git.lowcodeplatform.net/fabric/app
 go 1.20
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.3.1
+	git.lowcodeplatform.net/fabric/api-client v0.3.2
 	git.lowcodeplatform.net/fabric/iam-client v0.1.14
 	git.lowcodeplatform.net/fabric/lib v0.2.36
 	git.lowcodeplatform.net/fabric/models v0.1.32
-	git.lowcodeplatform.net/packages/cache v0.1.21
+	git.lowcodeplatform.net/packages/cache v0.1.22
 	git.lowcodeplatform.net/packages/logger v0.1.24
 	git.lowcodeplatform.net/wb/analyticscollector-client v0.0.0-20240422114202-d666b4d2bc83
 	github.com/Masterminds/sprig v2.22.0+incompatible
