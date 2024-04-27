@@ -29,27 +29,33 @@ import (
 	"strings"
 	"time"
 
+	"git.lowcodeplatform.net/fabric/lib"
+	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	"git.lowcodeplatform.net/packages/logger/types"
 	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
-	"github.com/valyala/fastjson"
-	"go.uber.org/zap"
-	"golang.org/x/text/transform"
-
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
 	"github.com/Masterminds/sprig"
+	"github.com/araddon/dateparse"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
 	"github.com/saintfish/chardet"
 	"github.com/segmentio/ksuid"
+	"github.com/valyala/fastjson"
+	duration "github.com/xhit/go-str2duration"
+	"go.uber.org/zap"
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 )
 
-var Funcs funcMap
-var FuncMap template.FuncMap
-
 const ttlCache = 5 * time.Minute
+
+var (
+	Funcs   funcMap
+	FuncMap template.FuncMap
+
+	reDate     = regexp.MustCompile(`^(\d{2}).(\d{2}).(\d{4})\b`)
+	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*)$`)
+)
 
 type Vfs interface {
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
@@ -176,6 +182,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"timemount":           Funcs.timemount,
 		"timeday":             Funcs.timeday,
 		"timeparse":           Funcs.timeparse,
+		"timeparseany":        Funcs.timeparseany,
 		"timeunix":            Funcs.timeUnix,
 		"tomoney":             Funcs.tomoney,
 		"invert":              Funcs.invert,
@@ -1229,6 +1236,48 @@ func (t *funcMap) timeparse(str, mask string) (res time.Time, err error) {
 	}
 
 	return res, err
+}
+
+// timeparseany парсит дату-время из любого формата и возвращает в UTC.
+//
+// Можно задать интервал, который надо добавить/вычесть, знак операции при этом отбив пробелами:
+//
+// "2024-04-04 11:11:11 MSK - 1d3h"
+func (t *funcMap) timeparseany(str string) (res time.Time, err error) {
+	var (
+		sign, interval string
+		dur            time.Duration
+	)
+
+	// извлекаем интервал из времени старта при наличии
+	if reInterval.MatchString(str) {
+		sign = reInterval.ReplaceAllString(str, "$2")
+		interval = reInterval.ReplaceAllString(str, "$3")
+		str = reInterval.ReplaceAllString(str, "$1")
+	}
+
+	// приводим дату к стандартному формату
+	str = reDate.ReplaceAllString(str, "$3-$2-$1")
+
+	res, err = dateparse.ParseAny(str)
+	if err != nil {
+		return
+	}
+
+	// смещаем на заданный интервал
+	if interval != "" {
+		dur, err = duration.Str2Duration(interval)
+		if err != nil {
+			return
+		}
+
+		if sign == "-" {
+			dur = -dur
+		}
+		res = res.Add(dur)
+	}
+
+	return res.UTC(), nil
 }
 
 func (t *funcMap) refind(mask, str string, n int) (res [][]string) {
