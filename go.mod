@@ -5,7 +5,7 @@ go 1.20
 require (
 	git.lowcodeplatform.net/fabric/api-client v0.3.0
 	git.lowcodeplatform.net/fabric/iam-client v0.1.14
-	git.lowcodeplatform.net/fabric/lib v0.2.35
+	git.lowcodeplatform.net/fabric/lib v0.2.36
 	git.lowcodeplatform.net/fabric/models v0.1.32
 	git.lowcodeplatform.net/packages/cache v0.1.20
 	git.lowcodeplatform.net/packages/logger v0.1.24
@@ -25,7 +25,6 @@ require (
 	github.com/prometheus/common v0.45.0
 	github.com/restream/reindexer v4.6.0+incompatible
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
-	github.com/satori/go.uuid v1.2.0
 	github.com/swaggo/http-swagger v1.3.3
 	github.com/swaggo/swag v1.8.7
 	go.uber.org/multierr v1.10.0

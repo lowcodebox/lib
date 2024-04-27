@@ -71,7 +71,7 @@ func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Re
 		Path:     "/",
 		Name:     "X-Auth-Key",
 		Value:    out.Token,
-		MaxAge:   30000,
+		MaxAge:   5256000000,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,

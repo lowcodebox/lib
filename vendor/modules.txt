@@ -29,7 +29,7 @@ git.lowcodeplatform.net/fabric/iam/pkg/i18n
 # git.lowcodeplatform.net/fabric/iam-client v0.1.14
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/iam-client
-# git.lowcodeplatform.net/fabric/lib v0.2.35
+# git.lowcodeplatform.net/fabric/lib v0.2.36
 ## explicit; go 1.18
 git.lowcodeplatform.net/fabric/lib
 git.lowcodeplatform.net/fabric/lib/pkg/s3
@@ -402,7 +402,6 @@ github.com/russross/blackfriday/v2
 github.com/saintfish/chardet
 # github.com/satori/go.uuid v1.2.0
 ## explicit
-github.com/satori/go.uuid
 # github.com/segmentio/kafka-go v0.4.40
 ## explicit; go 1.15
 github.com/segmentio/kafka-go

@@ -206,7 +206,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 						Path:     "/",
 						Name:     "X-Auth-Key",
 						Value:    authKey,
-						MaxAge:   5256000,
+						MaxAge:   5256000000,
 						HttpOnly: true,
 						Secure:   true,
 						SameSite: http.SameSiteLaxMode,
