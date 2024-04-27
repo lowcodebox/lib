@@ -111,7 +111,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
-		handler = h.MiddleLogger(handler, route.Name)
+		handler = h.MiddleLogger(handler, route.Name, route.Pattern)
 
 		// проверяем адреса для исключения SSRF-уязвимостей
 		// проверяем на защищенный доступ через авторизацию

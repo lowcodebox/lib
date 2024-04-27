@@ -2,12 +2,16 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 )
 
 // Files ...
 func (s *service) Files(ctx context.Context, in model.ServiceFilesIn) (out model.ServiceFilesOut, err error) {
+	defer s.monitoringTimingService("Files", time.Now())
+	defer s.monitoringError("Files", err)
+
 	if in.Action == model.FilesActionLoad {
 		out, err = loadFileOnly(ctx, in)
 	}

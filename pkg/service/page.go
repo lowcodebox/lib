@@ -24,6 +24,9 @@ var (
 
 // Page ...
 func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.ServicePageOut, err error) {
+	defer s.monitoringTimingService("Page", time.Now())
+	defer s.monitoringError("Page", err)
+
 	var objPages models.ResponseData
 	var objPage *models.ResponseData
 

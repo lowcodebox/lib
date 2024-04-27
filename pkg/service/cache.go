@@ -2,11 +2,16 @@ package service
 
 import (
 	"context"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"strconv"
+	"time"
+
+	"git.lowcodeplatform.net/fabric/app/pkg/model"
 )
 
 func (s *service) Cache(ctx context.Context, in model.ServiceCacheIn) (out model.RestStatus, err error) {
+	defer s.monitoringTimingService("Cache", time.Now())
+	defer s.monitoringError("Cache", err)
+
 	count, err := s.cache.Clear(in.Link)
 	if err == nil {
 		out.Code = "OK"

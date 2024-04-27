@@ -3,12 +3,16 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 )
 
 // AuthLogIn - функция авторизации (получение и создание на клиенте токена)
 func (s *service) AuthLogIn(ctx context.Context, in model.ServiceAuthIn) (out model.ServiceAuthOut, err error) {
+	defer s.monitoringTimingService("AuthLogIn", time.Now())
+	defer s.monitoringError("AuthLogIn", err)
+
 	status, token, err := s.iam.Auth(ctx, in.Payload, in.Ref)
 	if err != nil {
 		out.Error = err
