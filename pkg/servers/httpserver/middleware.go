@@ -19,11 +19,26 @@ const headerReferer = "Referer"
 
 const errorReferer = "421 Misdirected Request"
 
+// Черкасов: Насоколько помню спорная вещь по мнению интернета.
+// Если память поплывет - возможная причина
+type responeWrapper struct {
+	http.ResponseWriter
+
+	code int
+}
+
+func (r *responeWrapper) WriteHeader(statusCode int) {
+	r.code = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
 func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		next.ServeHTTP(w, r)
+		wrapper := &responeWrapper{ResponseWriter: w}
+
+		next.ServeHTTP(wrapper, r)
 		timeInterval := time.Since(start)
 		if name != "ProxyPing" { //&& false == true
 			mes := fmt.Sprintf("Query: %s %s %s %s",
@@ -34,6 +49,9 @@ func (h *httpserver) MiddleLogger(next http.Handler, name string) http.Handler {
 			logger.Info(r.Context(), mes,
 				zap.Float64("timing", timeInterval.Seconds()),
 			)
+
+			h.observeMetric(start, name, r.Method, r.RequestURI)
+			h.statusCodeMetric(name, r.Method, r.RequestURI, wrapper.code)
 		}
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)

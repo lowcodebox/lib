@@ -3,12 +3,17 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"git.lowcodeplatform.net/fabric/app/pkg/model"
 	"git.lowcodeplatform.net/fabric/models"
 )
 
 func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.ServiceBlockOut, err error) {
+	start := time.Now()
+	defer s.timingService("Block", start)
+	defer s.errorMetric("Block", err)
+
 	var objBlock *models.ResponseData
 
 	//t1 := time.Now()
@@ -50,5 +55,6 @@ func (s *service) Block(ctx context.Context, in model.ServiceIn) (out model.Serv
 
 	out.Result = moduleResult.Result
 
+	s.timingBlock(moduleResult.Id, start)
 	return
 }
