@@ -12,6 +12,7 @@ import (
 	"git.lowcodeplatform.net/fabric/models"
 	"git.lowcodeplatform.net/packages/logger"
 	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
+	"github.com/stretchr/testify/assert"
 )
 
 var config struct {
@@ -38,7 +39,16 @@ var config struct {
 	CbIntervalLogbox    time.Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
 }
 
-func Test_csvtosliсemap(t *testing.T) {
+func TestParseAnyTime(t *testing.T) {
+	m := &funcMap{}
+
+	tt, err := m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h")
+	assert.Nil(t, err, "parsing time")
+	exp := time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
+	assert.Equal(t, exp, tt, "check result")
+}
+
+func Test_csvtoslicemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 
 	NewFuncMap(nil, nil, "", nil)
