@@ -113,8 +113,17 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	}
 
 	file, handler, err := r.FormFile(fileField)
+	logger.Info(h.ctx, "fileload formfile",
+		zap.String("filename", handler.Filename),
+		zap.Int64("filesize", handler.Size),
+	)
+
 	if err != nil {
 		objResp.Status.Error = err
+		logger.Error(h.ctx, "fileload formfile error",
+			zap.String("filename", handler.Filename),
+			zap.Int64("filesize", handler.Size),
+		)
 		return
 	}
 	defer file.Close()
@@ -127,15 +136,8 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	mode := r.FormValue("mode")
 
 	r.Form.Set("os", "linux")
-	getPath = h.app.DogParse(getPath, r, nil, nil)
 
-	// для обработки возможных встроенных @-фукнций если передан objuid - берем этот объект
 	objuid := r.FormValue("objuid")
-	if objuid != "" {
-		var objProduct models.ResponseData
-		h.app.Curl("GET", "_objs/"+objuid, "", &objProduct, nil)
-		getPath = h.app.DogParse(getPath, r, &objProduct.Data, nil)
-	}
 	urlPath := strings.Split(getPath, "/")
 
 	for _, v := range urlPath {
@@ -149,14 +151,16 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 
 	res := make([]byte, handler.Size)
 	_, err = io.ReadFull(file, res)
+
 	if err != nil {
+		logger.Error(h.ctx, "fileload readfull err", zap.Error(err))
 		objResp.Status.Error = err
 		return
 	}
 
 	err = h.vfs.Write(h.ctx, thisFilePath, res)
 	if err != nil {
-		log.Error(err)
+		logger.Error(h.ctx, "fileload write err", zap.Error(err))
 		objResp.Status.Error = err
 		return
 	}
