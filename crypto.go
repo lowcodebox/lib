@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"golang.org/x/crypto/argon2"
 )
 

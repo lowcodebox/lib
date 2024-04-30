@@ -19,9 +19,9 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.lowcodeplatform.net/fabric/models v0.1.27
+# git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
 ## explicit; go 1.17
-git.lowcodeplatform.net/fabric/models
+git.edtech.vm.prod-6.cloud.el/fabric/models
 # github.com/Azure/azure-sdk-for-go v32.5.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/storage
