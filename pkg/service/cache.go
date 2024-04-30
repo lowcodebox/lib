@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 func (s *service) Cache(ctx context.Context, in model.ServiceCacheIn) (out model.RestStatus, err error) {

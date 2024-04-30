@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	dto "github.com/prometheus/client_model/go"
 )
 

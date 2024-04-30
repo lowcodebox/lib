@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
-	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 	"github.com/stretchr/testify/assert"
 )
 

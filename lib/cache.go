@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"github.com/restream/reindexer"
 )
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 )
 
 type App interface {

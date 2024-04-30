@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 )
 
 type ServiceCacheIn struct {

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	api "git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"github.com/segmentio/ksuid"
 )
 

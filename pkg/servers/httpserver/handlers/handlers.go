@@ -9,14 +9,15 @@ import (
 	"net/http"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	app_lib "git.lowcodeplatform.net/fabric/app/lib"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+
+	app_lib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
 )
 
 const LocalDefault = "RU"

@@ -10,28 +10,28 @@ import (
 	"syscall"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/packages/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	applib "git.lowcodeplatform.net/fabric/app/lib"
+	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
 
-	implCache "git.lowcodeplatform.net/fabric/app/pkg/cache"
-	"git.lowcodeplatform.net/fabric/app/pkg/function"
-	"git.lowcodeplatform.net/fabric/app/pkg/i18n"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/servers"
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/app/pkg/session"
+	implCache "git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/i18n"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/packages/logger"
-	analytics "git.lowcodeplatform.net/wb/analyticscollector-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 )
 
 const sep = string(os.PathSeparator)

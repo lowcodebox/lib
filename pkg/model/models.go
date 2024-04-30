@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sync"
 
-	"git.lowcodeplatform.net/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"github.com/restream/reindexer"
 )
 

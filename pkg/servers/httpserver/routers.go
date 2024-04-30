@@ -5,7 +5,7 @@ import (
 	"net/http/pprof"
 	"strings"
 
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -13,7 +13,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver/handlers"
 )
 
 type Result struct {

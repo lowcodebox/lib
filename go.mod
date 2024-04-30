@@ -1,15 +1,17 @@
-module git.lowcodeplatform.net/fabric/app
+module git.edtech.vm.prod-6.cloud.el/fabric/app
 
-go 1.20
+go 1.21
+
+toolchain go1.21.8
 
 require (
-	git.lowcodeplatform.net/fabric/api-client v0.3.2
-	git.lowcodeplatform.net/fabric/iam-client v0.1.14
-	git.lowcodeplatform.net/fabric/lib v0.2.36
-	git.lowcodeplatform.net/fabric/models v0.1.32
-	git.lowcodeplatform.net/packages/cache v0.1.22
-	git.lowcodeplatform.net/packages/logger v0.1.24
-	git.lowcodeplatform.net/wb/analyticscollector-client v0.0.0-20240422114202-d666b4d2bc83
+	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3
+	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
+	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.40
+	git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
+	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
+	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
@@ -20,15 +22,15 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oliamb/cutter v0.2.2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/client_golang v1.19.0
 	github.com/prometheus/client_model v0.5.0
-	github.com/prometheus/common v0.45.0
+	github.com/prometheus/common v0.48.0
 	github.com/restream/reindexer v4.6.0+incompatible
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/http-swagger v1.3.3
-	github.com/swaggo/swag v1.8.7
+	github.com/swaggo/swag v1.16.3
 	github.com/valyala/fastjson v1.6.4
 	github.com/xhit/go-str2duration v1.2.0
 	go.uber.org/multierr v1.10.0
@@ -42,12 +44,12 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
-	git.lowcodeplatform.net/fabric/iam v0.2.35 // indirect
-	git.lowcodeplatform.net/fabric/logbox v0.2.15 // indirect
-	git.lowcodeplatform.net/fabric/logbox-client v0.1.17 // indirect
-	git.lowcodeplatform.net/packages/curl v0.0.0-20230610191235-c6a17eb4efc1 // indirect
-	git.lowcodeplatform.net/packages/grpcbalancer v0.0.0-20230625153511-db2331a573d5 // indirect
-	git.lowcodeplatform.net/wb/analyticscollector v0.0.0-20240419110236-27278c5a7ccd // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40 // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 // indirect
+	git.edtech.vm.prod-6.cloud.el/packages/curl v0.0.1 // indirect
+	git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 // indirect
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.0.2 // indirect
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.28 // indirect
@@ -77,7 +79,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
@@ -94,7 +96,6 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/ncw/swift v1.0.53 // indirect
@@ -113,9 +114,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/oauth2 v0.12.0 // indirect
+	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -123,7 +124,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/grpc v1.56.1 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

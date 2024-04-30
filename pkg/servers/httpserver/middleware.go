@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
-	"git.lowcodeplatform.net/packages/logger/types"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger/types"
 	"go.uber.org/zap"
 )
 

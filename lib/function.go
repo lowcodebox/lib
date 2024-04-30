@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/labstack/gommon/log"
 )
 

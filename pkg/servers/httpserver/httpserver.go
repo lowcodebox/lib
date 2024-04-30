@@ -5,22 +5,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/labstack/gommon/color"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/app/pkg/session"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 
-	applib "git.lowcodeplatform.net/fabric/app/lib"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
+
 	// should be so!
-	_ "git.lowcodeplatform.net/fabric/app/pkg/servers/docs"
+	_ "git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/docs"
 )
 
 type httpserver struct {

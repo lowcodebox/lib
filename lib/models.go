@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"sync"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/lib"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"github.com/restream/reindexer"
 )
 
