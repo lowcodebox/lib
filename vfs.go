@@ -15,7 +15,7 @@ import (
 	"github.com/graymeta/stow/azure"
 	"github.com/graymeta/stow/local"
 
-	"git.lowcodeplatform.net/fabric/lib/pkg/s3"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3"
 
 	// support Azure storage
 	_ "github.com/graymeta/stow/azure"
