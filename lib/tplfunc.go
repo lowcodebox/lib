@@ -1240,12 +1240,13 @@ func (t *FuncMapImpl) timeparse(str, mask string) (res time.Time, err error) {
 	return res, err
 }
 
-// Timeparseany парсит дату-время из любого формата и возвращает в UTC. Если вторым параметром передать true, то возвращает в MSK.
-//
+// Timeparseany парсит дату-время из любого формата.
 // Если в строке не передана временна́я зона, то парсится как UTC.
 //
+// Если вторым параметром передать true, то полученное время скастится в UTC.
+//
 // Можно задать интервал, который надо добавить/вычесть, знак операции при этом отбивается пробелами.
-func (t *FuncMapImpl) Timeparseany(str string, toMSK bool) (res time.Time, err error) {
+func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) (res time.Time, err error) {
 	var (
 		sign, interval string
 		dur            time.Duration
@@ -1279,11 +1280,11 @@ func (t *FuncMapImpl) Timeparseany(str string, toMSK bool) (res time.Time, err e
 		res = res.Add(dur)
 	}
 
-	if toMSK {
-		return res.In(locationMSK), nil
+	if toUTC {
+		return res.UTC(), nil
 	}
 
-	return res.UTC(), nil
+	return res, nil
 }
 
 func (t *FuncMapImpl) refind(mask, str string, n int) (res [][]string) {
