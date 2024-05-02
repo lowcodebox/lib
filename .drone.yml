@@ -51,7 +51,7 @@ steps:
 
   - name: darwin arm64
     failure: ignore
-    image: golang:1.20.3-alpine3.17
+    image: golang:1.22.2-alpine3.18
     commands:
       - cd /drone/src
       - GOOS=darwin GOARCH=arm64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_arm64 cmd/app/main.go
