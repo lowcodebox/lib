@@ -40,15 +40,15 @@ var config struct {
 }
 
 func TestParseAnyTime(t *testing.T) {
-	m := &funcMap{}
+	m := &FuncMapImpl{}
 
-	tt, err := m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h", false)
+	tt, err := m.Timeparseany("04.04.2024 11:11:11 MSK - 1d3h", false)
 	assert.Nil(t, err, "parsing time")
 	exp := time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
 	assert.Equal(t, exp, tt, "check result")
 	fmt.Println(tt)
 
-	tt, err = m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h", true)
+	tt, err = m.Timeparseany("04.04.2024 11:11:11 MSK - 1d3h", true)
 	assert.Nil(t, err, "parsing time")
 	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600))
 	assert.Equal(t, exp, tt, "check result")
@@ -2091,7 +2091,7 @@ func Test_funcMap_convert(t1 *testing.T) {
 	}
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
-			t := &funcMap{}
+			t := &FuncMapImpl{}
 			if gotEncodedData := t.convert(tt.args.content, tt.args.targetEncoding); !reflect.DeepEqual(gotEncodedData, tt.wantEncodedData) {
 				t1.Errorf("convert() = %v, want %v", gotEncodedData, tt.wantEncodedData)
 			}

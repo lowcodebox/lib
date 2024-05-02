@@ -38,7 +38,7 @@ type Manifest struct {
 	Organizations Organizations `xml:"organizations"`
 }
 
-func (t *funcMap) parsescorm(zipFilename string, destPath string) (index string) {
+func (t *FuncMapImpl) parsescorm(zipFilename string, destPath string) (index string) {
 	folder := t.unzip(zipFilename, destPath)
 
 	files, err := t.vfs.List(context.Background(), folder, math.MaxInt32)
