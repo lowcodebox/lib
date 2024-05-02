@@ -7,7 +7,7 @@ toolchain go1.21.8
 require (
 	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3
 	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
-	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.40
+	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.41
 	git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27

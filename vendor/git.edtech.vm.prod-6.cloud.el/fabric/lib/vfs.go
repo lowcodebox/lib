@@ -150,7 +150,12 @@ func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType stri
 	}
 
 	go func() {
-		chResult <- exec(ctx, file)
+		select {
+		case chResult <- exec(ctx, file):
+			return
+		case <-ctx.Done():
+			return
+		}
 	}()
 
 	select {
@@ -203,7 +208,12 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 	}
 
 	go func() {
-		chResult <- exec(ctx, file)
+		select {
+		case chResult <- exec(ctx, file):
+			return
+		case <-ctx.Done():
+			return
+		}
 	}()
 
 	select {
