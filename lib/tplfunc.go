@@ -95,6 +95,11 @@ type readerAt struct {
 	s    []byte
 }
 
+type TimeErr struct {
+	Time time.Time
+	Err  string
+}
+
 func (r *readerAt) ReadAt(p []byte, off int64) (n int, err error) {
 	ff := bytes.NewReader(r.s)
 	n, err = ff.ReadAt(p, 0)
@@ -1246,7 +1251,7 @@ func (t *FuncMapImpl) timeparse(str, mask string) (res time.Time, err error) {
 // Если вторым параметром передать true, то полученное время скастится в UTC.
 //
 // Можно задать интервал, который надо добавить/вычесть, знак операции при этом отбивается пробелами.
-func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) (res time.Time, err error) {
+func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) TimeErr {
 	var (
 		sign, interval string
 		dur            time.Duration
@@ -1262,16 +1267,16 @@ func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) (res time.Time, err e
 	// приводим дату к стандартному формату
 	str = reDate.ReplaceAllString(str, "$3-$2-$1")
 
-	res, err = dateparse.ParseAny(str)
+	res, err := dateparse.ParseAny(str)
 	if err != nil {
-		return
+		return TimeErr{Err: err.Error()}
 	}
 
 	// смещаем на заданный интервал
 	if interval != "" {
 		dur, err = duration.Str2Duration(interval)
 		if err != nil {
-			return
+			return TimeErr{Err: err.Error()}
 		}
 
 		if sign == "-" {
@@ -1281,10 +1286,10 @@ func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) (res time.Time, err e
 	}
 
 	if toUTC {
-		return res.UTC(), nil
+		return TimeErr{Time: res.UTC()}
 	}
 
-	return res, nil
+	return TimeErr{Time: res}
 }
 
 func (t *FuncMapImpl) refind(mask, str string, n int) (res [][]string) {
