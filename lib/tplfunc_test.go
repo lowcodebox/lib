@@ -42,10 +42,17 @@ var config struct {
 func TestParseAnyTime(t *testing.T) {
 	m := &funcMap{}
 
-	tt, err := m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h")
+	tt, err := m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h", false)
 	assert.Nil(t, err, "parsing time")
 	exp := time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
 	assert.Equal(t, exp, tt, "check result")
+	fmt.Println(tt)
+
+	tt, err = m.timeparseany("04.04.2024 11:11:11 MSK - 1d3h", true)
+	assert.Nil(t, err, "parsing time")
+	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600))
+	assert.Equal(t, exp, tt, "check result")
+	fmt.Println(tt)
 }
 
 func Test_csvtoslicemap(t *testing.T) {

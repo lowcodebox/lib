@@ -55,6 +55,8 @@ var (
 
 	reDate     = regexp.MustCompile(`^(\d{2}).(\d{2}).(\d{4})\b`)
 	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*)$`)
+
+	locationMSK = time.FixedZone("Europe/Moscow", 3*3600)
 )
 
 type Vfs interface {
@@ -1238,12 +1240,12 @@ func (t *funcMap) timeparse(str, mask string) (res time.Time, err error) {
 	return res, err
 }
 
-// timeparseany парсит дату-время из любого формата и возвращает в UTC.
+// timeparseany парсит дату-время из любого формата и возвращает в UTC. Если вторым параметром передать true, то возвращает в MSK.
 //
 // Можно задать интервал, который надо добавить/вычесть, знак операции при этом отбив пробелами:
 //
 // "2024-04-04 11:11:11 MSK - 1d3h"
-func (t *funcMap) timeparseany(str string) (res time.Time, err error) {
+func (t *funcMap) timeparseany(str string, toMSK bool) (res time.Time, err error) {
 	var (
 		sign, interval string
 		dur            time.Duration
@@ -1275,6 +1277,10 @@ func (t *funcMap) timeparseany(str string) (res time.Time, err error) {
 			dur = -dur
 		}
 		res = res.Add(dur)
+	}
+
+	if toMSK {
+		return res.In(locationMSK), nil
 	}
 
 	return res.UTC(), nil
