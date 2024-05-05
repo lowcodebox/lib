@@ -93,14 +93,16 @@ func timeTriggerProcess(ctx context.Context, api api.Api, trigger models.Data) {
 		}
 
 		if now.After(parsed.Time) {
+			logger.Info(ctx, "disable time trigger")
 			api.ObjAttrUpdate(ctx, trigger.Uid, "timer", "", "", "")
 
 			return
 		}
 	}
 
+	// проверяем соответствие времени интервальной сетке
 	interval, _ := trigger.Attr("interval", "value")
-	if !checkMatchInterval(now, interval) {
+	if !checkMatchInterval(ctx, now, interval) {
 		return
 	}
 
@@ -126,9 +128,11 @@ func timeTriggerProcess(ctx context.Context, api api.Api, trigger models.Data) {
 	}
 }
 
-func checkMatchInterval(t time.Time, interval string) bool {
+func checkMatchInterval(ctx context.Context, t time.Time, interval string) bool {
 	parsed, err := duration.Str2Duration(strings.ReplaceAll(interval, ":", "h") + "m")
 	if err != nil {
+		logger.Error(ctx, "unable parse trigger interval", zap.String("interval", interval), zap.Error(err))
+
 		return false
 	}
 
