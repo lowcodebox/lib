@@ -53,7 +53,7 @@ var (
 	Funcs   FuncMapImpl
 	FuncMap template.FuncMap
 
-	reDate     = regexp.MustCompile(`^(\d{2}).(\d{2}).(\d{4})\b`)
+	reDate     = regexp.MustCompile(`^(\d{2})[./](\d{2})[./](\d{4})\b`)
 	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*)$`)
 
 	locationMSK = time.FixedZone("Europe/Moscow", 3*3600)

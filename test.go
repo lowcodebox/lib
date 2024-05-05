@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	_ "github.com/lib/pq"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 //func test() {
@@ -35,13 +36,14 @@ func supplementTime(t int64) (res interface{}) {
 	if t == 0 {
 		return nil
 	}
-	for ; t < 1000000000000000000; t *= 10 {}
+	for ; t < 1000000000000000000; t *= 10 {
+	}
 	res = time.Unix(0, t)
 
 	return res
 }
 
-func testpostgres()  {
+func testpostgres() {
 	host := "127.0.0.1"
 	port := "5432"
 	user := "postgres"
@@ -51,27 +53,25 @@ func testpostgres()  {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	result, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		fmt.Println("Tidak Konek DB Errornya : %s", err)
+		fmt.Println("Tidak Konek DB Errornya :", err)
 	}
 
 	//cmdTag, err := result.Exec("INSERT INTO test (id) values ($1)", "3")
 	cmdTag, err := result.Exec("UPDATE test set bin = $1", supplementTime(1212321312312312))
 
 	if err != nil {
-		fmt.Println("can't save card %s to db: %s", err)
+		fmt.Println("can't save card to db:", err)
 	}
-
 
 	fmt.Println(cmdTag)
 }
 
-func main1()  {
+func main1() {
 	strv := `
 {"statusCode":404,"error":"Not Found","message":"Not Found"}`
 
 	fmt.Println(validateBodyType([]byte(strv), "text"))
 }
-
 
 // проверка на валидность типа данных в ответе
 // проверка на типы (expectedType): html, json, text
