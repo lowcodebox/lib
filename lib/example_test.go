@@ -23,9 +23,14 @@ func ExampleFuncMapImpl_Timeparseany() {
 	parsed = f.Timeparseany("2024-04-04 11:11:11 MSK - 1d3h", false)
 	fmt.Println(parsed.Time)
 
+	// Парсинг с несколькими интервалами
+	parsed = f.Timeparseany("2024-04-04 11:11:11 MSK - 1d - 3h", false)
+	fmt.Println(parsed.Time)
+
 	// Output:
 	// 2024-04-04 11:11:11 +0000 UTC
 	// 2024-04-04 11:11:11 +0300 MSK
 	// 2024-04-04 08:11:11 +0000 UTC
+	// 2024-04-03 08:11:11 +0300 MSK
 	// 2024-04-03 08:11:11 +0300 MSK
 }
