@@ -55,12 +55,6 @@ func TestParseAnyTime(t *testing.T) {
 	fmt.Println(res.Time)
 }
 
-func TestZone(t *testing.T) {
-	m := &FuncMapImpl{}
-	res := m.Timeparseany("MSK", false)
-	fmt.Println(res)
-}
-
 func Test_csvtoslicemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 

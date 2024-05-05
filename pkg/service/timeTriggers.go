@@ -46,7 +46,7 @@ func timeTriggers(ctx context.Context, api api.Api, interval time.Duration) {
 			}
 
 			for _, trigger := range triggers.Data {
-				timeTriggerProcess(ctx, api, trigger)
+				go timeTriggerProcess(ctx, api, trigger)
 			}
 		}
 	}
