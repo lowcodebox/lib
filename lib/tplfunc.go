@@ -1258,7 +1258,7 @@ func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) TimeErr {
 		dur              time.Duration
 	)
 
-	// извлекаем интервал из времени старта при наличии
+	// извлекаем интервал из строки при наличии
 	for {
 		if reInterval.MatchString(str) {
 			signs = append(signs, reInterval.ReplaceAllString(str, "$2"))
