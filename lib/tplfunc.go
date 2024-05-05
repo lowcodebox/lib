@@ -1251,18 +1251,22 @@ func (t *FuncMapImpl) timeparse(str, mask string) (res time.Time, err error) {
 //
 // Если вторым параметром передать true, то полученное время скастится в UTC.
 //
-// Можно задать интервал, который надо добавить/вычесть, знак операции при этом отбивается пробелами.
+// Можно задать интервалы, которые надо добавить/вычесть, знак операции при этом отбивается пробелами.
 func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) TimeErr {
 	var (
-		sign, interval string
-		dur            time.Duration
+		signs, intervals []string
+		dur              time.Duration
 	)
 
 	// извлекаем интервал из времени старта при наличии
-	if reInterval.MatchString(str) {
-		sign = reInterval.ReplaceAllString(str, "$2")
-		interval = reInterval.ReplaceAllString(str, "$3")
-		str = reInterval.ReplaceAllString(str, "$1")
+	for {
+		if reInterval.MatchString(str) {
+			signs = append(signs, reInterval.ReplaceAllString(str, "$2"))
+			intervals = append(intervals, reInterval.ReplaceAllString(str, "$3"))
+			str = reInterval.ReplaceAllString(str, "$1")
+		} else {
+			break
+		}
 	}
 
 	// приводим дату к стандартному формату
@@ -1274,13 +1278,13 @@ func (t *FuncMapImpl) Timeparseany(str string, toUTC bool) TimeErr {
 	}
 
 	// смещаем на заданный интервал
-	if interval != "" {
+	for i, interval := range intervals {
 		dur, err = duration.Str2Duration(interval)
 		if err != nil {
 			return TimeErr{Err: err.Error()}
 		}
 
-		if sign == "-" {
+		if signs[i] == "-" {
 			dur = -dur
 		}
 		res = res.Add(dur)
