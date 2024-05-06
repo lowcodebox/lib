@@ -7,17 +7,18 @@ import (
 	"time"
 
 	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	"go.uber.org/zap"
+
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/block"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/i18n"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
-	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
-	"git.edtech.vm.prod-6.cloud.el/packages/logger"
-	"go.uber.org/zap"
 )
 
 const queryPublicPages = "sys_public_pages"
@@ -90,6 +91,9 @@ func New(
 
 	// асинхронно обновляем список публичный страниц/блоков
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
+
+	// асинхронно обрабатываем временны́е триггеры
+	go timeTriggers(ctx, api, 1*time.Minute)
 
 	return &service{
 		ctx,

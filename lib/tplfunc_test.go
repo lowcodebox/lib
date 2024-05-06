@@ -53,6 +53,12 @@ func TestParseAnyTime(t *testing.T) {
 	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
 	assert.Equal(t, exp, res.Time, "check result")
 	fmt.Println(res.Time)
+
+	res = m.Timeparseany("04.04.2024 11:11:11 MSK - 1d - 3h", true)
+	assert.Empty(t, res.Err, "parsing time")
+	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
+	assert.Equal(t, exp, res.Time, "check result")
+	fmt.Println(res.Time)
 }
 
 func Test_csvtoslicemap(t *testing.T) {
