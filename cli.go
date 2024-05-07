@@ -193,11 +193,6 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 			Usage: "Get or set secrets for service",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "config, c",
-					Usage: "Название файла конфигурации, с которым будет запущен сервис",
-					Value: "lowcodebox",
-				},
-				cli.StringFlag{
 					Name:  "action, a",
 					Usage: "Действие для секрета. get или set",
 					Value: "get",
