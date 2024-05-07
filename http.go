@@ -151,6 +151,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 }
 
 func AddressProxy(addressProxy, interval string) (port string, err error) {
+	var res interface{}
 	fail := color.Red("[Fail]")
 	urlProxy := ""
 
@@ -163,7 +164,8 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		var portDataAPI models.Response
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
-		_, err := Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+
+		res, err = Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
 		if err != nil {
 			return "", err
 		}
@@ -171,8 +173,8 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 	}
 
 	if port == "" {
-		err = fmt.Errorf("%s", "Port APP-service is null. Servive not running.")
-		fmt.Print(fail, " Port APP-service is null. Servive not running.\n")
+		err = fmt.Errorf("Port APP-service is null. Servive not running. (urlProxy: %s, response: %+v)", urlProxy, res)
+		fmt.Print(fail, err, "\n")
 	}
 
 	return port, err
