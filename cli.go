@@ -188,6 +188,40 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 				return err
 			},
 		},
+		{
+			Name: "secrets", ShortName: "",
+			Usage: "Get or set secrets for service",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "config, c",
+					Usage: "Название файла конфигурации, с которым будет запущен сервис",
+					Value: "lowcodebox",
+				},
+				cli.StringFlag{
+					Name:  "action, a",
+					Usage: "Действие для секрета. get или set",
+					Value: "get",
+				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Usage: "Название секрета",
+					Value: "nokey",
+				},
+				cli.StringFlag{
+					Name:  "value, v",
+					Usage: "Значение секрета для ключа k",
+					Value: "novalue",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				configfile := c.String("config")
+				action := c.String("action")
+				key := c.String("key")
+				value := c.String("value")
+
+				return funcCLI(ctx, configfile, "", "", "", "", action, key, value, "", "secrets", "")
+			},
+		},
 	}
 	err = appCLI.Run(os.Args)
 
