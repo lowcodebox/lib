@@ -18,13 +18,12 @@ var warning = color.Red("[Fail]")
 // 1. поднимаемся до корневой директории
 // 2. от нее ищем полный путь до конфига
 // 3. читаем по этому пути
-func ConfigLoad(config string, pointToCfg interface{}) (err error) {
-	var payload string
+func ConfigLoad(config string, pointToCfg interface{}) (payload string, err error) {
 
 	if err := envconfig.Process("", pointToCfg); err != nil {
 		fmt.Printf("%s Error load default enviroment: %s\n", warning, err)
 		err = fmt.Errorf("Error load default enviroment: %s", err)
-		return err
+		return "", err
 	}
 
 	// проверка на длину конфигурационного файла
@@ -32,7 +31,7 @@ func ConfigLoad(config string, pointToCfg interface{}) (err error) {
 	if len(config) < 200 {
 		// 3.
 		if len(config) == 0 {
-			return fmt.Errorf("%s", "Error. Configfile is empty.")
+			return "", fmt.Errorf("%s", "Error. Configfile is empty.")
 		}
 		if !strings.Contains(config, ".") {
 			config = config + ".cfg"
@@ -41,20 +40,20 @@ func ConfigLoad(config string, pointToCfg interface{}) (err error) {
 		// 4. читаем из файла
 		payload, err = ReadFile(config)
 		if err != nil {
-			return fmt.Errorf("Error raed configfile:  (%s), err: %s", config, err)
+			return "", fmt.Errorf("Error raed configfile:  (%s), err: %s", config, err)
 		}
 
 	} else {
 		// пробуем расшифровать из base64
 		debase, err := base64.StdEncoding.DecodeString(config)
 		if err != nil {
-			return fmt.Errorf("Error decode to string from base64 configfile. err: %s", err)
+			return "", fmt.Errorf("Error decode to string from base64 configfile. err: %s", err)
 		}
 		payload = string(debase)
 	}
 	err = DecodeConfig(payload, pointToCfg)
 
-	return err
+	return payload, err
 }
 
 // DecodeConfig Читаем конфигурация из строки
