@@ -11,12 +11,22 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"github.com/araddon/dateparse"
 	"github.com/segmentio/ksuid"
+	duration "github.com/xhit/go-str2duration"
+)
+
+var (
+	reDate     = regexp.MustCompile(`^(\d{2})[./](\d{2})[./](\d{4})\b`)
+	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*)$`)
+
+	LocationMSK = time.FixedZone("Europe/Moscow", 3*3600)
 )
 
 // ResponseJSON если status не из списка, то вставляем статус - 501 и Descraption из статуса
@@ -235,4 +245,55 @@ func SearchConfig(projectDir, configuration string) (configPath string, err erro
 	}
 
 	return configPath, err
+}
+
+// TimeParse парсит дату-время из любого формата.
+// Если в строке не передана временна́я зона, то парсится как UTC.
+//
+// Если вторым параметром передать true, то полученное время скастится в UTC.
+//
+// Можно задать интервалы, которые надо добавить/вычесть, знак операции при этом отбивается пробелами.
+func TimeParse(str string, toUTC bool) (res time.Time, err error) {
+	var (
+		signs, intervals []string
+		dur              time.Duration
+	)
+
+	// извлекаем интервал из строки при наличии
+	for {
+		if reInterval.MatchString(str) {
+			signs = append(signs, reInterval.ReplaceAllString(str, "$2"))
+			intervals = append(intervals, reInterval.ReplaceAllString(str, "$3"))
+			str = reInterval.ReplaceAllString(str, "$1")
+		} else {
+			break
+		}
+	}
+
+	// приводим дату к стандартному формату
+	str = reDate.ReplaceAllString(str, "$3-$2-$1")
+
+	res, err = dateparse.ParseAny(str)
+	if err != nil {
+		return
+	}
+
+	// смещаем на заданный интервал
+	for i, interval := range intervals {
+		dur, err = duration.Str2Duration(interval)
+		if err != nil {
+			return
+		}
+
+		if signs[i] == "-" {
+			dur = -dur
+		}
+		res = res.Add(dur)
+	}
+
+	if toUTC {
+		return res.UTC(), nil
+	}
+
+	return res, nil
 }

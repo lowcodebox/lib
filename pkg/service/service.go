@@ -92,9 +92,6 @@ func New(
 	// асинхронно обновляем список публичный страниц/блоков
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
 
-	// асинхронно обрабатываем временны́е триггеры
-	go timeTriggers(ctx, api, 1*time.Minute)
-
 	return &service{
 		ctx,
 		cfg,

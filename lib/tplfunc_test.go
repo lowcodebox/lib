@@ -12,7 +12,6 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
-	"github.com/stretchr/testify/assert"
 )
 
 var config struct {
@@ -37,28 +36,6 @@ var config struct {
 	CbMaxRequestsLogbox uint32        `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
 	CbTimeoutLogbox     time.Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
 	CbIntervalLogbox    time.Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
-}
-
-func TestParseAnyTime(t *testing.T) {
-	m := &FuncMapImpl{}
-
-	res := m.Timeparseany("04.04.2024 11:11:11 MSK - 1d3h", false)
-	assert.Empty(t, res.Err, "parsing time")
-	exp := time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).Local()
-	assert.Equal(t, exp, res.Time, "check result")
-	fmt.Println(res.Time)
-
-	res = m.Timeparseany("04.04.2024 11:11:11 MSK - 1d3h", true)
-	assert.Empty(t, res.Err, "parsing time")
-	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
-	assert.Equal(t, exp, res.Time, "check result")
-	fmt.Println(res.Time)
-
-	res = m.Timeparseany("04.04.2024 11:11:11 MSK - 1d - 3h", true)
-	assert.Empty(t, res.Err, "parsing time")
-	exp = time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).UTC()
-	assert.Equal(t, exp, res.Time, "check result")
-	fmt.Println(res.Time)
 }
 
 func Test_csvtoslicemap(t *testing.T) {
@@ -2097,7 +2074,7 @@ func Test_funcMap_convert(t1 *testing.T) {
 	}
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
-			t := &FuncMapImpl{}
+			t := &funcMap{}
 			if gotEncodedData := t.convert(tt.args.content, tt.args.targetEncoding); !reflect.DeepEqual(gotEncodedData, tt.wantEncodedData) {
 				t1.Errorf("convert() = %v, want %v", gotEncodedData, tt.wantEncodedData)
 			}

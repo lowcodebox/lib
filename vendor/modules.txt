@@ -29,7 +29,7 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
 # git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
 ## explicit; go 1.21
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
-# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.41
+# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.42
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/lib
 git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3
@@ -175,7 +175,6 @@ github.com/cespare/xxhash/v2
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
-github.com/davecgh/go-spew/spew
 # github.com/gabriel-vasile/mimetype v1.4.1
 ## explicit; go 1.12
 github.com/gabriel-vasile/mimetype
@@ -363,7 +362,6 @@ github.com/pierrec/lz4/v4/internal/xxh32
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
-github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v1.19.0
 ## explicit; go 1.20
 github.com/prometheus/client_golang/prometheus
@@ -453,7 +451,6 @@ github.com/shirou/gopsutil/mem
 github.com/sony/gobreaker
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
-github.com/stretchr/testify/assert
 # github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe
 ## explicit; go 1.15
 github.com/swaggo/files
@@ -732,4 +729,3 @@ google.golang.org/protobuf/types/known/timestamppb
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
-gopkg.in/yaml.v3

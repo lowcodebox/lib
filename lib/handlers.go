@@ -500,7 +500,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage models.ResponseDat
 
 	// в режиме отладки пересборка шаблонов происходит при каждом запросе
 	if debugMode {
-		//t = template.Must(template.New(maketFile).Funcs(FuncMapImpl).ParseFiles(maketFile))
+		//t = template.Must(template.New(maketFile).Funcs(funcMap).ParseFiles(maketFile))
 		//t = template.Must(template.ParseFiles(maketFile))
 		tmp := template.New(maketFile)
 		t, err = tmp.Parse(dataFile)
