@@ -739,9 +739,13 @@ func (t *funcMap) redirect(w http.ResponseWriter, r *http.Request, url string, s
 // parsebody
 // json - преобразованный, по-умолчанию raw (строка)
 func (t *funcMap) parsebody(r *http.Request, format string) (result interface{}, err error) {
+	if r.Body == nil {
+		return nil, fmt.Errorf("body is empty, request: %+v", r)
+	}
+
 	responseData, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error read body, err: %s", err)
 	}
 	defer r.Body.Close()
 
