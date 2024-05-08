@@ -93,7 +93,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	defer cancel()
 
 	// инициируем пакеты
-	err = lib.ConfigLoad(configfile, &cfg)
+	_, err = lib.ConfigLoad(configfile, &cfg)
 	if err != nil {
 		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
 	}
