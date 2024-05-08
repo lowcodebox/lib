@@ -24,7 +24,8 @@ import (
 
 var (
 	reDate     = regexp.MustCompile(`^(\d{2})[./](\d{2})[./](\d{4})\b`)
-	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*)$`)
+	reInterval = regexp.MustCompile(`(.+) ([+-]) (\d[\d.wdhms]*[wdhms])$`)
+	reUTC      = regexp.MustCompile(`(?i)\b(?:UTC|GMT)([+-])(\d+)$`)
 
 	LocationMSK = time.FixedZone("Europe/Moscow", 3*3600)
 )
@@ -272,6 +273,20 @@ func TimeParse(str string, toUTC bool) (res time.Time, err error) {
 
 	// приводим дату к стандартному формату
 	str = reDate.ReplaceAllString(str, "$3-$2-$1")
+
+	// делаем часовой пояс понятнее парсеру
+	if reUTC.MatchString(str) {
+		if zone := reUTC.FindStringSubmatch(str); len(zone) >= 2 && len(zone[2]) < 4 {
+			shift := zone[2]
+			if len(shift) == 1 {
+				shift = "0" + shift
+			}
+			if len(shift) == 2 {
+				shift += "00"
+			}
+			str = reUTC.ReplaceAllString(str, zone[1]+shift)
+		}
+	}
 
 	res, err = dateparse.ParseAny(str)
 	if err != nil {
