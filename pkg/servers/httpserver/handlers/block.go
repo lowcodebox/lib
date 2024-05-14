@@ -82,6 +82,7 @@ func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceI
 	in.Host = r.Host
 	in.Method = r.Method
 	in.Query = r.URL.Query()
+	in.CacheSkip = r.FormValue("skip_cache") // true/false
 
 	in.RequestRaw = r
 

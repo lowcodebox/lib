@@ -30,6 +30,7 @@ type ServiceIn struct {
 
 	CachePath  string `json:"cache_path"`
 	CacheQuery string `json:"cache_url"`
+	CacheSkip  string `json:"cache_skip"`
 
 	RequestRaw *http.Request
 }
