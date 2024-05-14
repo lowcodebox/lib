@@ -51,9 +51,10 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 			//	zap.String("block", block.Uid), zap.String("block (id)", block.Id))
 		}
 
-		// 1 кеша нет (срабатывает только при первом формировании)
+		// 1 кеша нет (срабатывает только при первом формировании или если пропускаем кеш)
 		if err != nil || in.CacheSkip == "true" {
-			logger.Info(ctx, "first generate cache (GetBlock)", zap.String("step", "first cache"),
+			logger.Info(ctx, "generate cache (GetBlock)",
+				zap.Bool("cache skip", in.CacheSkip == "true"),
 				zap.Float64("timing", time.Since(t1).Seconds()),
 				zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 
