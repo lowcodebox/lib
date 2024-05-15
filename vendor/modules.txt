@@ -32,7 +32,7 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
 # git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
 ## explicit; go 1.21
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
-# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.43
+# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/lib
 git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3
