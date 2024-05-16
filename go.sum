@@ -27,6 +27,8 @@ git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 h1:ZoBUkYizxW1J8Y4KHW
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21/go.mod h1:DFbf9NCFgc+zmxRO+A6iwer+fmCkZ2O26DUW+0HoqBY=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39 h1:e4CJccgTs+6t9M2TacemoEKqhHOyOEJsP7GIHgtXRkA=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39/go.mod h1:uzhSJ9iRFnuW3Y2eu4/fT2d4A5NGrHEr02N9ekWjtW4=
+git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1 h1:RByROSyU6OJ6IR+fZBFHFCyvK+Ri8+JvGkVH9a+/nUg=
+git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1/go.mod h1:86zBS5Svr2+SBYp8XMgRE/KiLKv0HEgFVox774lLRds=
 git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23 h1:nF4V2ysX9BD4dGtzEJDs0m5RWNgcFF8mefDezladcXA=
 git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23/go.mod h1:fwQaqOHIwqpauFG8oYXq6oJpB/a2He50TTYfOMtp5sM=
 git.edtech.vm.prod-6.cloud.el/packages/curl v0.0.1 h1:GAwUzMhGIQc9RkYqtq2vWndF+cRjNxjadCQE/c78Wd0=

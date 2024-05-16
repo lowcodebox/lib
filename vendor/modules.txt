@@ -45,6 +45,9 @@ git.edtech.vm.prod-6.cloud.el/fabric/logbox-client
 # git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/fabric/models
+# git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1
+## explicit; go 1.21.6
+git.edtech.vm.prod-6.cloud.el/lovetsky/secrets
 # git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 ## explicit; go 1.19
 git.edtech.vm.prod-6.cloud.el/packages/cache
