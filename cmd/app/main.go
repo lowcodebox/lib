@@ -30,6 +30,7 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/lovetsky/secrets"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 )
@@ -93,9 +94,13 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	defer cancel()
 
 	// инициируем пакеты
-	_, err = lib.ConfigLoad(configfile, &cfg)
+	cfgString, err := lib.ConfigLoad(configfile, &cfg)
 	if err != nil {
 		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
+	}
+	err = secrets.ParseSecrets(context.Background(), cfgString, cfg.ProxyPointsrc, cfg.ProjectKey, &cfg)
+	if err != nil {
+		return fmt.Errorf("error. Parse secrets is failed. (%w)", err)
 	}
 
 	cfg.ServiceVersion = serviceVersion

@@ -1,20 +1,18 @@
 module git.edtech.vm.prod-6.cloud.el/fabric/app
 
-go 1.21
-
-toolchain go1.21.8
+go 1.21.6
 
 require (
 	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3
 	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
 	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44
 	git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
+	git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27
 	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
-	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/go-kit/kit v0.12.0
 	github.com/gorilla/mux v1.8.1
 	github.com/labstack/gommon v0.4.1
@@ -28,11 +26,9 @@ require (
 	github.com/restream/reindexer v4.6.0+incompatible
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/segmentio/ksuid v1.0.4
-	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/http-swagger v1.3.3
 	github.com/swaggo/swag v1.16.3
 	github.com/valyala/fastjson v1.6.4
-	github.com/xhit/go-str2duration v1.2.0
 	go.uber.org/multierr v1.10.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/text v0.14.0
@@ -44,6 +40,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.5 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 // indirect
@@ -62,11 +59,11 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/ReneKroon/ttlcache v1.7.0 // indirect
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de // indirect
 	github.com/aws/aws-sdk-go v1.44.114 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
@@ -100,7 +97,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/ncw/swift v1.0.53 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/kafka-go v0.4.40 // indirect
@@ -110,6 +106,7 @@ require (
 	github.com/urfave/cli v1.22.10 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	github.com/xhit/go-str2duration v1.2.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
@@ -126,5 +123,4 @@ require (
 	google.golang.org/grpc v1.56.1 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
