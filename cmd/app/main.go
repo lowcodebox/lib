@@ -98,7 +98,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	if err != nil {
 		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
 	}
-	err = secrets.ParseSecrets(context.Background(), cfgString, cfg.ProxyPointsrc, cfg.ProjectKey, cfg)
+	err = secrets.ParseSecrets(context.Background(), cfgString, cfg.ProxyPointsrc, cfg.ProjectKey, &cfg)
 	if err != nil {
 		return fmt.Errorf("error. Parse secrets is failed. (%w)", err)
 	}
