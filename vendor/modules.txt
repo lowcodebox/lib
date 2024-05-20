@@ -39,7 +39,7 @@ git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3
 # git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21
 ## explicit; go 1.20
 git.edtech.vm.prod-6.cloud.el/fabric/logbox/pkg/model/sdk
-# git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21
+# git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client
 # git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
@@ -58,7 +58,7 @@ git.edtech.vm.prod-6.cloud.el/packages/curl
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer/multiresolver
-# git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27
+# git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30
 ## explicit; go 1.19
 git.edtech.vm.prod-6.cloud.el/packages/logger
 git.edtech.vm.prod-6.cloud.el/packages/logger/types
