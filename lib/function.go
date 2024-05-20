@@ -144,9 +144,12 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 	if !flagExtRequest {
 		// дополняем путем до API если не передан вызов внешнего запроса через http://
 		if urlc[:1] != "/" {
-			urlc = c.urlORM + "/" + urlc
+			urlc, err = url.JoinPath(c.urlORM, urlc)
 		} else {
-			urlc = c.urlAPI + "/" + urlc
+			urlc, err = url.JoinPath(c.urlAPI, urlc)
+		}
+		if err != nil {
+			return
 		}
 	}
 
