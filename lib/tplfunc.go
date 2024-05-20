@@ -244,7 +244,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"help":   Funcs.help,
 
 		"analyticsset": Funcs.analyticsSet,
-		"secretget":    Funcs.secretGet,
+		"secretsget":   Funcs.secretsGet,
 	}
 }
 
@@ -1938,6 +1938,6 @@ func (t *funcMap) timeUnix(date time.Time) int64 {
 	return date.Unix()
 }
 
-func (t *funcMap) secretGet(key string) (value string, err error) {
+func (t *funcMap) secretsGet(key string) (value string, err error) {
 	return t.controllerClient.GetSecret(context.Background(), key)
 }
