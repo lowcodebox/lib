@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -270,6 +271,38 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 
 	_, err := t.analyticsClient.Set(context.Background(), req)
 	return err
+}
+
+func (t *funcMap) limiter(r http.Request) bool {
+	const codeExpiryTime = 5 // Время истечения кода в секундах
+
+	value, err := cache.Cache().Get(r.RemoteAddr)
+	if err != nil {
+		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
+			return time.Now(), nil
+		}, time.Minute)
+		if err != nil {
+			return false
+		}
+		return true
+	}
+
+	timeValue, ok := value.(time.Time)
+	if !ok {
+		return false
+	}
+
+	if time.Since(timeValue) >= codeExpiryTime*time.Second {
+		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
+			return time.Now(), nil
+		}, time.Minute)
+		if err != nil {
+			return false
+		}
+		return true
+	} else {
+		return false
+	}
 }
 
 // logger - через логгер приложения
