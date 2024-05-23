@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -2157,5 +2159,62 @@ func Test_analyticsSet(t *testing.T) {
 	err = Funcs.analyticsSet("attempt", "parent", "test", "other", "idunno")
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func Test_funcMap_limiter(t1 *testing.T) {
+	ctx := context.Background()
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
+
+	tests := []struct {
+		name  string
+		arg   http.Request
+		sleep int
+		want  bool
+	}{
+		{
+			name: "1",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.123",
+			},
+			sleep: 0,
+			want:  true,
+		},
+		{
+			name: "2",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.123",
+			},
+			sleep: 2,
+			want:  false,
+		},
+		{
+			name: "3",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.124",
+			},
+			sleep: 0,
+			want:  true,
+		},
+		{
+			name: "3",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.124",
+			},
+			sleep: 5,
+			want:  true,
+		},
+	}
+
+	NewFuncMap(nil, nil, "", nil)
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+
+			time.Sleep(time.Duration(tt.sleep) * time.Second)
+			if got := Funcs.limiter(tt.arg); got != tt.want {
+				t1.Errorf("limiter() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
