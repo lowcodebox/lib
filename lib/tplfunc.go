@@ -47,7 +47,7 @@ import (
 )
 
 const ttlCache = 5 * time.Minute
-
+const limitExpiryTime = 5 // Время истечения кода в секундах для rate limiter
 var (
 	Funcs   funcMap
 	FuncMap template.FuncMap
@@ -273,34 +273,42 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
+// limiter - функция, которая проверяет, может ли клиент с определенным IP-адресом отправить запрос повторно
 func (t *funcMap) limiter(r http.Request) bool {
-	const codeExpiryTime = 5 // Время истечения кода в секундах
-
+	// Получить значение из кеша, используя IP-адрес клиента в качестве ключа
 	value, err := cache.Cache().Get(r.RemoteAddr)
+	// Если ключ не найден или значение просрочено
 	if err != nil && (errors.Is(err, cache.ErrorKeyNotFound) || errors.Is(err, cache.ErrorItemExpired)) {
+		// Создать новую запись в кеше с текущим временем
 		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
 			return time.Now(), nil
 		}, time.Minute)
 		if err != nil {
 			return false
 		}
+		// Разрешить клиенту отправить запрос
 		return true
 	}
 
+	// Получить время последнего запроса из кеша
 	timeValue, ok := value.(time.Time)
 	if !ok {
 		return false
 	}
 
-	if time.Since(timeValue) >= codeExpiryTime*time.Second {
+	// Проверить, не входит ли в интервал паузы
+	if time.Since(timeValue) >= limitExpiryTime*time.Second {
+		// Обновить время последнего запроса в кеше
 		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
 			return time.Now(), nil
 		}, time.Minute)
 		if err != nil {
 			return false
 		}
+		// Разрешить клиенту отправить запрос
 		return true
 	} else {
+		// Отклонить запрос, так как клиент не может отправлять запросы слишком часто
 		return false
 	}
 }
