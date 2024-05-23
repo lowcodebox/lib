@@ -277,7 +277,7 @@ func (t *funcMap) limiter(r http.Request) bool {
 	const codeExpiryTime = 5 // Время истечения кода в секундах
 
 	value, err := cache.Cache().Get(r.RemoteAddr)
-	if err != nil {
+	if err != nil && (errors.Is(err, cache.ErrorKeyNotFound) || errors.Is(err, cache.ErrorItemExpired)) {
 		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
 			return time.Now(), nil
 		}, time.Minute)
