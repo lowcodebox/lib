@@ -162,6 +162,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"jsonescapeunlessamp": Funcs.jsonEscapeUnlessAmp,
 		"marshal":             Funcs.marshal,
 		"mulfloat":            Funcs.mulfloat,
+		"limiter":             Funcs.limiter,
 		"output":              Funcs.output,
 		"parsebody":           Funcs.parsebody,
 		"parseform":           Funcs.parseform,
