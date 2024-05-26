@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
@@ -403,14 +404,21 @@ func (t *funcMap) iterate(count int) []int {
 }
 
 // profileuid берем uid профиля по uid-роли
+// если roleuid - пусто - отдает uid текущей роли
+// если не находит профиль с заданной ролью - отдает мапку всех имеющихся у пользователя ролей
 func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
 	mapRoles := map[string]string{}
+	profile := t.profile(r)
 
-	for _, v := range t.profile(r).Profiles {
+	if roleuid == "" {
+		return profile.CurrentProfile.Uid
+	}
+
+	for _, v := range profile.Profiles {
 		roleSrc, _ := v.Attr("userroles", "src")
 		roleValue, _ := v.Attr("userroles", "value")
 		mapRoles[roleSrc] = roleValue
-		if roleSrc == roleuid {
+		if strings.Contains(roleSrc, roleuid) {
 			return v.Uid
 		}
 	}
