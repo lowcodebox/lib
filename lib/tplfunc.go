@@ -155,6 +155,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"dogparse":            Funcs.dogparse,
 		"fastjsonforkey":      Funcs.fastjsonforkey,
 		"get":                 Funcs.get,
+		"cache":               Funcs.cache,
 		"groupbyfield":        Funcs.groupbyfield,
 		"hash":                Funcs.hash,
 		"invert":              Funcs.invert,
@@ -177,6 +178,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"sendmail":            Funcs.sendmail,
 		"separator":           Funcs.separator,
 		"set":                 Funcs.set,
+		"cacheset":            Funcs.cacheset,
 		"setstring":           Funcs.setstring,
 		"sliceappend":         Funcs.sliceappend,
 		"slicedelete":         Funcs.slicedelete,
@@ -210,6 +212,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"tomoney":             Funcs.tomoney,
 		"tostring":            Funcs.tostring,
 		"totree":              Funcs.totree,
+		"xrealip":             Funcs.xrealip,
 		"unmarshal":           Funcs.unmarshal,
 		"uuid":                Funcs.UUID,
 		"value":               Funcs.value,
@@ -275,14 +278,45 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
+func (t *funcMap) cacheset(key string, value interface{}) bool {
+	_, err := cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		return value, err
+	}, 0)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (t *funcMap) cache(key string) interface{} {
+	value, err := cache.Cache().Get(key)
+	if err != nil {
+		return "nil"
+	}
+
+	return value
+}
+
+func (t *funcMap) xrealip(r http.Request) string {
+	ipAddress := r.Header.Get("X-Real-Ip")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	return ipAddress
+}
+
 // limiter - функция, которая проверяет, может ли клиент с определенным IP-адресом отправить запрос повторно
-func (t *funcMap) limiter(r http.Request) bool {
+func (t *funcMap) limiter(ip string) bool {
 	// Получить значение из кеша, используя IP-адрес клиента в качестве ключа
-	value, err := cache.Cache().Get(r.RemoteAddr)
+	value, err := cache.Cache().Get(ip)
 	// Если ключ не найден или значение просрочено
 	if err != nil && (errors.Is(err, cache.ErrorKeyNotFound) || errors.Is(err, cache.ErrorItemExpired)) {
 		// Создать новую запись в кеше с текущим временем
-		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
+		_, err = cache.Cache().Upsert(ip, func() (res interface{}, err error) {
 			return time.Now(), nil
 		}, time.Minute)
 		if err != nil {
@@ -301,7 +335,7 @@ func (t *funcMap) limiter(r http.Request) bool {
 	// Проверить, не входит ли в интервал паузы
 	if time.Since(timeValue) >= limitExpiryTime*time.Second {
 		// Обновить время последнего запроса в кеше
-		_, err = cache.Cache().Upsert(r.RemoteAddr, func() (res interface{}, err error) {
+		_, err = cache.Cache().Upsert(ip, func() (res interface{}, err error) {
 			return time.Now(), nil
 		}, time.Minute)
 		if err != nil {

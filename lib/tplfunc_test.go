@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
-	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -2168,41 +2167,45 @@ func Test_funcMap_limiter(t1 *testing.T) {
 
 	tests := []struct {
 		name  string
-		arg   http.Request
+		arg   string
 		sleep int
 		want  bool
 	}{
 		{
-			name: "1",
-			arg: http.Request{
-				RemoteAddr: "192.168.123.123",
-			},
+			name:  "1",
+			arg:   "192.168.123.123",
 			sleep: 0,
 			want:  true,
 		},
 		{
-			name: "2",
-			arg: http.Request{
-				RemoteAddr: "192.168.123.123",
-			},
+			name:  "2",
+			arg:   "192.168.123.123",
 			sleep: 2,
 			want:  false,
 		},
 		{
-			name: "3",
-			arg: http.Request{
-				RemoteAddr: "192.168.123.124",
-			},
+			name:  "3",
+			arg:   "192.168.123.124",
 			sleep: 0,
 			want:  true,
 		},
 		{
-			name: "3",
-			arg: http.Request{
-				RemoteAddr: "192.168.123.124",
-			},
+			name:  "4",
+			arg:   "192.168.123.124",
 			sleep: 5,
 			want:  true,
+		},
+		{
+			name:  "5",
+			arg:   "",
+			sleep: 5,
+			want:  true,
+		},
+		{
+			name:  "5",
+			arg:   "",
+			sleep: 2,
+			want:  false,
 		},
 	}
 
@@ -2217,4 +2220,19 @@ func Test_funcMap_limiter(t1 *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_funcMap_cache(t1 *testing.T) {
+	ctx := context.Background()
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
+
+	NewFuncMap(nil, nil, "", nil)
+
+	cacheset := Funcs.cacheset("key1", "value1")
+	if cacheset {
+		fmt.Println("true")
+	}
+
+	cacheget := Funcs.cache("key1")
+	fmt.Println(cacheget)
 }
