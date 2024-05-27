@@ -21,6 +21,7 @@ type Config struct {
 	EnvironmentPointsrc string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
 	Cluster             string `envconfig:"CLUSTER" default:"alpha"`
 	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
+	DC                  string `envconfig:"DC" default:"el"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 

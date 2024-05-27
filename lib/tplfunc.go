@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
@@ -76,6 +77,7 @@ type Api interface {
 type funcMap struct {
 	vfs             Vfs
 	api             Api
+	cfg             *model.Config
 	projectKey      string
 	analyticsClient analytics.Client
 }
@@ -115,10 +117,11 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.Client) {
+func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client) {
 	Funcs = funcMap{
 		vfs,
 		api,
+		cfg,
 		projectKey,
 		analyticsClient,
 	}
@@ -239,12 +242,22 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 
 		"logger": Funcs.logger,
 		"help":   Funcs.help,
+		"env":    Funcs.env,
 
 		"analyticsset": Funcs.analyticsSet,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// help
+func (t *funcMap) env() (result map[string]string) {
+	result["env"] = t.cfg.Environment
+	result["cluster"] = t.cfg.Cluster
+	result["dc"] = t.cfg.DC
+
+	return result
+}
 
 // help
 func (t *funcMap) help() map[string]any {
