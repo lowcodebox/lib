@@ -132,8 +132,6 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"apiquery":            Funcs.apiQuery,
 		"apisearch":           Funcs.apiSearch,
 		"attr":                Funcs.attr,
-		"cacheset":            Funcs.cacheset,
-		"cacheget":            Funcs.cacheget,
 		"compare":             Funcs.compare,
 		"concatenation":       Funcs.concatenation,
 		"concatination":       Funcs.concatenation, // Deprecated
@@ -156,6 +154,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"dogparse":            Funcs.dogparse,
 		"fastjsonforkey":      Funcs.fastjsonforkey,
 		"get":                 Funcs.get,
+		"getcache":            Funcs.getcache,
 		"groupbyfield":        Funcs.groupbyfield,
 		"hash":                Funcs.hash,
 		"invert":              Funcs.invert,
@@ -178,6 +177,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"sendmail":            Funcs.sendmail,
 		"separator":           Funcs.separator,
 		"set":                 Funcs.set,
+		"setcache":            Funcs.setcache,
 		"setstring":           Funcs.setstring,
 		"sliceappend":         Funcs.sliceappend,
 		"slicedelete":         Funcs.slicedelete,
@@ -277,7 +277,7 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
-func (t *funcMap) cacheset(key string, value interface{}) bool {
+func (t *funcMap) setcache(key string, value interface{}) bool {
 	_, err := cache.Cache().Upsert(key, func() (res interface{}, err error) {
 		return value, err
 	}, 0)
@@ -288,7 +288,7 @@ func (t *funcMap) cacheset(key string, value interface{}) bool {
 	return true
 }
 
-func (t *funcMap) cacheget(key string) interface{} {
+func (t *funcMap) getcache(key string) interface{} {
 	value, err := cache.Cache().Get(key)
 	if err != nil {
 		return "nil"

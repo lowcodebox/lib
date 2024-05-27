@@ -2228,11 +2228,11 @@ func Test_funcMap_cache(t1 *testing.T) {
 
 	NewFuncMap(nil, nil, "", nil)
 
-	cacheset := Funcs.cacheset("key1", "value1")
+	cacheset := Funcs.setcache("key1", "value1")
 	if cacheset {
 		fmt.Println("true")
 	}
 
-	cacheget := Funcs.cacheget("key1")
+	cacheget := Funcs.getcache("key1")
 	fmt.Println(cacheget)
 }
