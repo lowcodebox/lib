@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	timingMetrics metrics.Histogram = kitprometheus.NewSummaryFrom(prometheus.SummaryOpts{
-		Name:       "app_request_http_timing",
-		Help:       "timing a request in http server",
-		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, 0.999: 0.0001},
+	timingMetrics metrics.Histogram = kitprometheus.NewHistogramFrom(prometheus.HistogramOpts{
+		Name:    "app_request_http_timing",
+		Help:    "timing a request in http server",
+		Buckets: []float64{0.05, 0.1, 0.2, 0.5, 1, 10},
 	}, []string{"method", "http_method"})
 
 	statusCodeMetrics = kitprometheus.NewCounterFrom(prometheus.CounterOpts{
