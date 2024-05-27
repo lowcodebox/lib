@@ -9,27 +9,27 @@ import (
 )
 
 // Названия полей
-var (
+const (
 	fieldMethod = "method"
 	fieldBlock  = "block"
 )
 
 // Метрики
 var (
-	timingServiceMetrics metrics.Histogram = kitprometheus.NewSummaryFrom(prometheus.SummaryOpts{
-		Name:       "app_request_service_timing",
-		Help:       "timing a request in service",
-		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, 0.999: 0.0001},
+	timingServiceMetrics metrics.Histogram = kitprometheus.NewHistogramFrom(prometheus.HistogramOpts{
+		Name:    "app_request_service_timing",
+		Help:    "timing a request in service",
+		Buckets: []float64{0.05, 0.1, 0.2, 0.5, 1, 10},
 	}, []string{fieldMethod})
 
-	timingBlockMetrics metrics.Histogram = kitprometheus.NewSummaryFrom(prometheus.SummaryOpts{
-		Name:       "app_request_block_timing",
-		Help:       "timing a request in Blocks",
-		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, 0.999: 0.0001},
+	timingBlockMetrics metrics.Histogram = kitprometheus.NewHistogramFrom(prometheus.HistogramOpts{
+		Name:    "app_request_block_timing",
+		Help:    "timing a request in Blocks",
+		Buckets: []float64{0.05, 0.1, 0.2, 0.5, 1, 10},
 	}, []string{fieldBlock})
 
 	errorsMetrics metrics.Counter = kitprometheus.NewCounterFrom(prometheus.CounterOpts{
-		Name: "request_http_errors",
+		Name: "request_service_errors",
 		Help: "error in http server",
 	}, []string{fieldMethod})
 )
