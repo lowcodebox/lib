@@ -2213,7 +2213,7 @@ func Test_funcMap_limiter(t1 *testing.T) {
 		t1.Run(tt.name, func(t1 *testing.T) {
 
 			time.Sleep(time.Duration(tt.sleep) * time.Second)
-			if got := Funcs.limiter(tt.arg); got != tt.want {
+			if got := Funcs.limiter(tt.arg.RemoteAddr); got != tt.want {
 				t1.Errorf("limiter() = %v, want %v", got, tt.want)
 			}
 		})
