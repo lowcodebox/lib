@@ -154,7 +154,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"dogparse":            Funcs.dogparse,
 		"fastjsonforkey":      Funcs.fastjsonforkey,
 		"get":                 Funcs.get,
-		"getcache":            Funcs.getcache,
+		"cache":               Funcs.cache,
 		"groupbyfield":        Funcs.groupbyfield,
 		"hash":                Funcs.hash,
 		"invert":              Funcs.invert,
@@ -177,7 +177,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"sendmail":            Funcs.sendmail,
 		"separator":           Funcs.separator,
 		"set":                 Funcs.set,
-		"setcache":            Funcs.setcache,
+		"cacheset":            Funcs.cacheset,
 		"setstring":           Funcs.setstring,
 		"sliceappend":         Funcs.sliceappend,
 		"slicedelete":         Funcs.slicedelete,
@@ -277,7 +277,7 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
-func (t *funcMap) setcache(key string, value interface{}) bool {
+func (t *funcMap) cacheset(key string, value interface{}) bool {
 	_, err := cache.Cache().Upsert(key, func() (res interface{}, err error) {
 		return value, err
 	}, 0)
@@ -288,7 +288,7 @@ func (t *funcMap) setcache(key string, value interface{}) bool {
 	return true
 }
 
-func (t *funcMap) getcache(key string) interface{} {
+func (t *funcMap) cache(key string) interface{} {
 	value, err := cache.Cache().Get(key)
 	if err != nil {
 		return "nil"
