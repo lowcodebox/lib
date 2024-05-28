@@ -274,3 +274,17 @@ func getFieldCtx(ctx context.Context, name string) string {
 
 	return requestID
 }
+
+func ExtractNameVersionString(target, defaultName, defaultVersion string) (name, version, host string, err error) {
+	path := target
+	if len(path) > 1 && path[0] == '/' {
+		path = path[1:]
+	}
+	tmp := strings.Split(path, "/")
+	if len(tmp) < 2 {
+		return defaultName, defaultVersion, "", nil
+	}
+	name, version = tmp[0], tmp[1]
+	target = "/" + strings.Join(tmp[2:], "/")
+	return name, version, host, nil
+}
