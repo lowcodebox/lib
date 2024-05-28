@@ -21,6 +21,8 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15 h1:i7QxL1XKZBkq22IvXb9vL
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15/go.mod h1:UwNChnMnFm2qeJgDK7kMZX0Iu7f4/ByaczSQEeSiYGA=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44 h1:fxZKluy/OXANQDAkgNwbiIE9PBqufHBTGf+cAQ5CqzU=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
+git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45 h1:Cd55uHYyjSEm7nHGND4I1nqAQBu+3DVBrfewdDh9aN0=
+git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 h1:Je9lFykQ79qWSI+mZ5UDd+wQlnCuoLHzmuKbXZLi/tQ=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21/go.mod h1:EY11INWcfzSWRcNuOs9e/0cMe63/V2oOeXl2gw2+KS4=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 h1:ZoBUkYizxW1J8Y4KHWpKTkBGI4BGjm1e7vHSvsCHrcI=

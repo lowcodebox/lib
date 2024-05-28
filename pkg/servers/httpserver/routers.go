@@ -34,7 +34,6 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	router := mux.NewRouter().StrictSlash(true)
 	handler := handlers.New(h.src, h.cfg, h.api, h.vfs, h.app_lib)
 
-	router.HandleFunc("/alive", handler.Alive).Methods("GET")
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
@@ -72,7 +71,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 
 	var routes = Routes{
 		// запросы (настроенные)
-		Route{"ProxyPing", "GET", "/ping", handler.Ping},
+		Route{"Alive", "GET", "/alive", handler.Alive},
+		Route{"Ping", "GET", "/ping", handler.Ping},
 
 		// обновить роль в сессии
 		Route{"AuthChangeRole", "GET", "/auth/change", handler.AuthChangeRole},
@@ -112,6 +112,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		var handler http.Handler
 		handler = route.HandlerFunc
 		handler = h.MiddleLogger(handler, route.Name, route.Pattern)
+		handler = h.XServiceKeyProcessor(handler, h.cfg)
 
 		// проверяем адреса для исключения SSRF-уязвимостей
 		// проверяем на защищенный доступ через авторизацию

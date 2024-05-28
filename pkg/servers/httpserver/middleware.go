@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
@@ -18,6 +19,26 @@ import (
 const headerReferer = "Referer"
 
 const errorReferer = "421 Misdirected Request"
+
+const defaultName = "lms"
+const defaultVersion = "ru"
+
+// список роутеров, для который пропускается без авторизации
+var constPublicLink = map[string]bool{
+	"/templates": true,
+	"/upload":    true,
+	"/logout":    true,
+	"/login":     true,
+}
+
+// список роутеров, для который запрещается без авторизация
+var constPrivateLink = map[string]bool{
+	"/alive":   true,
+	"/metrics": true,
+	"/pid":     true,
+	"/ping":    true,
+	"/secret":  true,
+}
 
 // Черкасов: Насоколько помню спорная вещь по мнению интернета.
 // Если память поплывет - возможная причина
@@ -56,6 +77,69 @@ func (h *httpserver) MiddleLogger(next http.Handler, name, pattern string) http.
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)
 		//serviceMetrics.SetTimeRequest(timeInterval)
+	})
+}
+
+func (h *httpserver) XServiceKeyProcessor(next http.Handler, cfg model.Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var authKey string
+		var itPrivatePath bool
+		var err error
+
+		defer func() {
+			if err != nil {
+				lib.ResponseJSON(w, nil, "Unauthorized", err, nil)
+				return
+			}
+			next.ServeHTTP(w, r)
+		}()
+
+		// обращение к публичному урлу
+		for k, _ := range constPublicLink {
+			if strings.Contains(r.URL.Path, k) {
+				return
+			}
+		}
+
+		// обращение к приватному урлу
+		for k, _ := range constPrivateLink {
+			if strings.Contains(r.URL.Path, k) {
+				itPrivatePath = true
+			}
+		}
+
+		// не нашли в списке ограничений - пропускаем
+		if !itPrivatePath {
+			return
+		}
+
+		// он приватный - проверяем на валидность токена
+		authKeyHeader := r.Header.Get("X-Service-Key")
+		if authKeyHeader != "" {
+			authKey = authKeyHeader
+		} else {
+			authKeyCookie, err := r.Cookie("X-Service-Key")
+			if err == nil {
+				authKey = authKeyCookie.Value
+			}
+		}
+
+		if authKey == "" {
+			err = fmt.Errorf("token is empty")
+			return
+		}
+
+		// не передали ключ (пропускаем пинги)
+		name, version, _, err := lib.ExtractNameVersionString(r.RequestURI, defaultName, defaultVersion)
+		if err != nil {
+			return
+		}
+
+		status := lib.CheckXServiceKey(name+"/"+version, []byte(cfg.ProjectKey), authKey)
+		if !status {
+			err = fmt.Errorf("token is not valid")
+			return
+		}
 	})
 }
 
