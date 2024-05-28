@@ -14,7 +14,7 @@ func ExampleTimeParse() {
 	fmt.Println(res)
 
 	// Выводим в UTC
-	res, _ = TimeParse("2024-04-04 11:11:11 MSK", true)
+	res, _ = TimeParse("2024-04-04 11:11:11 UTC+1", true)
 	fmt.Println(res)
 
 	// Парсинг вместе с интервалом
@@ -28,7 +28,7 @@ func ExampleTimeParse() {
 	// Output:
 	// 2024-04-04 11:11:11 +0000 UTC
 	// 2024-04-04 11:11:11 +0300 MSK
-	// 2024-04-04 08:11:11 +0000 UTC
+	// 2024-04-04 10:11:11 +0000 UTC
 	// 2024-04-03 08:11:11 +0300 MSK
 	// 2024-04-03 08:11:11 +0300 MSK
 }

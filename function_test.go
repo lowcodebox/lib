@@ -25,9 +25,9 @@ func TestSearchConfig(t *testing.T) {
 }
 
 func TestTimeParse(t *testing.T) {
-	res, err := TimeParse("04.04.2024 11:11:11 MSK - 1d3h", false)
+	res, err := TimeParse("04.04.2024 11:11:11 UTC+2", true)
 	assert.Nil(t, err, "parsing time")
-	exp := time.Date(2024, 4, 3, 8, 11, 11, 0, time.FixedZone("Europe/Moscow", 3*3600)).Local()
+	exp := time.Date(2024, 4, 4, 9, 11, 11, 0, time.UTC)
 	assert.Equal(t, exp, res, "check result")
 	fmt.Println(res)
 
