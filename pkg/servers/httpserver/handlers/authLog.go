@@ -142,7 +142,7 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 		Value:    token,
 		MaxAge:   5256000,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -162,7 +162,7 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 		Expires: time.Unix(0, 0),
 		Value:   "",
 		MaxAge:  30000,
-		Secure:  true,
+		Secure:  false,
 	}
 
 	//// переписываем куку у клиента

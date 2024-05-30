@@ -310,7 +310,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 						Value:    authKey,
 						MaxAge:   5256000,
 						HttpOnly: true,
-						Secure:   true,
+						Secure:   false,
 						SameSite: http.SameSiteLaxMode,
 					}
 
