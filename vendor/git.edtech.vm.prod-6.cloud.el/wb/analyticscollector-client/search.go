@@ -3,77 +3,56 @@ package logbox_client
 import (
 	"context"
 	"fmt"
-	"time"
-
 	pb "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk"
+	"time"
 )
 
-func (c *client) search(ctx context.Context, in searchRes) (out searchReq, err error) {
-	//token, err := lib.GenXServiceKey(c.domain, []byte(c.projectKey), tokenInterval)
-	//ctx = AddToGRPCHeader(ctx, headerServiceKey, token)
-
+func (c *client) search(ctx context.Context, in searchReq) (out SearchResponse, err error) {
 	conn, err := c.client.Conn(ctx)
-	if err != nil || conn == nil {
-		err = fmt.Errorf("[client] [logbox] cannot get grpc connection")
+	if err != nil {
+		err = fmt.Errorf("cannot get grpc connection. err: %w, client: %+v", err, c.client)
+		return out, err
+	}
+	if conn == nil {
+		err = fmt.Errorf("cannot get grpc connection (connection is null)")
 		return out, err
 	}
 
-	// добавили выход по контексту, для случаев, если соединение таймаутит
 	ctxWithDeadline, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-
-	columns := []*pb.Column{}
-	startTime := time.Now()
-
-	for _, v := range in.Columns {
-		column := pb.Column{
-			Name:        v.Name,
-			SearchValue: v.SearchValue,
-		}
-		columns = append(columns, &column)
-	}
-
-	inClient := &pb.SearchRequest{
-		Columns: columns,
-		Search:  in.Search,
-		Draw:    uint64(in.Draw),
-		Limit:   uint64(in.Limit),
-		Skip:    uint64(in.Skip),
-		OrderBy: uint64(in.OrderBy),
-		Dir:     in.Dir,
-	}
-
-	client := pb.NewCollectorClient(conn)
-
-	result, err := client.Search(ctxWithDeadline, inClient)
+	collectorClient := pb.NewCollectorClient(conn)
+	res, err := collectorClient.Search(ctxWithDeadline, in.SearchRequest)
 	if err != nil {
-		return out, fmt.Errorf("[client] [collector] request error request Search. timing: %d, err: %dms", time.Since(startTime).Milliseconds(), err)
+		return out, fmt.Errorf("error search message to collector. err: %w", err)
 	}
-	if result == nil {
-		return out, fmt.Errorf("[client] [collector] error request Search. result is empty")
+	if res == nil {
+		return out, fmt.Errorf("error search message to collector. (result is null)")
 	}
-
-	out.Draw = int(result.Draw)
-	out.RecordsTotal = int(result.RecordsTotal)
-	out.RecordsFiltered = int(result.RecordsFiltered)
-	out.Data = []event{}
-	for _, _ = range result.Data {
-		// ev := c.NewEvent(
-		// m.Uid,
-		// m.Level,
-		// m.Type,
-		// m.Name,
-		// m.Config,
-		// m.Request,
-		// m.User,
-		// m.Srv,
-		// m.Msg,
-		// m.Time,
-		// m.Timing,
-		// m.Payload,
-		// )
-		// out.Data = append(out.Data, ev)
+	if res.Error != "" {
+		return out, fmt.Errorf("error search message. err: %s", res.Error)
 	}
 
-	return out, err
+	out.ResultSize = uint(res.Metrics.ResultCount)
+	out.ResultOffset = int(res.Metrics.ResultOffset)
+	out.ResultLimit = int(res.Metrics.ResultLimit)
+
+	out.Data = make([]Event, len(res.Events))
+	// Заполнение эвентов
+	for i, e := range res.Events {
+		out.Data[i] = Event{
+			Storage:   e.Storage,
+			Payload:   e.Payload,
+			Timestamp: e.Timestamp.AsTime(),
+			Fields:    make([]Field, len(e.Items)),
+		}
+		// Заполнение полей эвента
+		for j, item := range e.Items {
+			out.Data[i].Fields[j] = Field{
+				Name:  item.Field,
+				Value: item.Value,
+			}
+		}
+	}
+
+	return
 }
