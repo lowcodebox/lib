@@ -23,6 +23,8 @@ type Config struct {
 	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
 	DC                  string `envconfig:"DC" default:"el"`
 
+	CookieFront string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение;имя=значение)"`
+
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
 	IntervalCleaner Duration `envconfig:"INTERVAL_CLEANER" default:"10m" description:"период очистки кеша сессий через запрос актуальных сессий в IAM"`
