@@ -247,7 +247,8 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"help":   Funcs.help,
 		"env":    Funcs.env,
 
-		"analyticsset": Funcs.analyticsSet,
+		"analyticsset":    Funcs.analyticsSet,
+		"analyticssearch": Funcs.analyticsSearch,
 	}
 }
 
@@ -270,6 +271,25 @@ func (t *funcMap) help() map[string]any {
 // analytics - аналитика......
 func (t *funcMap) analytics(storage string, params ...string) bool {
 	return true
+}
+
+func (t *funcMap) analyticsSearch(limit int, offset int, storage string, params ...string) analytics.SearchResponse {
+	searchReq := t.analyticsClient.NewSearchReq(storage, limit, offset)
+
+	fields := make([]analytics.Field, len(params)/2)
+	for i := 0; i < len(params)/2; i++ {
+		fields[i] = analytics.Field{
+			Name:  params[i*2],
+			Value: params[i*2+1],
+		}
+	}
+
+	req, err := t.analyticsClient.Search(context.Background(), searchReq)
+	if err != nil {
+		req.Data = append(req.Data, analytics.Event{Storage: "", Fields: []analytics.Field{analytics.Field{Name: "error", Value: err.Error()}}, Timestamp: time.Now(), Payload: ""})
+	}
+
+	return req
 }
 
 // analyticsSet - сборщик
