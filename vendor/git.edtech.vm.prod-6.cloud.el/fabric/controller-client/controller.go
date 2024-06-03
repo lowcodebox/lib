@@ -21,6 +21,7 @@ type controller struct {
 type Controller interface {
 	UpsertSecret(ctx context.Context, key string, value string) error
 	GetSecret(ctx context.Context, key string) (string, error)
+	ListSecrets(ctx context.Context) (res map[string]string, err error)
 }
 
 func (c *controller) UpsertSecret(ctx context.Context, key string, value string) error {
@@ -29,6 +30,10 @@ func (c *controller) UpsertSecret(ctx context.Context, key string, value string)
 
 func (c *controller) GetSecret(ctx context.Context, key string) (string, error) {
 	return c.getSecret(ctx, key)
+}
+
+func (c *controller) ListSecrets(ctx context.Context) (res map[string]string, err error) {
+	return c.listSecrets(ctx)
 }
 
 func New(urlStr string, observeLog bool, projectKey string) Controller {
