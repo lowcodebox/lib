@@ -23,7 +23,8 @@ type Config struct {
 	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
 	DC                  string `envconfig:"DC" default:"el"`
 
-	CookieFront string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение;имя=значение)"`
+	CookieFront     string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение;имя=значение)"`
+	CookieFrontAuth string `envconfig:"COOKIE_FRONT_AUTH" default:"" description:"ставим куки на беке для фронта (после авторизации)"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 

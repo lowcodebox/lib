@@ -355,6 +355,36 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 
 					// переписываем куку у клиента
 					http.SetCookie(w, cookie)
+
+					// устанавливаем сервисные куки после авторизации (для фронта)
+					for _, v := range strings.Split(h.cfg.CookieFrontAuth, ",") {
+						if v == "" {
+							continue
+						}
+
+						nv := strings.Split(v, "=")
+						if len(nv) < 2 {
+							continue
+						}
+						name := nv[0]
+						value := nv[1]
+
+						cookie, err := r.Cookie(name)
+						if err != nil || cookie.Valid() != nil {
+							// заменяем куку у пользователя в браузере
+							c := &http.Cookie{
+								Path:     "/",
+								Name:     name,
+								Value:    value,
+								MaxAge:   56000,
+								HttpOnly: false,
+								Secure:   false,
+							}
+
+							http.SetCookie(w, c)
+						}
+					}
+
 				}
 			}
 
