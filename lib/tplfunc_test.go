@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
 	"net/http"
 	"reflect"
 	"testing"
@@ -44,7 +45,7 @@ var config struct {
 func Test_csvtoslicemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res, err := Funcs.csvtosliсemap([]byte(in))
 	if err != nil {
 		t.Errorf("Should not produce an error")
@@ -70,7 +71,7 @@ func Test_unzip(t *testing.T) {
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 	in := "WMS.zip"
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 	status := Funcs.unzip(in, "")
 
 	fmt.Println(status)
@@ -90,7 +91,7 @@ func Test_parsescorm(t *testing.T) {
 
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 	index := Funcs.parsescorm(in, "")
 	fmt.Printf("index: %s", index)
 }
@@ -111,7 +112,7 @@ func Test_imgResize(t *testing.T) {
 
 	in := "landing/ludam.png"
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgResize(in, 100, 100)
 
@@ -134,7 +135,7 @@ func Test_imgCrop(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 
@@ -157,7 +158,7 @@ func Test_imgCropAndResize(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 	res = Funcs.imgResize(res, 100, 100)
@@ -181,7 +182,7 @@ func Test_sliceuint8delete(t *testing.T) {
 
 	in := []uint8{1, 2, 3, 4, 5, 6}
 
-	NewFuncMap(vfs, nil, nil, "", nil)
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.sliceuint8delete(in, 2)
 
@@ -1956,7 +1957,7 @@ func Test_sortbyfield(t *testing.T) {
 
 	fmt.Println("-----------------")
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res, err := Funcs.sortbyfield(obj, "", "rev", true)
 	if err != nil {
 		t.Errorf("Should not produce an error, err: %s", err)
@@ -2088,7 +2089,7 @@ func Test_funcMap_convert(t1 *testing.T) {
 func Test_funcMap_fastjsonforkey(t1 *testing.T) {
 	body := "{\n    \"first_name\": \"adadad\",\n    \"last_name\": \"awdawda\",\n    \"phone\": \"79063056130\",\n    \"employee_id\": 1234567,\n    \"user_id\": \"1234567\"\n}"
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 
 	result1 := Funcs.fastjsonforkey(body, "employee_id")
 	fmt.Println(result1)
@@ -2097,7 +2098,7 @@ func Test_funcMap_fastjsonforkey(t1 *testing.T) {
 func Test_decodebase64(t *testing.T) {
 	in := "user1:passw0rd"
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res := Funcs.decodebase64(in)
 
 	fmt.Println(res)
@@ -2144,7 +2145,7 @@ func Test_loggert(t *testing.T) {
 
 	//logger.Info(context.Background(), "msg", zap.String("df", "sdf"))
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res := Funcs.logger("info", "test", "key", "sdf", "sdf")
 
 	fmt.Println(res)
@@ -2156,8 +2157,17 @@ func Test_analyticsSet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	NewFuncMap(nil, nil, nil, "", client)
+	NewFuncMap(nil, nil, nil, "", client, nil)
 	err = Funcs.analyticsSet("attempt", "parent", "test", "other", "idunno")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_secretsGet(t *testing.T) {
+	client := controller.New("https://localhost:8001", false, "LKHlhb899Y09olUi")
+	NewFuncMap(nil, nil, nil, "", nil, client)
+	_, err := Funcs.secretsGet("key1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2207,7 +2217,7 @@ func Test_funcMap_limiter(t1 *testing.T) {
 		},
 	}
 
-	NewFuncMap(nil, nil, nil, "", nil)
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {

@@ -74,12 +74,17 @@ type Api interface {
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 }
 
+type ControllerClient interface {
+	GetSecret(ctx context.Context, key string) (string, error)
+}
+
 type funcMap struct {
-	vfs             Vfs
-	api             Api
-	cfg             *model.Config
-	projectKey      string
-	analyticsClient analytics.Client
+	vfs              Vfs
+	api              Api
+	projectKey       string
+	analyticsClient  analytics.Client
+	controllerClient ControllerClient
+	cfg              *model.Config
 }
 
 type FuncMaper interface {
@@ -117,13 +122,14 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client) {
+func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient) {
 	Funcs = funcMap{
 		vfs,
 		api,
-		cfg,
 		projectKey,
 		analyticsClient,
+		controllerClient,
+		cfg,
 	}
 
 	FuncMap = template.FuncMap{
@@ -249,6 +255,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 
 		"analyticsset":    Funcs.analyticsSet,
 		"analyticssearch": Funcs.analyticsSearch,
+		"secretsget":      Funcs.secretsGet,
 	}
 }
 
@@ -2046,4 +2053,8 @@ func (t *funcMap) convert(content []byte, targetEncoding string) (encodedData []
 
 func (t *funcMap) timeUnix(date time.Time) int64 {
 	return date.Unix()
+}
+
+func (t *funcMap) secretsGet(key string) (value string, err error) {
+	return t.controllerClient.GetSecret(context.Background(), key)
 }
