@@ -21,10 +21,14 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15 h1:i7QxL1XKZBkq22IvXb9vL
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15/go.mod h1:UwNChnMnFm2qeJgDK7kMZX0Iu7f4/ByaczSQEeSiYGA=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44 h1:fxZKluy/OXANQDAkgNwbiIE9PBqufHBTGf+cAQ5CqzU=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
+git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45 h1:Cd55uHYyjSEm7nHGND4I1nqAQBu+3DVBrfewdDh9aN0=
+git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 h1:Je9lFykQ79qWSI+mZ5UDd+wQlnCuoLHzmuKbXZLi/tQ=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21/go.mod h1:EY11INWcfzSWRcNuOs9e/0cMe63/V2oOeXl2gw2+KS4=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 h1:ZoBUkYizxW1J8Y4KHWpKTkBGI4BGjm1e7vHSvsCHrcI=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21/go.mod h1:DFbf9NCFgc+zmxRO+A6iwer+fmCkZ2O26DUW+0HoqBY=
+git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22 h1:CdikrRdkOM45BwcT3UB/lQkgmnIgX3Yo4umR3eDz1CQ=
+git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22/go.mod h1:DFbf9NCFgc+zmxRO+A6iwer+fmCkZ2O26DUW+0HoqBY=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39 h1:e4CJccgTs+6t9M2TacemoEKqhHOyOEJsP7GIHgtXRkA=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39/go.mod h1:uzhSJ9iRFnuW3Y2eu4/fT2d4A5NGrHEr02N9ekWjtW4=
 git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1 h1:RByROSyU6OJ6IR+fZBFHFCyvK+Ri8+JvGkVH9a+/nUg=
@@ -37,6 +41,8 @@ git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 h1:gQotQWr8NRH4B6YhQx
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1/go.mod h1:M/qHbs0+khM/tl/b9PhLeUuJhTYy8nqJhmfF1w+I1cQ=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27 h1:Wv4DO+jXitsqo8S+c9NNE98XAwRRq2d3UQcLu3QFNVY=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27/go.mod h1:DQi/HaNNyKbjW0+ClQB20JU5MJLoKs6Dp0IQfhFf68w=
+git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30 h1:LX+CQHPjHpyypQggmoAUMRAX95sADIkU2otdhN/n48A=
+git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30/go.mod h1:2qjMYMI1JJTaVtaYXOzoCSP4VSf1sB4PW9MA7spqQLY=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.0.2 h1:pnm5ZdCj92zL+3iYUb1fGdypuQTLMnRgodHsiKDpivs=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.0.2/go.mod h1:8eRg91JRanitXiZTwN4UZzOmRRUUuu4nYDtEIHzOafA=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.1 h1:EZ3BG3jM32VqseOX1wHAVbpLperQLOKm5Tjymb0EiZ4=

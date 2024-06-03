@@ -21,6 +21,9 @@ type Config struct {
 	EnvironmentPointsrc string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
 	Cluster             string `envconfig:"CLUSTER" default:"alpha"`
 	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
+	DC                  string `envconfig:"DC" default:"el"`
+
+	CookieFront string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение;имя=значение)"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 

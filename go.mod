@@ -6,11 +6,11 @@ require (
 	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3
 	git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.5
 	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
-	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.44
+	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45
 	git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
 	git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
-	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.27
+	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30
 	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
@@ -43,7 +43,7 @@ require (
 	cloud.google.com/go/storage v1.29.0 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 // indirect
-	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.21 // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22 // indirect
 	git.edtech.vm.prod-6.cloud.el/packages/curl v0.0.1 // indirect
 	git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 // indirect
 	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.0.2 // indirect

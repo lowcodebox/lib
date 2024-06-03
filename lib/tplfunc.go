@@ -29,6 +29,9 @@ import (
 	"strings"
 	"time"
 
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
+
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
@@ -46,7 +49,7 @@ import (
 )
 
 const ttlCache = 5 * time.Minute
-
+const limitExpiryTime = 5 // Время истечения кода в секундах для rate limiter
 var (
 	Funcs   funcMap
 	FuncMap template.FuncMap
@@ -81,6 +84,7 @@ type funcMap struct {
 	projectKey       string
 	analyticsClient  analytics.Client
 	controllerClient ControllerClient
+	cfg              *model.Config
 }
 
 type FuncMaper interface {
@@ -118,13 +122,14 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient) {
+func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient) {
 	Funcs = funcMap{
 		vfs,
 		api,
 		projectKey,
 		analyticsClient,
 		controllerClient,
+		cfg,
 	}
 
 	FuncMap = template.FuncMap{
@@ -159,6 +164,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"dogparse":            Funcs.dogparse,
 		"fastjsonforkey":      Funcs.fastjsonforkey,
 		"get":                 Funcs.get,
+		"cache":               Funcs.cache,
 		"groupbyfield":        Funcs.groupbyfield,
 		"hash":                Funcs.hash,
 		"invert":              Funcs.invert,
@@ -167,6 +173,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"jsonescapeunlessamp": Funcs.jsonEscapeUnlessAmp,
 		"marshal":             Funcs.marshal,
 		"mulfloat":            Funcs.mulfloat,
+		"limiter":             Funcs.limiter,
 		"output":              Funcs.output,
 		"parsebody":           Funcs.parsebody,
 		"parseform":           Funcs.parseform,
@@ -180,6 +187,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"sendmail":            Funcs.sendmail,
 		"separator":           Funcs.separator,
 		"set":                 Funcs.set,
+		"cacheset":            Funcs.cacheset,
 		"setstring":           Funcs.setstring,
 		"sliceappend":         Funcs.sliceappend,
 		"slicedelete":         Funcs.slicedelete,
@@ -213,6 +221,7 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 		"tomoney":             Funcs.tomoney,
 		"tostring":            Funcs.tostring,
 		"totree":              Funcs.totree,
+		"xrealip":             Funcs.xrealip,
 		"unmarshal":           Funcs.unmarshal,
 		"uuid":                Funcs.UUID,
 		"value":               Funcs.value,
@@ -242,13 +251,24 @@ func NewFuncMap(vfs Vfs, api Api, projectKey string, analyticsClient analytics.C
 
 		"logger": Funcs.logger,
 		"help":   Funcs.help,
+		"env":    Funcs.env,
 
-		"analyticsset": Funcs.analyticsSet,
-		"secretsget":   Funcs.secretsGet,
+		"analyticsset":    Funcs.analyticsSet,
+		"analyticssearch": Funcs.analyticsSearch,
+		"secretsget":      Funcs.secretsGet,
 	}
 }
 
 var FuncMapS = sprig.FuncMap()
+
+// help
+func (t *funcMap) env() (result map[string]string) {
+	result["env"] = t.cfg.Environment
+	result["cluster"] = t.cfg.Cluster
+	result["dc"] = t.cfg.DC
+
+	return result
+}
 
 // help
 func (t *funcMap) help() map[string]any {
@@ -258,6 +278,25 @@ func (t *funcMap) help() map[string]any {
 // analytics - аналитика......
 func (t *funcMap) analytics(storage string, params ...string) bool {
 	return true
+}
+
+func (t *funcMap) analyticsSearch(limit int, offset int, storage string, params ...string) analytics.SearchResponse {
+	searchReq := t.analyticsClient.NewSearchReq(storage, limit, offset)
+
+	fields := make([]analytics.Field, len(params)/2)
+	for i := 0; i < len(params)/2; i++ {
+		fields[i] = analytics.Field{
+			Name:  params[i*2],
+			Value: params[i*2+1],
+		}
+	}
+
+	req, err := t.analyticsClient.Search(context.Background(), searchReq)
+	if err != nil {
+		req.Data = append(req.Data, analytics.Event{Storage: "", Fields: []analytics.Field{analytics.Field{Name: "error", Value: err.Error()}}, Timestamp: time.Now(), Payload: ""})
+	}
+
+	return req
 }
 
 // analyticsSet - сборщик
@@ -277,6 +316,77 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 
 	_, err := t.analyticsClient.Set(context.Background(), req)
 	return err
+}
+
+func (t *funcMap) cacheset(key string, value interface{}) bool {
+	_, err := cache.Cache().Upsert(key, func() (res interface{}, err error) {
+		return value, err
+	}, 0)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (t *funcMap) cache(key string) interface{} {
+	value, err := cache.Cache().Get(key)
+	if err != nil {
+		return "nil"
+	}
+
+	return value
+}
+
+func (t *funcMap) xrealip(r http.Request) string {
+	ipAddress := r.Header.Get("X-Real-Ip")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	return ipAddress
+}
+
+// limiter - функция, которая проверяет, может ли клиент с определенным IP-адресом отправить запрос повторно
+func (t *funcMap) limiter(ip string) bool {
+	// Получить значение из кеша, используя IP-адрес клиента в качестве ключа
+	value, err := cache.Cache().Get(ip)
+	// Если ключ не найден или значение просрочено
+	if err != nil && (errors.Is(err, cache.ErrorKeyNotFound) || errors.Is(err, cache.ErrorItemExpired)) {
+		// Создать новую запись в кеше с текущим временем
+		_, err = cache.Cache().Upsert(ip, func() (res interface{}, err error) {
+			return time.Now(), nil
+		}, time.Minute)
+		if err != nil {
+			return false
+		}
+		// Разрешить клиенту отправить запрос
+		return true
+	}
+
+	// Получить время последнего запроса из кеша
+	timeValue, ok := value.(time.Time)
+	if !ok {
+		return false
+	}
+
+	// Проверить, не входит ли в интервал паузы
+	if time.Since(timeValue) >= limitExpiryTime*time.Second {
+		// Обновить время последнего запроса в кеше
+		_, err = cache.Cache().Upsert(ip, func() (res interface{}, err error) {
+			return time.Now(), nil
+		}, time.Minute)
+		if err != nil {
+			return false
+		}
+		// Разрешить клиенту отправить запрос
+		return true
+	} else {
+		// Отклонить запрос, так как клиент не может отправлять запросы слишком часто
+		return false
+	}
 }
 
 // logger - через логгер приложения
@@ -368,14 +478,21 @@ func (t *funcMap) iterate(count int) []int {
 }
 
 // profileuid берем uid профиля по uid-роли
+// если roleuid - пусто - отдает uid текущей роли
+// если не находит профиль с заданной ролью - отдает мапку всех имеющихся у пользователя ролей
 func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
 	mapRoles := map[string]string{}
+	profile := t.profile(r)
 
-	for _, v := range t.profile(r).Profiles {
+	if roleuid == "" {
+		return profile.CurrentProfile.Uid
+	}
+
+	for _, v := range profile.Profiles {
 		roleSrc, _ := v.Attr("userroles", "src")
 		roleValue, _ := v.Attr("userroles", "value")
 		mapRoles[roleSrc] = roleValue
-		if roleSrc == roleuid {
+		if strings.Contains(roleSrc, roleuid) {
 			return v.Uid
 		}
 	}

@@ -219,7 +219,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	fmt.Printf("%s Enabled API (url: %s)\n", done, cfg.UrlApi)
 
 	// инициализация FuncMap
-	applib.NewFuncMap(vfs, api, cfg.ProjectKey, analyticsClient, controllerClient)
+	applib.NewFuncMap(vfs, api, &cfg, cfg.ProjectKey, analyticsClient, controllerClient)
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
