@@ -23,7 +23,7 @@ cloud.google.com/go/storage/internal/apiv2/stubs
 # git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/api-client
-# git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.5
+# git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client
 # git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40
@@ -45,7 +45,7 @@ git.edtech.vm.prod-6.cloud.el/fabric/logbox-client
 # git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/fabric/models
-# git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.1
+# git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.2
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/lovetsky/secrets
 # git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23

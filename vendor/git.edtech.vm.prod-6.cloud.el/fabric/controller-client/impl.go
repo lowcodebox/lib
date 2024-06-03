@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
@@ -16,8 +15,18 @@ import (
 )
 
 var (
-	ErrRespWrongType = errors.New("wrong response type. expected string")
+	ErrSecretNotFound = errors.New("secret not found")
 )
+
+type secret struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type secretsOut struct {
+	Secrets []secret `json:"secrets"`
+	Error   error    `json:"error"`
+}
 
 func (c *controller) upsertSecret(ctx context.Context, key, value string) error {
 	handlers := map[string]string{}
@@ -36,8 +45,15 @@ func (c *controller) upsertSecret(ctx context.Context, key, value string) error 
 	}
 
 	body := secretsInJSON(key, value)
-	_, err = lib.Curl(ctx, http.MethodPost, urlc, body, nil, handlers, nil)
-	return err
+	var resp secretsOut
+	_, err = lib.Curl(ctx, http.MethodPost, urlc, body, &resp, handlers, nil)
+	if err != nil {
+		return err
+	}
+	if resp.Error != nil {
+		return resp.Error
+	}
+	return nil
 }
 
 func (c *controller) getSecret(ctx context.Context, key string) (string, error) {
@@ -57,24 +73,60 @@ func (c *controller) getSecret(ctx context.Context, key string) (string, error) 
 	}
 
 	key = url.QueryEscape(key)
-	res, err := lib.Curl(ctx, http.MethodGet, urlc+"?key="+key, "", nil, handlers, nil)
+	var resp secretsOut
+	_, err = lib.Curl(ctx, http.MethodGet, urlc+"?key="+key, "", &resp, handlers, nil)
 	if err != nil {
 		return "", err
 	}
 
-	str, ok := res.(string)
-	if !ok {
-		return "", ErrRespWrongType
+	if resp.Error != nil {
+		return "", resp.Error
 	}
-	data := map[string]string{}
-	err = json.Unmarshal([]byte(str), &data)
-	if err != nil {
-		return "", err
+
+	if len(resp.Secrets) == 0 {
+		return "", ErrSecretNotFound
 	}
-	value := data["value"]
-	bytes, err := base64.StdEncoding.DecodeString(value)
+
+	bytes, err := base64.StdEncoding.DecodeString(resp.Secrets[0].Value)
 
 	return string(bytes), err
+}
+
+func (c *controller) listSecrets(ctx context.Context) (res map[string]string, err error) {
+	handlers := map[string]string{}
+	err = c.generateKey(handlers)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.observeLog {
+		defer c.observeLogger(ctx, time.Now(), "Get", err)
+	}
+
+	urlc, err := url.JoinPath(c.url, "secret", "list")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp secretsOut
+	_, err = lib.Curl(ctx, http.MethodGet, urlc, "", &resp, handlers, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Error != nil {
+		return nil, resp.Error
+	}
+
+	res = make(map[string]string)
+	for _, secret := range resp.Secrets {
+		bytes, err := base64.StdEncoding.DecodeString(secret.Value)
+		if err != nil {
+			return nil, err
+		}
+		res[secret.Key] = string(bytes)
+	}
+	return
 }
 
 func (c *controller) generateKey(handlers map[string]string) (err error) {

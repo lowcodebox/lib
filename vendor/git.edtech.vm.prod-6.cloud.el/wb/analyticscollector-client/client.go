@@ -20,13 +20,11 @@ type client struct {
 }
 
 type Client interface {
-	Set(ctx context.Context, in setReq) (out SetRes, err error)
-	Search(ctx context.Context, in searchReq) (out SearchResponse, err error)
+	Set(ctx context.Context, in setReq) (out setRes, err error)
+	Search(ctx context.Context, in searchRes) (out searchReq, err error)
 
 	NewSetReq() setReq
 	NewEvent(storage string, fields ...Field) event
-
-	NewSearchReq(storage string, limit, offset int, fields ...Field) searchReq
 
 	Close() error
 }
