@@ -220,6 +220,29 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					zap.String("rnd", rnd),
 					zap.Error(err))
 
+				// удаляем сервисные куки если не авторизован (для фронта)
+				for _, name := range strings.Split(h.cfg.CookieFrontLogoutDelete, ",") {
+					if name == "" {
+						continue
+					}
+
+					cookie, err := r.Cookie(name)
+					if err != nil || cookie.Valid() != nil {
+						// заменяем куку у пользователя в браузере
+						c := &http.Cookie{
+							Path:     "/",
+							Name:     name,
+							Expires:  time.Unix(0, 0),
+							Value:    "",
+							MaxAge:   56000,
+							HttpOnly: false,
+							Secure:   false,
+						}
+
+						http.SetCookie(w, c)
+					}
+				}
+
 				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
 			}
 
@@ -357,7 +380,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					http.SetCookie(w, cookie)
 
 					// устанавливаем сервисные куки после авторизации (для фронта)
-					for _, v := range strings.Split(h.cfg.CookieFrontAuth, ",") {
+					for _, v := range strings.Split(h.cfg.CookieFrontLogin, ",") {
 						if v == "" {
 							continue
 						}
@@ -384,7 +407,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 							http.SetCookie(w, c)
 						}
 					}
-
 				}
 			}
 
