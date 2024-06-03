@@ -7,7 +7,6 @@ import (
 
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -48,7 +47,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	router.Name("Storage").Path("/assets/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
 	router.Name("Storage").Path("/templates/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
 
-	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
+	//prometheus.MustRegister(version.NewCollector(h.cfg.Name))
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 

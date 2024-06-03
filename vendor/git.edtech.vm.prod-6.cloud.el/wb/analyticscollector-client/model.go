@@ -1,6 +1,10 @@
 package logbox_client
 
-import "strings"
+import (
+	pb "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk"
+	"strings"
+	"time"
+)
 
 type event struct {
 	Storage string
@@ -8,40 +12,37 @@ type event struct {
 	Payload string `json:"payload"`
 }
 
+type Event struct {
+	Storage   string
+	Fields    []Field
+	Timestamp time.Time
+	Payload   string `json:"payload"`
+}
+
 type Field struct {
 	Name  string
 	Value string
-}
-
-type Column struct {
-	Name        string
-	SearchValue string
 }
 
 type setReq struct {
 	Events []event
 }
 
-type setRes struct {
+type SetRes struct {
+	UIDs   []string
 	Status bool
 	Error  string
 }
 
 type searchReq struct {
-	Draw            int     `json:"draw"`
-	RecordsTotal    int     `json:"recordsTotal"`
-	RecordsFiltered int     `json:"recordsFiltered"`
-	Data            []event `json:"data"`
+	*pb.SearchRequest
 }
 
-type searchRes struct {
-	Columns []Column
-	Search  string `json:"search"`
-	Draw    int    `json:"draw"`
-	Limit   int    `json:"limit"`
-	Skip    int    `json:"skip"` //nolint
-	OrderBy int    `json:"order_by"`
-	Dir     string `json:"dir"`
+type SearchResponse struct {
+	Data         []Event
+	ResultSize   uint
+	ResultLimit  int
+	ResultOffset int
 }
 
 func (u *setReq) AddEvent(event event) {
@@ -77,4 +78,19 @@ func (c *client) NewEvent(storage string, fields ...Field) event {
 	e.Payload = builder.String()
 
 	return e
+}
+
+func (c *client) NewSearchReq(storage string, limit, offset int, fields ...Field) (sr searchReq) {
+	sr.SearchRequest = &pb.SearchRequest{}
+	sr.SearchRequest.Storage = storage
+	sr.Offset = int64(offset)
+	sr.Count = int64(limit)
+	sr.Items = make([]*pb.EventItem, len(fields))
+	for i, f := range fields {
+		sr.Items[i] = &pb.EventItem{
+			Field: f.Name,
+			Value: f.Value,
+		}
+	}
+	return
 }

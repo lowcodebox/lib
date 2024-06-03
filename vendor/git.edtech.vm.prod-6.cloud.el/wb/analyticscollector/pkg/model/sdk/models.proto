@@ -3,22 +3,18 @@ syntax = "proto3";
 package analytic_collector;
 
 option go_package = ".";
+import "google/protobuf/timestamp.proto";
 
 message Event {
 	string storage = 1;
 	repeated EventItem items = 2;
 	string payload = 3;
+	google.protobuf.Timestamp timestamp = 4;
 }
 
 message EventItem {
 	string field = 1;
 	string value = 2;
-}
-
-//TODO: Если делать поиск с возможностью учитывать регист создать структуру Search (используется в корне и колонках)
-message Column {
-	string Name = 1;
-	string SearchValue = 2;
 }
 
 message SetRequest {
@@ -27,26 +23,27 @@ message SetRequest {
 
 message SetResponse {
 	bool status = 1;
-	string error = 2;
+	repeated string uids = 2;
+	string error = 3;
 }
 
 message SearchRequest {
-	repeated Column Columns = 1;
-	string Search = 2;
-	uint64 Draw = 3;
-	uint64 Limit = 4;
-	uint64 Skip = 5;
-	uint64 OrderBy = 6;
-	string Dir = 7;
+	string storage = 1;
+	repeated EventItem items = 2;
+	int64 count = 3;
+	int64 offset = 4;
 }
 
 message SearchResponse {
-	uint64 Draw = 1;
-	uint64 RecordsTotal = 2;
-	uint64 RecordsFiltered = 3;
-	repeated Event Data = 4;
-	string error = 5;
-	bool 	 status = 6;
+	repeated Event events = 1;
+	Metrics metrics = 2;
+	string error = 3;
+}
+
+message Metrics {
+	uint64 ResultCount = 2;
+	int64 ResultOffset = 3;
+	int64 ResultLimit = 4;
 }
 
 service Collector {

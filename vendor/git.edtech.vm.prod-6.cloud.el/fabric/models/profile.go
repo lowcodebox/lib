@@ -50,6 +50,7 @@ type ProfileData struct {
 	EmployeeId string `json:"employee_id"`
 	UserId     string `json:"user_id"`
 	OfficeId   string `json:"office_id"`
+	ShardId    string `json:"shard_id"`
 }
 
 type Items struct {
