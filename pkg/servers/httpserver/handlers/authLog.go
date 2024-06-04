@@ -167,6 +167,19 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 
 	//// переписываем куку у клиента
 	http.SetCookie(w, cookie)
+
+	cookie = &http.Cookie{
+		Path:    "/",
+		Name:    "Token-Exist",
+		Expires: time.Unix(0, 0),
+		Value:   "",
+		MaxAge:  30000,
+		Secure:  false,
+	}
+
+	//// переписываем куку у клиента
+	http.SetCookie(w, cookie)
+
 	http.Redirect(w, r, r.Referer(), 302)
 
 	return err
