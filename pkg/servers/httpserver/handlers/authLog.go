@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
@@ -58,6 +59,35 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[AuthLog] error exec AuthLog")
 		return
+	}
+
+	// устанавливаем сервисные куки после авторизации (для фронта)
+	for _, v := range strings.Split(h.cfg.CookieFrontLogin, ",") {
+		if v == "" {
+			continue
+		}
+
+		nv := strings.Split(v, "=")
+		if len(nv) < 2 {
+			continue
+		}
+		name := nv[0]
+		value := nv[1]
+
+		cookie, err := r.Cookie(name)
+		if err != nil || cookie.Valid() != nil {
+			// заменяем куку у пользователя в браузере
+			c := &http.Cookie{
+				Path:     "/",
+				Name:     name,
+				Value:    value,
+				MaxAge:   56000,
+				HttpOnly: false,
+				Secure:   false,
+			}
+
+			http.SetCookie(w, c)
+		}
 	}
 
 	out, er := h.authEncodeResponse(r.Context(), serviceResult)
@@ -168,17 +198,28 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 	//// переписываем куку у клиента
 	http.SetCookie(w, cookie)
 
-	cookie = &http.Cookie{
-		Path:    "/",
-		Name:    "Token-Exist",
-		Expires: time.Unix(0, 0),
-		Value:   "",
-		MaxAge:  30000,
-		Secure:  false,
-	}
+	// удаляем сервисные куки если не авторизован (для фронта)
+	for _, name := range strings.Split(h.cfg.CookieFrontLogoutDelete, ",") {
+		if name == "" {
+			continue
+		}
 
-	//// переписываем куку у клиента
-	http.SetCookie(w, cookie)
+		cookie, err := r.Cookie(name)
+		if err != nil || cookie.Valid() != nil {
+			// заменяем куку у пользователя в браузере
+			c := &http.Cookie{
+				Path:     "/",
+				Name:     name,
+				Expires:  time.Unix(0, 0),
+				Value:    "",
+				MaxAge:   56000,
+				HttpOnly: false,
+				Secure:   false,
+			}
+
+			http.SetCookie(w, c)
+		}
+	}
 
 	http.Redirect(w, r, r.Referer(), 302)
 
