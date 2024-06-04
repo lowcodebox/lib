@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const authTokenName = "X-Auth-Key"
@@ -74,20 +75,17 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 		name := nv[0]
 		value := nv[1]
 
-		cookie, err := r.Cookie(name)
-		if err != nil || cookie.Valid() != nil {
-			// заменяем куку у пользователя в браузере
-			c := &http.Cookie{
-				Path:     "/",
-				Name:     name,
-				Value:    value,
-				MaxAge:   56000,
-				HttpOnly: false,
-				Secure:   false,
-			}
-
-			http.SetCookie(w, c)
+		// заменяем куку у пользователя в браузере
+		c := &http.Cookie{
+			Path:     "/",
+			Name:     name,
+			Value:    value,
+			MaxAge:   56000,
+			HttpOnly: false,
+			Secure:   false,
 		}
+
+		http.SetCookie(w, c)
 	}
 
 	out, er := h.authEncodeResponse(r.Context(), serviceResult)
@@ -204,21 +202,18 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 			continue
 		}
 
-		cookie, err := r.Cookie(name)
-		if err != nil || cookie.Valid() != nil {
-			// заменяем куку у пользователя в браузере
-			c := &http.Cookie{
-				Path:     "/",
-				Name:     name,
-				Expires:  time.Unix(0, 0),
-				Value:    "",
-				MaxAge:   56000,
-				HttpOnly: false,
-				Secure:   false,
-			}
-
-			http.SetCookie(w, c)
+		// заменяем куку у пользователя в браузере
+		c := &http.Cookie{
+			Path:     "/",
+			Name:     name,
+			Expires:  time.Unix(0, 0),
+			Value:    "",
+			MaxAge:   56000,
+			HttpOnly: false,
+			Secure:   false,
 		}
+
+		http.SetCookie(w, c)
 	}
 
 	http.Redirect(w, r, r.Referer(), 302)
