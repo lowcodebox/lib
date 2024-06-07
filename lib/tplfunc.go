@@ -472,7 +472,7 @@ func (t *funcMap) iterate(count int) []int {
 
 // profileuid берем uid профиля по uid-роли
 // если roleuid - пусто - отдает uid текущей роли
-// если не находит профиль с заданной ролью - отдает мапку всех имеющихся у пользователя ролей
+// если не находит профиль с заданной ролью - отдает текущий профиль
 func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
 	mapRoles := map[string]string{}
 	profile := t.profile(r)
@@ -490,8 +490,7 @@ func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
 		}
 	}
 
-	g, _ := json.Marshal(mapRoles)
-	return string(g)
+	return profile.CurrentProfile.Uid
 }
 
 // profile перемешивает полученный слайс
