@@ -27,6 +27,7 @@ type Client interface {
 	NewEvent(storage string, fields ...Field) event
 
 	NewSearchReq(storage string, limit, offset int, fields ...Field) searchReq
+	SearchWithOrder(sr searchReq, orderField string, asc bool) searchReq
 
 	Close() error
 }
