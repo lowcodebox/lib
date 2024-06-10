@@ -39,10 +39,10 @@ git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 h1:gQotQWr8NRH4B6YhQx
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1/go.mod h1:M/qHbs0+khM/tl/b9PhLeUuJhTYy8nqJhmfF1w+I1cQ=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30 h1:LX+CQHPjHpyypQggmoAUMRAX95sADIkU2otdhN/n48A=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30/go.mod h1:2qjMYMI1JJTaVtaYXOzoCSP4VSf1sB4PW9MA7spqQLY=
-git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.6-stage h1:6l/Fvn/iXwHO/HBpwlWQbyqO8XmQPWRyzb7OMqDCVO4=
-git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.6-stage/go.mod h1:E+ph8eQm0slNjAKj7aenPxQlwz3HuGW3x8+r5GpuUtc=
-git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.3 h1:oukcLGevvPnFr1ZV36L0cF2IQWpbxU3niQCdnYV4cvU=
-git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.3/go.mod h1:sgcWnBOFGemZ9XDaTMyrzInfCyKJ9Osg2QhNfJAn2W0=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.11 h1:8G9xVqdAUog0k3gRI5SjbdIHz2GLbInbDZ0hAr8bSl4=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.11/go.mod h1:YANOowRTYZB+JkvJTV85FiEWE3zyhuKct9uLT7K+ZE4=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4 h1:f2ZfTmsUEl/wp4ZjXudUXzRhbZkGkOmVwJqFshirm84=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4/go.mod h1:aFAXEqwFoLHZq9cT5wLX8ufqNHmRktPPBrgqocm4fN0=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible h1:fcYLmCpyNYRnvJbPerq7U0hS+6+I79yEDJBqVNcqUzU=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=

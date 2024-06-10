@@ -11,7 +11,7 @@ require (
 	git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.2
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30
-	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.3
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.13.0
@@ -47,7 +47,7 @@ require (
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22 // indirect
 	git.edtech.vm.prod-6.cloud.el/packages/curl v0.0.1 // indirect
 	git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 // indirect
-	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.6-stage // indirect
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.11 // indirect
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.29 // indirect

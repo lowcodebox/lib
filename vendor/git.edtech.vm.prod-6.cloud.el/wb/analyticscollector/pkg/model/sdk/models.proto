@@ -32,6 +32,8 @@ message SearchRequest {
 	repeated EventItem items = 2;
 	int64 count = 3;
 	int64 offset = 4;
+	string orderField = 5;
+	bool asc = 6;
 }
 
 message SearchResponse {

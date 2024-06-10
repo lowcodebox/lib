@@ -280,9 +280,12 @@ func (t *funcMap) analytics(storage string, params ...string) bool {
 	return true
 }
 
-func (t *funcMap) analyticsSearch(limit int, offset int, storage string, params ...string) analytics.SearchResponse {
-	searchReq := t.analyticsClient.NewSearchReq(storage, limit, offset)
-
+// analyticsSearch поиск в заданном хранилище по полям в params в формате ключ, значение.
+// Если limit <= 0 => limit = максимальному значению в колллекторе
+// Если limit > максимального значения в колллекторе => limit = максимальному значению в колллекторе
+// Если offset <0 => offset = 0
+// Если orderField пустой, сортируется по datetime
+func (t *funcMap) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) analytics.SearchResponse {
 	fields := make([]analytics.Field, len(params)/2)
 	for i := 0; i < len(params)/2; i++ {
 		fields[i] = analytics.Field{
@@ -290,6 +293,9 @@ func (t *funcMap) analyticsSearch(limit int, offset int, storage string, params 
 			Value: params[i*2+1],
 		}
 	}
+
+	searchReq := t.analyticsClient.NewSearchReq(storage, limit, offset, fields...)
+	searchReq = t.analyticsClient.SearchWithOrder(searchReq, orderField, asc)
 
 	req, err := t.analyticsClient.Search(context.Background(), searchReq)
 	if err != nil {

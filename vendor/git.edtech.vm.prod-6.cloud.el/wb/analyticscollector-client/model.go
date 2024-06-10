@@ -94,3 +94,9 @@ func (c *client) NewSearchReq(storage string, limit, offset int, fields ...Field
 	}
 	return
 }
+
+func (c *client) SearchWithOrder(sr searchReq, orderField string, asc bool) searchReq {
+	sr.SearchRequest.OrderField = orderField
+	sr.Asc = asc
+	return sr
+}
