@@ -281,8 +281,8 @@ func (t *funcMap) analytics(storage string, params ...string) bool {
 }
 
 // analyticsSearch поиск в заданном хранилище по полям в params в формате ключ, значение.
-// Если limit <= 0 => limit = 100
-// Если limit > 100 => limit = 100
+// Если limit <= 0 => limit = максимальному значению в колллекторе
+// Если limit > максимального значения в колллекторе => limit = максимальному значению в колллекторе
 // Если offset <0 => offset = 0
 // Если orderField пустой, сортируется по datetime
 func (t *funcMap) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) analytics.SearchResponse {
