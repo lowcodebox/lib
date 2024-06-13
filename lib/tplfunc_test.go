@@ -2229,3 +2229,47 @@ func Test_funcMap_limiter(t1 *testing.T) {
 		})
 	}
 }
+
+func Test_funcMap_useragentstr(t1 *testing.T) {
+	ctx := context.Background()
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
+
+	type args struct {
+		header string
+		param  string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "1",
+			args: args{
+				header: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36",
+				param:  "OS",
+			},
+			want: "macOS",
+		},
+	}
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			if got := Funcs.parseUserAgent(tt.args.header, tt.args.param); got != tt.want {
+				t1.Errorf("parseUserAgent() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleFuncMap_useragentstr() {
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	result := Funcs.parseUserAgent(
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36",
+		"OS")
+
+	fmt.Println(result) // Output: macOS
+}
