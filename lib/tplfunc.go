@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/mileusna/useragent"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -223,6 +224,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"totree":              Funcs.totree,
 		"xrealip":             Funcs.xrealip,
 		"unmarshal":           Funcs.unmarshal,
+		"parseUserAgent":      Funcs.parseUserAgent,
 		"uuid":                Funcs.UUID,
 		"value":               Funcs.value,
 		"varparse":            Funcs.parseparam,
@@ -344,6 +346,7 @@ func (t *funcMap) cache(key string) interface{} {
 	return value
 }
 
+// xrealip -
 func (t *funcMap) xrealip(r http.Request) string {
 	ipAddress := r.Header.Get("X-Real-Ip")
 	if ipAddress == "" {
@@ -353,6 +356,38 @@ func (t *funcMap) xrealip(r http.Request) string {
 		ipAddress = r.RemoteAddr
 	}
 	return ipAddress
+}
+
+// parseUserAgent - парсит заголовок User-Agent и выдает значению по параметру
+// параметры:
+// Name - название приложения
+// Version - версия приложения
+// OS - операционная система девайса
+// OSVersion - версия операционной системы девайса
+// Device - не разобрался как работает
+// isDesktop - true, если десктоп
+// isMobile - true, если смартфон
+// isTablet - true, если планшет
+// isBot - true, если бот
+func (t *funcMap) parseUserAgent(header string, param string) string {
+	ua := useragent.Parse(header)
+
+	params := map[string]string{
+		"Name":      ua.Name,
+		"Version":   ua.Version,
+		"OS":        ua.OS,
+		"OSVersion": ua.OSVersion,
+		"Device":    ua.Device,
+		"isMobile":  strconv.FormatBool(ua.Mobile),
+		"isTablet":  strconv.FormatBool(ua.Tablet),
+		"isBot":     strconv.FormatBool(ua.Bot),
+		"isDesktop": strconv.FormatBool(ua.Desktop),
+	}
+
+	if val, ok := params[param]; ok {
+		return val
+	}
+	return ""
 }
 
 // limiter - функция, которая проверяет, может ли клиент с определенным IP-адресом отправить запрос повторно
