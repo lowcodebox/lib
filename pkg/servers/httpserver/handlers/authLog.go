@@ -80,7 +80,7 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			Name:     name,
 			Value:    value,
-			MaxAge:   56000,
+			MaxAge:   5256000,
 			HttpOnly: false,
 			Secure:   false,
 		}
@@ -208,7 +208,7 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 			Name:     name,
 			Expires:  time.Unix(0, 0),
 			Value:    "",
-			MaxAge:   56000,
+			MaxAge:   5256000,
 			HttpOnly: false,
 			Secure:   false,
 		}
