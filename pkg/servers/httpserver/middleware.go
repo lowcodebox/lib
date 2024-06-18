@@ -234,7 +234,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 							Name:     name,
 							Expires:  time.Unix(0, 0),
 							Value:    "",
-							MaxAge:   5256000,
+							MaxAge:   56000,
 							HttpOnly: false,
 							Secure:   false,
 						}

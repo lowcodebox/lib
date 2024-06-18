@@ -208,7 +208,7 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 			Name:     name,
 			Expires:  time.Unix(0, 0),
 			Value:    "",
-			MaxAge:   5256000,
+			MaxAge:   56000,
 			HttpOnly: false,
 			Secure:   false,
 		}
