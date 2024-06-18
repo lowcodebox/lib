@@ -2095,6 +2095,10 @@ func (t *funcMap) timeUnix(date time.Time) int64 {
 	return date.Unix()
 }
 
-func (t *funcMap) secretsGet(key string) (value string, err error) {
-	return t.controllerClient.GetSecret(context.Background(), key)
+func (t *funcMap) secretsGet(key string) (value string) {
+	value, err := t.controllerClient.GetSecret(context.Background(), key)
+	if err != nil {
+		return ""
+	}
+	return value
 }

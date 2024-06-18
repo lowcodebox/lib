@@ -2167,10 +2167,11 @@ func Test_analyticsSet(t *testing.T) {
 func Test_secretsGet(t *testing.T) {
 	client := controller.New("https://localhost:8001", false, "LKHlhb899Y09olUi")
 	NewFuncMap(nil, nil, nil, "", nil, client)
-	_, err := Funcs.secretsGet("key1")
-	if err != nil {
-		t.Fatal(err)
+	value := Funcs.secretsGet("key1")
+	if value == "" {
+		t.Fatal("No value")
 	}
+	t.Log(value)
 }
 
 func Test_funcMap_limiter(t1 *testing.T) {
