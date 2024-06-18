@@ -84,8 +84,8 @@ func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	return result, err
 }
 
-func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token string, err error) {
-	var res models.Response
+func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token, userUID, profileUID string, err error) {
+	var res AuthResponse
 	var handlers = map[string]string{}
 	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
 	handlers[headerServiceKey] = serviceKey
@@ -100,10 +100,10 @@ func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token s
 
 	_, err = lib.Curl(ctx, http.MethodPost, urlc, suser, &res, handlers, nil)
 	if err != nil {
-		return false, "", fmt.Errorf("urlc: %s, err: %s", urlc, err)
+		return false, "", "", "", fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
 
-	return true, fmt.Sprint(res.Data), nil
+	return true, res.XAuthToken, res.UserUID, res.ProfileUID, nil
 }
 
 func (o *iam) verify(ctx context.Context, tokenString string) (status bool, body *models.Token, refreshToken string, err error) {

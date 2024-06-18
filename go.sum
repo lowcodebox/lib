@@ -19,8 +19,14 @@ git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6 h1:lAeeDnjHS65HBPY
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6/go.mod h1:HL3NabJ27XFiV0BbcB2Ezs9G35A4qKb6KkkfHxQ3+JI=
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40 h1:ShNF8Y0DJ5JFZew3/9xubdkucVJYOqQOG4CjOvmxroQ=
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40/go.mod h1:rUz4QUS1vqbR9/VQB75pib4HdDXaPPJozHWNvssUkA4=
+git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50 h1:vkz0j+sb8quLu4H+YcLO6q/A/1idKh1tnyCEC3BjklY=
+git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50/go.mod h1:/aTRjFRuvkbjH71j3LOI3pYQaV6+X3vaaGcG+yBTw4A=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15 h1:i7QxL1XKZBkq22IvXb9vLngMjqIXFVi6qkWWhEUETZw=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15/go.mod h1:UwNChnMnFm2qeJgDK7kMZX0Iu7f4/ByaczSQEeSiYGA=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.16 h1:s4i2Gd0Zb/5rBipICD1ij1Qze3NEbMTyVNd6jwwVOgU=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.16/go.mod h1:NtrgA6fg1Pt88CqRqaLHf2HnfF/bp5+9L35p0xjylI4=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17 h1:6iP2xvj83SDLaXR2tgAZ7fZ6g64ZBEaoluxCYUsMOkg=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17/go.mod h1:NtrgA6fg1Pt88CqRqaLHf2HnfF/bp5+9L35p0xjylI4=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45 h1:Cd55uHYyjSEm7nHGND4I1nqAQBu+3DVBrfewdDh9aN0=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 h1:Je9lFykQ79qWSI+mZ5UDd+wQlnCuoLHzmuKbXZLi/tQ=

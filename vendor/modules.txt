@@ -42,11 +42,11 @@ git.edtech.vm.prod-6.cloud.el/fabric/api-client
 # git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client
-# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40
-## explicit; go 1.21
+# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50
+## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
-# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15
-## explicit; go 1.21
+# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17
+## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
 # git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45
 ## explicit; go 1.18

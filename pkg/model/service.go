@@ -62,6 +62,8 @@ type ServiceAuthChangeIn struct {
 
 type ServiceAuthOut struct {
 	XAuthToken string
+	ProfileUID string
+	UserUID    string
 	Result     models.ResponseData
 	Error      error
 	Ref        string

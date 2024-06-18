@@ -13,7 +13,7 @@ func (s *service) AuthLogIn(ctx context.Context, in model.ServiceAuthIn) (out mo
 	defer s.monitoringTimingService("AuthLogIn", time.Now())
 	defer s.monitoringError("AuthLogIn", err)
 
-	status, token, err := s.iam.Auth(ctx, in.Payload, in.Ref)
+	status, token, userUID, profileUID, err := s.iam.Auth(ctx, in.Payload, in.Ref)
 	if err != nil {
 		out.Error = err
 		return out, fmt.Errorf("error auth from AuthLogIn. err: %s", err)
@@ -21,6 +21,8 @@ func (s *service) AuthLogIn(ctx context.Context, in model.ServiceAuthIn) (out mo
 
 	if status {
 		out.XAuthToken = token
+		out.UserUID = userUID
+		out.ProfileUID = profileUID
 		out.Ref = in.Ref
 		out.Error = nil
 	}

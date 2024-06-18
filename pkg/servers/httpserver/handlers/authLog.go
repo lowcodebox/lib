@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 
@@ -19,8 +18,12 @@ import (
 const authTokenName = "X-Auth-Key"
 
 type authResponse struct {
-	models.Response
-	Ref string `json:"ref"`
+	XAuthToken  string `json:"x_auth_token"`
+	UserUID     string `json:"user_uid"`
+	ProfileUID  string `json:"profile_uid"`
+	Ref         string `json:"ref"`
+	Code        string `json:"code"`
+	Description string `json:"description"`
 }
 
 func (h *handlers) AuthLogOut(w http.ResponseWriter, r *http.Request) {
@@ -148,18 +151,20 @@ func (h *handlers) authDecodeRequest(ctx *context.Context, r *http.Request) (in 
 }
 
 func (h *handlers) authEncodeResponse(ctx context.Context, serviceResult model.ServiceAuthOut) (response authResponse, err error) {
-	response.Data = serviceResult.XAuthToken
+	response.XAuthToken = serviceResult.XAuthToken
+	response.UserUID = serviceResult.UserUID
+	response.ProfileUID = serviceResult.ProfileUID
 	response.Ref = serviceResult.Ref
 
 	if serviceResult.Error == nil {
-		response.Status.Code = "Success"
-		response.Status.Description = "Авторизация успешна"
+		response.Code = "Success"
+		response.Description = "Авторизация успешна"
 	}
 	return response, err
 }
 
 func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request, out authResponse) (err error) {
-	token := fmt.Sprint(out.Response.Data)
+	token := fmt.Sprint(out.XAuthToken)
 
 	// редиректим страницу, передав в куку новый токен с просроченным временем
 	w.Header().Set(authTokenName, token)
