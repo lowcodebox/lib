@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
 	"net/http"
 	"reflect"
 	"testing"
 	"time"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
 
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 
@@ -2078,7 +2079,7 @@ func Test_funcMap_convert(t1 *testing.T) {
 	}
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
-			t := &funcMap{}
+			t := &FuncImpl{}
 			if gotEncodedData := t.convert(tt.args.content, tt.args.targetEncoding); !reflect.DeepEqual(gotEncodedData, tt.wantEncodedData) {
 				t1.Errorf("convert() = %v, want %v", gotEncodedData, tt.wantEncodedData)
 			}

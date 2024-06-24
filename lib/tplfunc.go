@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mileusna/useragent"
 	"html/template"
 	"image"
 	"image/jpeg"
@@ -30,15 +29,14 @@ import (
 	"strings"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
-	"git.edtech.vm.prod-6.cloud.el/packages/cache"
-
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger/types"
 	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 	"github.com/Masterminds/sprig"
+	"github.com/mileusna/useragent"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
 	"github.com/saintfish/chardet"
@@ -47,12 +45,14 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/transform"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const ttlCache = 5 * time.Minute
 const limitExpiryTime = 5 // Время истечения кода в секундах для rate limiter
 var (
-	Funcs   funcMap
+	Funcs   FuncImpl
 	FuncMap template.FuncMap
 )
 
@@ -79,7 +79,7 @@ type ControllerClient interface {
 	GetSecret(ctx context.Context, key string) (string, error)
 }
 
-type funcMap struct {
+type FuncImpl struct {
 	vfs              Vfs
 	api              Api
 	projectKey       string
@@ -124,7 +124,7 @@ func (r *readerAt) Len() (n int) {
 }
 
 func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient) {
-	Funcs = funcMap{
+	Funcs = FuncImpl{
 		vfs,
 		api,
 		projectKey,
@@ -210,7 +210,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"timemount":           Funcs.timemount,
 		"timenow":             Funcs.timenow,
 		"timeparse":           Funcs.timeparse,
-		"timeparseany":        Funcs.timeparseany,
+		"timeparseany":        Funcs.Timeparseany,
 		"timetostring":        Funcs.timetostring,
 		"timeunix":            Funcs.timeUnix,
 		"timeyear":            Funcs.timeyear,
@@ -264,7 +264,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 var FuncMapS = sprig.FuncMap()
 
 // help
-func (t *funcMap) env() (result map[string]string) {
+func (t *FuncImpl) env() (result map[string]string) {
 	result["env"] = t.cfg.Environment
 	result["cluster"] = t.cfg.Cluster
 	result["dc"] = t.cfg.DC
@@ -273,12 +273,12 @@ func (t *funcMap) env() (result map[string]string) {
 }
 
 // help
-func (t *funcMap) help() map[string]any {
+func (t *FuncImpl) help() map[string]any {
 	return FuncMap
 }
 
 // analytics - аналитика......
-func (t *funcMap) analytics(storage string, params ...string) bool {
+func (t *FuncImpl) analytics(storage string, params ...string) bool {
 	return true
 }
 
@@ -287,7 +287,7 @@ func (t *funcMap) analytics(storage string, params ...string) bool {
 // Если limit > максимального значения в колллекторе => limit = максимальному значению в колллекторе
 // Если offset <0 => offset = 0
 // Если orderField пустой, сортируется по datetime
-func (t *funcMap) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) analytics.SearchResponse {
+func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) analytics.SearchResponse {
 	fields := make([]analytics.Field, len(params)/2)
 	for i := 0; i < len(params)/2; i++ {
 		fields[i] = analytics.Field{
@@ -308,7 +308,7 @@ func (t *funcMap) analyticsSearch(storage string, limit int, offset int, orderFi
 }
 
 // analyticsSet - сборщик
-func (t *funcMap) analyticsSet(storage string, params ...string) error {
+func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
 	req := t.analyticsClient.NewSetReq()
 
 	fields := make([]analytics.Field, len(params)/2)
@@ -326,7 +326,7 @@ func (t *funcMap) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
-func (t *funcMap) cacheset(key string, value interface{}) bool {
+func (t *FuncImpl) cacheset(key string, value interface{}) bool {
 	_, err := cache.Cache().Upsert(key, func() (res interface{}, err error) {
 		return value, err
 	}, 0)
@@ -337,7 +337,7 @@ func (t *funcMap) cacheset(key string, value interface{}) bool {
 	return true
 }
 
-func (t *funcMap) cache(key string) interface{} {
+func (t *FuncImpl) cache(key string) interface{} {
 	value, err := cache.Cache().Get(key)
 	if err != nil {
 		return "nil"
@@ -347,7 +347,7 @@ func (t *funcMap) cache(key string) interface{} {
 }
 
 // xrealip -
-func (t *funcMap) xrealip(r http.Request) string {
+func (t *FuncImpl) xrealip(r http.Request) string {
 	ipAddress := r.Header.Get("X-Real-Ip")
 	if ipAddress == "" {
 		ipAddress = r.Header.Get("X-Forwarded-For")
@@ -369,7 +369,7 @@ func (t *funcMap) xrealip(r http.Request) string {
 // isMobile - true, если смартфон
 // isTablet - true, если планшет
 // isBot - true, если бот
-func (t *funcMap) parseUserAgent(header string, param string) string {
+func (t *FuncImpl) parseUserAgent(header string, param string) string {
 	ua := useragent.Parse(header)
 
 	params := map[string]string{
@@ -391,7 +391,7 @@ func (t *funcMap) parseUserAgent(header string, param string) string {
 }
 
 // limiter - функция, которая проверяет, может ли клиент с определенным IP-адресом отправить запрос повторно
-func (t *funcMap) limiter(ip string) bool {
+func (t *FuncImpl) limiter(ip string) bool {
 	// Получить значение из кеша, используя IP-адрес клиента в качестве ключа
 	value, err := cache.Cache().Get(ip)
 	// Если ключ не найден или значение просрочено
@@ -432,7 +432,7 @@ func (t *funcMap) limiter(ip string) bool {
 
 // logger - через логгер приложения
 // последний параметр для ERROR передается как ошибка
-func (t *funcMap) logger(logtype, msg string, key string, params ...string) bool {
+func (t *FuncImpl) logger(logtype, msg string, key string, params ...string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -459,12 +459,12 @@ func (t *funcMap) logger(logtype, msg string, key string, params ...string) bool
 	return true
 }
 
-func (t *funcMap) toLower(str string) string {
+func (t *FuncImpl) toLower(str string) string {
 	return strings.ToLower(str)
 }
 
 // decodebase64 зашифровывает тело в base64 из строки
-func (t *funcMap) decodebase64(payload string) string {
+func (t *FuncImpl) decodebase64(payload string) string {
 	// кодируем в base64 тело файла конфигурации
 	bodyBase64 := base64.StdEncoding.EncodeToString([]byte(payload))
 
@@ -472,7 +472,7 @@ func (t *funcMap) decodebase64(payload string) string {
 }
 
 // encodebase64 расшифровываем тело из base64 в строку
-func (t *funcMap) encodebase64(payload string) string {
+func (t *FuncImpl) encodebase64(payload string) string {
 	// декодируем из base64 тело
 	bodyDecode, err := base64.StdEncoding.DecodeString(payload)
 	if err != nil {
@@ -483,7 +483,7 @@ func (t *funcMap) encodebase64(payload string) string {
 }
 
 // decrypt расшифровываем тело ключом (совместимо с lib.Decrypt)
-func (t *funcMap) decrypt(key, payload string) string {
+func (t *FuncImpl) decrypt(key, payload string) string {
 	text, err := lib.Decrypt([]byte(key), payload)
 	if err != nil {
 		return fmt.Sprintf("error decrypted payload. err: %s", err)
@@ -493,7 +493,7 @@ func (t *funcMap) decrypt(key, payload string) string {
 }
 
 // encrypt зашифровываем тело ключом (совместимо с lib.Decrypt)
-func (t *funcMap) encrypt(key, payload string) string {
+func (t *FuncImpl) encrypt(key, payload string) string {
 	text, err := lib.Encrypt([]byte(key), payload)
 	if err != nil {
 		return fmt.Sprintf("error encrypted payload. err: %s", err)
@@ -509,7 +509,7 @@ func (t *funcMap) encrypt(key, payload string) string {
 //	{{ $val }}
 //
 // {{- end }}
-func (t *funcMap) iterate(count int) []int {
+func (t *FuncImpl) iterate(count int) []int {
 	var i int
 	var Items []int
 	for i = 0; i < (count); i++ {
@@ -521,7 +521,7 @@ func (t *funcMap) iterate(count int) []int {
 // profileuid берем uid профиля по uid-роли
 // если roleuid - пусто - отдает uid текущей роли
 // если не находит профиль с заданной ролью - отдает текущий профиль
-func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
+func (t *FuncImpl) profileuid(r http.Request, roleuid string) (result string) {
 	mapRoles := map[string]string{}
 	profile := t.profile(r)
 
@@ -542,7 +542,7 @@ func (t *funcMap) profileuid(r http.Request, roleuid string) (result string) {
 }
 
 // profile перемешивает полученный слайс
-func (t *funcMap) profile(r http.Request) (res models.ProfileData) {
+func (t *FuncImpl) profile(r http.Request) (res models.ProfileData) {
 	var err error
 	ctxUser := r.Context().Value("profile") // текущий профиль пользователя
 	err = json.Unmarshal([]byte(Funcs.marshal(ctxUser)), &res)
@@ -560,7 +560,7 @@ func (t *funcMap) profile(r http.Request) (res models.ProfileData) {
 // mode - центрирование (center/topleft/...)
 // ratio - в width, height будет задано соотношение сторон
 // actorWidth, actorHeight - точка, откуда будем начинать отрезание (по-умолчанию topleft)
-func (t *funcMap) imgCrop(file string, width, height int, centered, ratio bool, actorX, actorY int) (resultFile string) {
+func (t *FuncImpl) imgCrop(file string, width, height int, centered, ratio bool, actorX, actorY int) (resultFile string) {
 	var err error
 	var b bytes.Buffer
 	w := bufio.NewWriter(&b)
@@ -618,7 +618,7 @@ func (t *funcMap) imgCrop(file string, width, height int, centered, ratio bool, 
 
 // resize изменяет (тянет) размер изображения
 // сохраняем копию на диске, если она там есть - берет из хранилища
-func (t *funcMap) imgResize(file string, width, height uint) (resultFile string) {
+func (t *FuncImpl) imgResize(file string, width, height uint) (resultFile string) {
 	var err error
 	var b bytes.Buffer
 	w := bufio.NewWriter(&b)
@@ -658,7 +658,7 @@ func (t *funcMap) imgResize(file string, width, height uint) (resultFile string)
 
 // unzip распаковываем файл в текущем хранилище приложения
 // destPath - обязательный параметр (чтобы исключить перезатирание файлов разными вызовами)
-func (t *funcMap) unzip(zipFilename, destPath string) (folder string) {
+func (t *FuncImpl) unzip(zipFilename, destPath string) (folder string) {
 	var err error
 	var writePath string
 
@@ -722,7 +722,7 @@ func (t *funcMap) unzip(zipFilename, destPath string) (folder string) {
 }
 
 // randinterfaceslice перемешивает полученный слайс
-func (t *funcMap) randinterfaceslice(a []interface{}) (res []interface{}) {
+func (t *FuncImpl) randinterfaceslice(a []interface{}) (res []interface{}) {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(a),
 		func(i, j int) { a[i], a[j] = a[j], a[i] })
@@ -731,7 +731,7 @@ func (t *funcMap) randinterfaceslice(a []interface{}) (res []interface{}) {
 }
 
 // randstringslice перемешивает полученный слайс
-func (t *funcMap) randstringslice(a []string) (res []string) {
+func (t *FuncImpl) randstringslice(a []string) (res []string) {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(a),
 		func(i, j int) { a[i], a[j] = a[j], a[i] })
@@ -740,7 +740,7 @@ func (t *funcMap) randstringslice(a []string) (res []string) {
 }
 
 // readfile чтение файла из текущего (подключенного) s3-хранилища
-func (t *funcMap) readfile(file string) (res []byte) {
+func (t *FuncImpl) readfile(file string) (res []byte) {
 	data, _, err := t.vfs.Read(context.Background(), file)
 	if err != nil {
 		return []byte(err.Error())
@@ -749,7 +749,7 @@ func (t *funcMap) readfile(file string) (res []byte) {
 }
 
 // csvtosliсemap преобразуем []byte в мап, если там csv данные
-func (t *funcMap) csvtosliсemap(in []byte) (res []map[string]string, err error) {
+func (t *FuncImpl) csvtosliсemap(in []byte) (res []map[string]string, err error) {
 	var headers = []string{}
 
 	reader := csv.NewReader(bytes.NewBuffer(in))
@@ -783,7 +783,7 @@ func (t *funcMap) csvtosliсemap(in []byte) (res []map[string]string, err error)
 }
 
 // objFromID получить объект из массива объектов по id
-func (t *funcMap) objFromID(dt []models.Data, id string) (result interface{}) {
+func (t *FuncImpl) objFromID(dt []models.Data, id string) (result interface{}) {
 	//var dt []models.Data
 
 	//err := json.Unmarshal([]byte(fmt.Sprint(data)), &dt)
@@ -800,7 +800,7 @@ func (t *funcMap) objFromID(dt []models.Data, id string) (result interface{}) {
 }
 
 // groupbyfield группируем полученные данные (объекты) формата models.ResponseData согласно шаблону
-func (t *funcMap) groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+func (t *FuncImpl) groupbyfield(queryData interface{}, groupField, groupPoint string, sortField, sortPoint string, desc bool) (result interface{}, err error) {
 	var d models.ResponseData
 
 	b, _ := json.Marshal(queryData)
@@ -842,7 +842,7 @@ func (t *funcMap) groupbyfield(queryData interface{}, groupField, groupPoint str
 }
 
 // sortbyfield сортирует (объекты) формата models.ResponseData согласно шаблону
-func (t *funcMap) sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) (result interface{}, err error) {
+func (t *FuncImpl) sortbyfield(queryData interface{}, sortField, sortPoint string, desc bool) (result interface{}, err error) {
 	var d models.ResponseData
 
 	b, _ := json.Marshal(queryData)
@@ -894,7 +894,7 @@ func reverseData(input []models.Data) []models.Data {
 }
 
 // redirect
-func (t *funcMap) redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int) (result interface{}, err error) {
+func (t *FuncImpl) redirect(w http.ResponseWriter, r *http.Request, url string, statusCode int) (result interface{}, err error) {
 	http.Redirect(w, r, url, statusCode)
 
 	return
@@ -902,7 +902,7 @@ func (t *funcMap) redirect(w http.ResponseWriter, r *http.Request, url string, s
 
 // parsebody
 // json - преобразованный, по-умолчанию raw (строка)
-func (t *funcMap) parsebody(r *http.Request, format string) (result interface{}, err error) {
+func (t *FuncImpl) parsebody(r *http.Request, format string) (result interface{}, err error) {
 	if r.Body == nil {
 		return nil, fmt.Errorf("body is empty, request: %+v", r)
 	}
@@ -927,7 +927,7 @@ func (t *funcMap) parsebody(r *http.Request, format string) (result interface{},
 }
 
 // parseform парсит полученные в запросе значения в мапку
-func (t *funcMap) parseformsep(r *http.Request, separator string) map[string]string {
+func (t *FuncImpl) parseformsep(r *http.Request, separator string) map[string]string {
 	if separator == "" {
 		separator = ","
 	}
@@ -942,7 +942,7 @@ func (t *funcMap) parseformsep(r *http.Request, separator string) map[string]str
 	return data
 }
 
-func (t *funcMap) parseform(r *http.Request) map[string][]string {
+func (t *FuncImpl) parseform(r *http.Request) map[string][]string {
 	err := r.ParseForm()
 	if err != nil {
 		return nil
@@ -957,7 +957,7 @@ func (t *funcMap) parseform(r *http.Request) map[string][]string {
 // curl_engine
 // отправка запроса (повторяет интерфейс lib.Curl)
 // при передаче в куку времени протухани используется формат "2006-01-02T15:04:05Z07:00"
-func (t *funcMap) curl_engine(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (res models.ResponseData, raw interface{}, err error) {
+func (t *FuncImpl) curl_engine(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (res models.ResponseData, raw interface{}, err error) {
 	var cookies []*http.Cookie
 	var responseData models.ResponseData
 
@@ -996,7 +996,7 @@ func (t *funcMap) curl_engine(method, urlc, bodyJSON string, headers map[string]
 
 // отправка запроса (повторяет интерфейс lib.Curl)
 // при передаче в куку времени протухани используется формат "2006-01-02T15:04:05Z07:00"
-func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}) {
+func (t *FuncImpl) curl(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) (rawPayload interface{}) {
 	res, raw, _ := t.curl_engine(method, urlc, bodyJSON, headers, incookies)
 	if len(res.Data) == 0 {
 		return raw
@@ -1005,7 +1005,7 @@ func (t *funcMap) curl(method, urlc, bodyJSON string, headers map[string]interfa
 	return res
 }
 
-func (t *funcMap) curlfull(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) models.ResponseData {
+func (t *FuncImpl) curlfull(method, urlc, bodyJSON string, headers map[string]interface{}, incookies []map[string]interface{}) models.ResponseData {
 	var response = models.ResponseData{}
 	res, raw, err := t.curl_engine(method, urlc, bodyJSON, headers, incookies)
 	if err != nil {
@@ -1021,7 +1021,7 @@ func (t *funcMap) curlfull(method, urlc, bodyJSON string, headers map[string]int
 }
 
 // ObjGet операции с объектами через клиента API
-func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseData) {
+func (t *FuncImpl) apiObjGet(apiURL string, uids string) (result models.ResponseData) {
 	var err error
 	ctx := context.Background()
 	result, err = t.api.ObjGet(ctx, uids)
@@ -1032,7 +1032,7 @@ func (t *funcMap) apiObjGet(apiURL string, uids string) (result models.ResponseD
 	return result
 }
 
-func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) models.ResponseData {
+func (t *FuncImpl) apiObjCreate(apiURL string, bodymap map[string]string) models.ResponseData {
 	var err error
 	var res = models.ResponseData{}
 	ctx := context.Background()
@@ -1044,7 +1044,7 @@ func (t *funcMap) apiObjCreate(apiURL string, bodymap map[string]string) models.
 	return res
 }
 
-func (t *funcMap) apiObjDelete(apiURL string, uids string) (res models.ResponseData) {
+func (t *FuncImpl) apiObjDelete(apiURL string, uids string) (res models.ResponseData) {
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
@@ -1056,7 +1056,7 @@ func (t *funcMap) apiObjDelete(apiURL string, uids string) (res models.ResponseD
 	return res
 }
 
-func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (res models.ResponseData) {
+func (t *FuncImpl) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor string) (res models.ResponseData) {
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
@@ -1068,7 +1068,7 @@ func (t *funcMap) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor 
 	return res
 }
 
-func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res models.ResponseData) {
+func (t *FuncImpl) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res models.ResponseData) {
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
@@ -1080,7 +1080,7 @@ func (t *funcMap) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res m
 	return res
 }
 
-func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (res string) {
+func (t *FuncImpl) apiQuery(apiURL string, query, method, bodyJSON string) (res string) {
 	var err error
 	ctx := context.Background()
 	res, err = t.api.Query(ctx, query, method, bodyJSON)
@@ -1091,7 +1091,7 @@ func (t *funcMap) apiQuery(apiURL string, query, method, bodyJSON string) (res s
 	return res
 }
 
-func (t *funcMap) apiSearch(apiURL string, params map[string]string, withcache bool) (res string) {
+func (t *FuncImpl) apiSearch(apiURL string, params map[string]string, withcache bool) (res string) {
 	var err error
 	var b1 []byte
 	ctx := context.Background()
@@ -1114,7 +1114,7 @@ func (t *funcMap) apiSearch(apiURL string, params map[string]string, withcache b
 }
 
 // формируем сепаратор для текущей ОС
-func (t *funcMap) separator() string {
+func (t *FuncImpl) separator() string {
 	return string(filepath.Separator)
 }
 
@@ -1127,7 +1127,7 @@ func (t *funcMap) separator() string {
 // pass - пароль пользователя
 // message - сообщение
 // turbo - режим отправки в отдельной горутине
-func (t *funcMap) sendmail(server, port, user, pass, from, to, subject, message, turbo string) (result string) {
+func (t *FuncImpl) sendmail(server, port, user, pass, from, to, subject, message, turbo string) (result string) {
 	var resMessage interface{}
 	var fromFull, toFull, subjectFull string
 	result = "true"
@@ -1209,7 +1209,7 @@ func (t *funcMap) sendmail(server, port, user, pass, from, to, subject, message,
 	return result
 }
 
-func (t *funcMap) divfloat(a, b interface{}) interface{} {
+func (t *FuncImpl) divfloat(a, b interface{}) interface{} {
 	aF := fmt.Sprint(a)
 	bF := fmt.Sprint(b)
 	fa, err := strconv.ParseFloat(aF, 64)
@@ -1223,7 +1223,7 @@ func (t *funcMap) divfloat(a, b interface{}) interface{} {
 }
 
 // обработка @-функций внутри конфигурации (в шаблонизаторе)
-func (t *funcMap) confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
+func (t *FuncImpl) confparse(configuration string, r *http.Request, queryData interface{}) (result interface{}) {
 	var d models.Data
 	var lb app
 
@@ -1250,7 +1250,7 @@ func (t *funcMap) confparse(configuration string, r *http.Request, queryData int
 }
 
 // обработка @-функций внутри шаблонизатора
-func (t *funcMap) dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
+func (t *FuncImpl) dogparse(p string, r *http.Request, queryData interface{}, values map[string]interface{}) (result string) {
 	var d models.Data
 	var lb app
 
@@ -1264,7 +1264,7 @@ func (t *funcMap) dogparse(p string, r *http.Request, queryData interface{}, val
 }
 
 // отдаем значение куки
-func (t *funcMap) cookieGet(name string, field string, r *http.Request) (result string) {
+func (t *FuncImpl) cookieGet(name string, field string, r *http.Request) (result string) {
 	c, err := r.Cookie(name)
 	if err != nil {
 		return fmt.Sprint(err)
@@ -1287,12 +1287,12 @@ func (t *funcMap) cookieGet(name string, field string, r *http.Request) (result 
 	return result
 }
 
-func (t *funcMap) cookieSet(name string, field string, r *http.Request) (err error) {
+func (t *FuncImpl) cookieSet(name string, field string, r *http.Request) (err error) {
 	return nil
 }
 
 // получаем значение из переданного объекта
-func (t *funcMap) attr(name, element string, data interface{}) (result interface{}) {
+func (t *FuncImpl) attr(name, element string, data interface{}) (result interface{}) {
 	var dt Data
 	var err error
 	err = json.Unmarshal([]byte(t.marshal(data)), &dt)
@@ -1307,7 +1307,7 @@ func (t *funcMap) attr(name, element string, data interface{}) (result interface
 }
 
 // получаем значение из переданного объекта
-func (t *funcMap) addfloat(i ...interface{}) (result float64) {
+func (t *FuncImpl) addfloat(i ...interface{}) (result float64) {
 	var a float64 = 0.0
 	for _, b := range i {
 		a += t.tofloat(b)
@@ -1315,21 +1315,21 @@ func (t *funcMap) addfloat(i ...interface{}) (result float64) {
 	return a
 }
 
-func (t *funcMap) UUID() string {
+func (t *FuncImpl) UUID() string {
 	return ksuid.New().String()
 }
 
-func (t *funcMap) randT() string {
+func (t *FuncImpl) randT() string {
 	uuid := t.UUID()
 	return uuid[1:6]
 }
 
-func (t *funcMap) timenow() time.Time {
+func (t *FuncImpl) timenow() time.Time {
 	return time.Now().UTC()
 }
 
 // преобразуем текст в дату (если ошибка - возвращаем false), а потом обратно в строку нужного формата
-func (t *funcMap) timeformat(str interface{}, mask, format string) string {
+func (t *FuncImpl) timeformat(str interface{}, mask, format string) string {
 	ss := fmt.Sprintf("%v", str)
 
 	timeFormat, err := t.timeparse(ss, mask)
@@ -1342,28 +1342,28 @@ func (t *funcMap) timeformat(str interface{}, mask, format string) string {
 }
 
 // преобразуем текст в дату (если ошибка - возвращаем false), а потом обратно в строку нужного формата
-func (t *funcMap) timetostring(time time.Time, format string) string {
+func (t *FuncImpl) timetostring(time time.Time, format string) string {
 	res := time.Format(format)
 
 	return res
 }
 
-func (t *funcMap) timeyear(tm time.Time) string {
+func (t *FuncImpl) timeyear(tm time.Time) string {
 	ss := fmt.Sprintf("%v", tm.Year())
 	return ss
 }
 
-func (t *funcMap) timemount(tm time.Time) string {
+func (t *FuncImpl) timemount(tm time.Time) string {
 	ss := fmt.Sprintf("%v", tm.Month())
 	return ss
 }
 
-func (t *funcMap) timeday(tm time.Time) string {
+func (t *FuncImpl) timeday(tm time.Time) string {
 	ss := fmt.Sprintf("%v", tm.Day())
 	return ss
 }
 
-func (t *funcMap) timeparse(str, mask string) (res time.Time, err error) {
+func (t *FuncImpl) timeparse(str, mask string) (res time.Time, err error) {
 	mask = strings.ToUpper(mask)
 
 	time.Now().UTC()
@@ -1407,13 +1407,13 @@ func (t *funcMap) timeparse(str, mask string) (res time.Time, err error) {
 	return res, err
 }
 
-// timeparseany парсит дату-время из любого формата.
+// Timeparseany парсит дату-время из любого формата.
 // Если в строке не передана временна́я зона, то парсится как UTC.
 //
 // Если вторым параметром передать true, то полученное время скастится в UTC.
 //
 // Можно задать интервалы, которые надо добавить/вычесть, знак операции при этом отбивается пробелами.
-func (t *funcMap) timeparseany(str string, toUTC bool) TimeErr {
+func (t *FuncImpl) Timeparseany(str string, toUTC bool) TimeErr {
 	res, err := lib.TimeParse(str, toUTC)
 	if err != nil {
 		return TimeErr{Err: err.Error()}
@@ -1422,7 +1422,7 @@ func (t *funcMap) timeparseany(str string, toUTC bool) TimeErr {
 	return TimeErr{Time: res}
 }
 
-func (t *funcMap) refind(mask, str string, n int) (res [][]string) {
+func (t *FuncImpl) refind(mask, str string, n int) (res [][]string) {
 	if n == 0 {
 		n = -1
 	}
@@ -1436,7 +1436,7 @@ func (t *funcMap) refind(mask, str string, n int) (res [][]string) {
 	return
 }
 
-func (t *funcMap) rereplace(str, mask, new string) (res string) {
+func (t *FuncImpl) rereplace(str, mask, new string) (res string) {
 	// Тут лучше обыкновенный compile, панику лишний раз ловить не прикольно
 	re, err := regexp.Compile(mask)
 	if err != nil {
@@ -1447,7 +1447,7 @@ func (t *funcMap) rereplace(str, mask, new string) (res string) {
 	return
 }
 
-func (t *funcMap) parseparam(str string, configuration, data interface{}, resulttype string) (result interface{}) {
+func (t *FuncImpl) parseparam(str string, configuration, data interface{}, resulttype string) (result interface{}) {
 
 	// разбиваем строку на слайс для замкены и склейки
 	sl := strings.Split(str, "%")
@@ -1473,7 +1473,7 @@ func (t *funcMap) parseparam(str string, configuration, data interface{}, result
 }
 
 // функция указывает переданная дата до или после текущего времени
-func (t *funcMap) Timefresh(str interface{}) string {
+func (t *FuncImpl) Timefresh(str interface{}) string {
 
 	ss := fmt.Sprintf("%v", str)
 	start := time.Now().UTC()
@@ -1489,7 +1489,7 @@ func (t *funcMap) Timefresh(str interface{}) string {
 }
 
 // инвертируем строку
-func (t *funcMap) invert(str string) string {
+func (t *FuncImpl) invert(str string) string {
 	var result string
 	for i := len(str); i > 0; i-- {
 		result = result + string(str[i-1])
@@ -1498,28 +1498,28 @@ func (t *funcMap) invert(str string) string {
 }
 
 // переводим массив в строку
-func (t *funcMap) join(slice []string, sep string) (result string) {
+func (t *FuncImpl) join(slice []string, sep string) (result string) {
 	result = strings.Join(slice, sep)
 
 	return result
 }
 
 // split разбиваем строку на строковый слайс
-func (t *funcMap) split(str, sep string) (result interface{}) {
+func (t *FuncImpl) split(str, sep string) (result interface{}) {
 	result = strings.Split(str, sep)
 
 	return result
 }
 
 // split разбиваем строку на строковый слайс
-func (t *funcMap) splittostring(str, sep string) (result []string) {
+func (t *FuncImpl) splittostring(str, sep string) (result []string) {
 	result = strings.Split(str, sep)
 
 	return result
 }
 
 // переводим в денежное отображение строки - 12.344.342
-func (t *funcMap) tomoney(str, dec string) (res string) {
+func (t *FuncImpl) tomoney(str, dec string) (res string) {
 
 	for i, v1 := range t.invert(str) {
 		if (i == 3) || (i == 6) || (i == 9) {
@@ -1532,7 +1532,7 @@ func (t *funcMap) tomoney(str, dec string) (res string) {
 	return t.invert(res)
 }
 
-func (t *funcMap) contains1(message, str, substr string) string {
+func (t *FuncImpl) contains1(message, str, substr string) string {
 	sl1 := strings.Split(substr, "|")
 	for _, v := range sl1 {
 		if strings.Contains(str, v) {
@@ -1542,7 +1542,7 @@ func (t *funcMap) contains1(message, str, substr string) string {
 	return ""
 }
 
-func (t *funcMap) contains(str, substr, message, messageelse string) string {
+func (t *FuncImpl) contains(str, substr, message, messageelse string) string {
 	sl1 := strings.Split(substr, "|")
 	for _, v := range sl1 {
 		if strings.Contains(str, v) {
@@ -1553,7 +1553,7 @@ func (t *funcMap) contains(str, substr, message, messageelse string) string {
 }
 
 // преобразую дату из 2013-12-24 в 24 января 2013
-func (t *funcMap) datetotext(str string) (result string) {
+func (t *FuncImpl) datetotext(str string) (result string) {
 	mapMount := map[string]string{"01": "января", "02": "февраля", "03": "марта", "04": "апреля", "05": "мая", "06": "июня", "07": "июля", "08": "августа", "09": "сентября", "10": "октября", "11": "ноября", "12": "декабря"}
 	spd := strings.Split(str, "-")
 	if len(spd) == 3 {
@@ -1566,13 +1566,13 @@ func (t *funcMap) datetotext(str string) (result string) {
 }
 
 // заменяем
-func (t *funcMap) Replace(str, old, new string, n int) (message string) {
+func (t *FuncImpl) Replace(str, old, new string, n int) (message string) {
 	message = strings.Replace(str, old, new, n)
 	return message
 }
 
 // сравнивает два значения и вы	водит текст, если они равны
-func (t *funcMap) compare(var1, var2, message string) string {
+func (t *FuncImpl) compare(var1, var2, message string) string {
 	if var1 == var2 {
 		return message
 	}
@@ -1581,7 +1581,7 @@ func (t *funcMap) compare(var1, var2, message string) string {
 
 // фукнцкия мультитпликсирования передаваемых параметров при передаче в шаблонах нескольких параметров
 // {{template "sub-template" dict "Data" . "Values" $.Values}}
-func (t *funcMap) dict(values ...interface{}) (map[string]interface{}, error) {
+func (t *FuncImpl) dict(values ...interface{}) (map[string]interface{}, error) {
 	if len(values) == 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -1611,7 +1611,7 @@ func (t *funcMap) dict(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
-func (t *funcMap) dictstring(values ...string) (map[string]string, error) {
+func (t *FuncImpl) dictstring(values ...string) (map[string]string, error) {
 	if len(values) == 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -1627,39 +1627,39 @@ func (t *funcMap) dictstring(values ...string) (map[string]string, error) {
 }
 
 // slicestringset - заменяем значение в переданном слайсе
-func (t *funcMap) slicestringset(d []string, index int, value string) []string {
+func (t *FuncImpl) slicestringset(d []string, index int, value string) []string {
 	d[index] = value
 	return d
 }
 
 // slicenew - создаем строковый слайс интерфейсов
-func (t *funcMap) slicenew() []interface{} {
+func (t *FuncImpl) slicenew() []interface{} {
 	return []interface{}{}
 }
 
 // slicestringnew - создаем строковый слайс
-func (t *funcMap) slicestringnew() []string {
+func (t *FuncImpl) slicestringnew() []string {
 	return []string{}
 }
 
 // sliceset - заменяем значение в переданном слайсе
-func (t *funcMap) sliceset(d []interface{}, index int, value interface{}) []interface{} {
+func (t *FuncImpl) sliceset(d []interface{}, index int, value interface{}) []interface{} {
 	d[index] = value
 	return d
 }
 
 // sliceappend - добавляет значение в переданный слайс
-func (t *funcMap) sliceappend(d []interface{}, value interface{}) []interface{} {
+func (t *FuncImpl) sliceappend(d []interface{}, value interface{}) []interface{} {
 	return append(d, value)
 }
 
 // sliceappend - добавляет значение в переданный слайс
-func (t *funcMap) slicestringappend(d []string, value string) []string {
+func (t *FuncImpl) slicestringappend(d []string, value string) []string {
 	return append(d, value)
 }
 
 // slicedelete - удаляет из слайса
-func (t *funcMap) slicedelete(d []interface{}, index int) []interface{} {
+func (t *FuncImpl) slicedelete(d []interface{}, index int) []interface{} {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
 	d = d[:len(d)-1]
@@ -1668,7 +1668,7 @@ func (t *funcMap) slicedelete(d []interface{}, index int) []interface{} {
 }
 
 // sliceuint8delete - удаляет из слайса
-func (t *funcMap) sliceuint8delete(d []uint8, index int) []uint8 {
+func (t *FuncImpl) sliceuint8delete(d []uint8, index int) []uint8 {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = 0
 	d = d[:len(d)-1]
@@ -1677,7 +1677,7 @@ func (t *funcMap) sliceuint8delete(d []uint8, index int) []uint8 {
 }
 
 // slicestringdelete - удаляет из слайса
-func (t *funcMap) slicestringdelete(d []string, index int) []string {
+func (t *FuncImpl) slicestringdelete(d []string, index int) []string {
 	copy(d[index:], d[index+1:])
 	d[len(d)-1] = ""
 	d = d[:len(d)-1]
@@ -1685,17 +1685,17 @@ func (t *funcMap) slicestringdelete(d []string, index int) []string {
 	return d
 }
 
-func (t *funcMap) set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
+func (t *FuncImpl) set(d map[string]interface{}, key string, value interface{}) map[string]interface{} {
 	d[key] = value
 	return d
 }
 
-func (t *funcMap) setstring(d map[string]string, key string, value string) map[string]string {
+func (t *FuncImpl) setstring(d map[string]string, key string, value string) map[string]string {
 	d[key] = value
 	return d
 }
 
-func (t *funcMap) get(d map[string]interface{}, key string) (value interface{}) {
+func (t *FuncImpl) get(d map[string]interface{}, key string) (value interface{}) {
 	value, found := d[key]
 	if !found {
 		value = ""
@@ -1703,19 +1703,19 @@ func (t *funcMap) get(d map[string]interface{}, key string) (value interface{}) 
 	return value
 }
 
-func (t *funcMap) deletekey(d map[string]interface{}, key string) (value string) {
+func (t *FuncImpl) deletekey(d map[string]interface{}, key string) (value string) {
 	delete(d, key)
 	return "true"
 }
 
 // суммируем
-func (t *funcMap) sum(res, i int) int {
+func (t *FuncImpl) sum(res, i int) int {
 	res = res + i
 	return res
 }
 
 // образаем по заданному кол-ву символов
-func (t *funcMap) cut(res string, i int, sep string) string {
+func (t *FuncImpl) cut(res string, i int, sep string) string {
 	res = strings.Trim(res, " ")
 	if i <= len([]rune(res)) {
 		res = string([]rune(res)[:i]) + sep
@@ -1725,7 +1725,7 @@ func (t *funcMap) cut(res string, i int, sep string) string {
 
 // обрезаем строку (строка, откуда, [сколько])
 // если откуда отрицательно, то обрезаем с конца
-func (t *funcMap) substring(str string, args ...int) string {
+func (t *FuncImpl) substring(str string, args ...int) string {
 	str = strings.Trim(str, " ")
 	lenstr := len([]rune(str))
 	from := 0
@@ -1759,13 +1759,13 @@ func (t *funcMap) substring(str string, args ...int) string {
 	return string([]rune(str)[from:to]) // вырежем диапазон
 }
 
-func (t *funcMap) tostring(i interface{}) (res string) {
+func (t *FuncImpl) tostring(i interface{}) (res string) {
 	res = fmt.Sprint(i)
 	return res
 }
 
 // функция преобразует переданные данные в формат типа Items с вложенными подпукнтами
-func (t *funcMap) totree(i interface{}, objstart string) (res interface{}) {
+func (t *FuncImpl) totree(i interface{}, objstart string) (res interface{}) {
 	var objD []Data
 	var objRes []interface{}
 	var objTree []DataTreeOut
@@ -1796,12 +1796,12 @@ func (t *funcMap) totree(i interface{}, objstart string) (res interface{}) {
 	return objTree
 }
 
-func (t *funcMap) tohtml(i interface{}) template.HTML {
+func (t *FuncImpl) tohtml(i interface{}) template.HTML {
 
 	return template.HTML(i.(string))
 }
 
-func (t *funcMap) toint(i interface{}) (res int) {
+func (t *FuncImpl) toint(i interface{}) (res int) {
 	str := fmt.Sprint(i)
 	i = strings.Trim(str, " ")
 	res, err := strconv.Atoi(str)
@@ -1813,7 +1813,7 @@ func (t *funcMap) toint(i interface{}) (res int) {
 }
 
 // mulfloat умножение с запятой
-func (t *funcMap) mulfloat(a float64, v ...float64) float64 {
+func (t *FuncImpl) mulfloat(a float64, v ...float64) float64 {
 	for _, b := range v {
 		a = a * b
 	}
@@ -1821,7 +1821,7 @@ func (t *funcMap) mulfloat(a float64, v ...float64) float64 {
 	return a
 }
 
-func (t *funcMap) tofloat(i interface{}) (res float64) {
+func (t *FuncImpl) tofloat(i interface{}) (res float64) {
 	str := fmt.Sprint(i)
 	str = strings.Trim(str, " ")
 	str = strings.ReplaceAll(str, ",", ".")
@@ -1833,7 +1833,7 @@ func (t *funcMap) tofloat(i interface{}) (res float64) {
 	return res
 }
 
-func (t *funcMap) tointerface(input interface{}) (res interface{}) {
+func (t *FuncImpl) tointerface(input interface{}) (res interface{}) {
 	b3, _ := json.Marshal(input)
 	err := json.Unmarshal(b3, &res)
 	if err != nil {
@@ -1842,17 +1842,17 @@ func (t *funcMap) tointerface(input interface{}) (res interface{}) {
 	return
 }
 
-func (t *funcMap) concatenation(values ...string) (res string) {
+func (t *FuncImpl) concatenation(values ...string) (res string) {
 	res = strings.Join(values, "")
 	return res
 }
 
-func (t *funcMap) marshal(i interface{}) (res string) {
+func (t *FuncImpl) marshal(i interface{}) (res string) {
 	b3, _ := json.Marshal(&i)
 	return string(b3)
 }
 
-func (t *funcMap) unmarshal(i string) (res interface{}) {
+func (t *FuncImpl) unmarshal(i string) (res interface{}) {
 	var conf interface{}
 	i = strings.Trim(i, "  ")
 
@@ -1863,7 +1863,7 @@ func (t *funcMap) unmarshal(i string) (res interface{}) {
 	return conf
 }
 
-func (t *funcMap) fastjsonforkey(i string, key string) (value interface{}) {
+func (t *FuncImpl) fastjsonforkey(i string, key string) (value interface{}) {
 	i = strings.Trim(i, "  ")
 
 	res, err := fastjson.Parse(i)
@@ -1882,7 +1882,7 @@ func (t *funcMap) fastjsonforkey(i string, key string) (value interface{}) {
 // СТАРОЕ! ДЛЯ РАБОТЫ В ШАБЛОНАХ ГУЯ СТАРЫХ (ПЕРЕДЕЛАТЬ И УБРАТЬ)
 // получаем значение из массива данных по имени элемента
 // ПЕРЕДЕЛАТЬ! приходится постоянно сериализовать данные
-func (t *funcMap) value(element string, configuration, data interface{}) (result interface{}) {
+func (t *FuncImpl) value(element string, configuration, data interface{}) (result interface{}) {
 	var conf map[string]Element
 	json.Unmarshal([]byte(t.marshal(configuration)), &conf)
 
@@ -1931,7 +1931,7 @@ func (t *funcMap) value(element string, configuration, data interface{}) (result
 
 // получаем значение из массива данных по имени элемента
 // ПЕРЕДЕЛАТЬ! приходится постоянно сериализовать данные
-func (t *funcMap) output(element string, configuration, data interface{}, resulttype string) (result interface{}) {
+func (t *FuncImpl) output(element string, configuration, data interface{}, resulttype string) (result interface{}) {
 	var conf map[string]Element
 	json.Unmarshal([]byte(t.marshal(configuration)), &conf)
 
@@ -1996,7 +1996,7 @@ func (t *funcMap) output(element string, configuration, data interface{}, result
 // экранируем "
 // fmt.Println(jsonEscape(`dog "fish" cat`))
 // output: dog \"fish\" cat
-func (t *funcMap) jsonEscape(i string) (result string) {
+func (t *FuncImpl) jsonEscape(i string) (result string) {
 	b, err := json.Marshal(i)
 	if err != nil {
 		panic(err)
@@ -2007,13 +2007,13 @@ func (t *funcMap) jsonEscape(i string) (result string) {
 }
 
 // экранируем кроме аперсанда (&)
-func (t *funcMap) jsonEscapeUnlessAmp(s string) (result string) {
+func (t *FuncImpl) jsonEscapeUnlessAmp(s string) (result string) {
 	result = t.jsonEscape(s)
 	result = strings.Replace(result, `\u0026`, "&", -1)
 	return result
 }
 
-func (t *funcMap) hash(str string) string {
+func (t *FuncImpl) hash(str string) string {
 	var lb *app
 
 	return lb.hash(str)
@@ -2021,7 +2021,7 @@ func (t *funcMap) hash(str string) string {
 
 // detectEncoding NotDetectedError = errors.New("Charset not detected.")
 // detectEncoding определяет кодировку слайса байтов
-func (t *funcMap) detectEncoding(content []byte) string {
+func (t *FuncImpl) detectEncoding(content []byte) string {
 	detector := chardet.NewTextDetector()
 	result, err := detector.DetectBest(content)
 	if err != nil {
@@ -2040,7 +2040,7 @@ func (t *funcMap) detectEncoding(content []byte) string {
 
 // convert конвертирует слайс байтов в нужную кодировку (UTF-8, UTF-8 BOM, windows-1251).
 // convert Если слайс байтов не соответствует ни одной из этих кодировок, то возвращается nil
-func (t *funcMap) convert(content []byte, targetEncoding string) (encodedData []byte) {
+func (t *FuncImpl) convert(content []byte, targetEncoding string) (encodedData []byte) {
 	// Определение текущей кодировки
 	currentEncoding := t.detectEncoding(content)
 
@@ -2091,11 +2091,11 @@ func (t *funcMap) convert(content []byte, targetEncoding string) (encodedData []
 	return
 }
 
-func (t *funcMap) timeUnix(date time.Time) int64 {
+func (t *FuncImpl) timeUnix(date time.Time) int64 {
 	return date.Unix()
 }
 
-func (t *funcMap) secretsGet(key string) (value string) {
+func (t *FuncImpl) secretsGet(key string) (value string) {
 	value, err := t.controllerClient.GetSecret(context.Background(), key)
 	if err != nil {
 		return ""
