@@ -257,7 +257,9 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 
 		"analyticsset":    Funcs.analyticsSet,
 		"analyticssearch": Funcs.analyticsSearch,
-		"secretsget":      Funcs.secretsGet,
+		"analytycsquery":  Funcs.analyticsQuery,
+
+		"secretsget": Funcs.secretsGet,
 	}
 }
 
@@ -324,6 +326,14 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
 
 	_, err := t.analyticsClient.Set(context.Background(), req)
 	return err
+}
+
+func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...string) analytics.QueryResult {
+	out, err := t.analyticsClient.Query(context.Background(), queryUid, offset, params)
+	if err != nil {
+		out = append(out, map[string]interface{}{"error": err})
+	}
+	return out
 }
 
 func (t *FuncImpl) cacheset(key string, value interface{}) bool {
