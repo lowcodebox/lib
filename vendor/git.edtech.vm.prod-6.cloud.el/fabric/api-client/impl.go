@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -13,6 +15,56 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 )
+
+func (a *api) data(ctx context.Context, tpls, option, role, page, size string) (result models.ResponseData, err error) {
+	if tpls == "" {
+		return result, fmt.Errorf("error request to orm (Data). err: param tpls in empty")
+	}
+
+	var headers = map[string]string{}
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	headers[headerServiceKey] = token
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "Data", err)
+	}
+
+	urlc, err := url.JoinPath(a.url, "data", tpls)
+	if err != nil {
+		return result, fmt.Errorf("error request to orm (Data). err: %w)", err)
+	}
+
+	if option != "" {
+		urlc, err = url.JoinPath(urlc, option)
+		if err != nil {
+			return result, fmt.Errorf("error request to orm (Data). err: %w)", err)
+		}
+	}
+
+	urlObj, err := url.Parse(urlc)
+	if err != nil {
+		return result, fmt.Errorf("error request to orm (Data). err: %w)", err)
+	}
+
+	// Добавление query параметров
+	query := urlObj.Query()
+	if role != "" {
+		query.Add("role", role)
+	}
+	if page != "" {
+		query.Add("page", page)
+	}
+	if size != "" {
+		query.Add("size", size)
+	}
+	urlObj.RawQuery = query.Encode()
+
+	_, err = lib.Curl(ctx, http.MethodPost, urlObj.String(), "", &result, headers, nil)
+	if err != nil {
+		err = fmt.Errorf("error request to orm (Data). err: %w, urlc: %s, method: %s", err, urlc, http.MethodPost)
+	}
+
+	return result, err
+}
 
 // Query результат выводим в объект как при вызове Curl
 func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
@@ -30,18 +82,45 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result
 	urlc := a.url + "/query/" + query
 	urlc = strings.Replace(urlc, "//query", "/query", 1)
 
-	// если в запросе / - значит пробрасываем запрос сразу на апи
-	if strings.Contains(query, "/") {
-		urlc = a.url + "/" + query
-		urlc = strings.Replace(urlc, a.url+"//", a.url+"/", 1)
-	}
-
 	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
 
 	return fmt.Sprint(res), err
+}
+
+func (a *api) tpls(ctx context.Context, role, option string) (result models.ResponseData, err error) {
+	if role == "" {
+		role = "_all"
+	}
+
+	var handlers = map[string]string{}
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
+	handlers[headerServiceKey] = token
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "tpls", err, role, option)
+	}
+
+	urlc := a.url
+	if option == "" {
+		urlc, err = url.JoinPath(urlc, "tpls", role)
+	} else {
+		urlc, err = url.JoinPath(urlc, "tpls", role, option)
+	}
+	if err != nil {
+		return result, fmt.Errorf("error request to api (Tpls). err: %w)", err)
+	}
+
+	_, err = lib.Curl(ctx, "GET", urlc, "", &result, handlers, nil)
+	if err != nil {
+		err = fmt.Errorf("%s (url: %s)", err, urlc)
+	}
+
+	return result, err
 }
 
 // search результат выводим в объект как при вызове Curl

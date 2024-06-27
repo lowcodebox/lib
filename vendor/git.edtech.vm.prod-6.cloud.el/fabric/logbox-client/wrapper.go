@@ -27,11 +27,9 @@ func (c *client) Upsert(ctx context.Context, in upsertReq) (_ upsertRes, _ error
 	})*/
 
 	go func() {
-		if _, set := ctx.Deadline(); !set {
-			var cf context.CancelFunc
-			ctx, cf = context.WithTimeout(ctx, defaultTimeout)
-			defer cf()
-		}
+		ctx, cf := context.WithTimeout(context.WithoutCancel(ctx), defaultTimeout)
+		defer cf()
+
 		_, _ = c.upsert(ctx, in)
 	}()
 

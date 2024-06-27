@@ -36,6 +36,7 @@ const (
 	ServiceClusterKey   = "cluster"
 	ServiceEnvKey       = "env"
 	ServiceDCKey        = "dc"
+	ServiceVersion      = "version"
 	ConfigIDKey         = "config-id"
 	requestUserAgentKey = "user-agent"
 	requestUnitKey      = "unit-key"

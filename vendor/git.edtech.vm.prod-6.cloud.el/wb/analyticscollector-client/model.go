@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+type QueryResult []map[string]interface{}
+
 type event struct {
 	Storage string
 	Fields  []Field

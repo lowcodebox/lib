@@ -3,7 +3,10 @@ syntax = "proto3";
 package analytic_collector;
 
 option go_package = ".";
+
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
 
 message Event {
 	string storage = 1;
@@ -48,7 +51,18 @@ message Metrics {
 	int64 ResultLimit = 4;
 }
 
+message QueryRequest{
+	string UID = 1;
+	int64 Offset = 2;
+	google.protobuf.ListValue Params = 3;
+}
+
+message QueryResponse{
+	repeated google.protobuf.Struct Data = 1;
+}
+
 service Collector {
 	rpc Set(SetRequest) returns (SetResponse);
 	rpc Search(SearchRequest) returns (SearchResponse);
+	rpc Query(QueryRequest) returns (QueryResponse);
 }

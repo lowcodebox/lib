@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CollectorClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 }
 
 type collectorClient struct {
@@ -52,12 +53,22 @@ func (c *collectorClient) Search(ctx context.Context, in *SearchRequest, opts ..
 	return out, nil
 }
 
+func (c *collectorClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+	out := new(QueryResponse)
+	err := c.cc.Invoke(ctx, "/analytic_collector.Collector/Query", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CollectorServer is the server API for Collector service.
 // All implementations should embed UnimplementedCollectorServer
 // for forward compatibility
 type CollectorServer interface {
 	Set(context.Context, *SetRequest) (*SetResponse, error)
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	Query(context.Context, *QueryRequest) (*QueryResponse, error)
 }
 
 // UnimplementedCollectorServer should be embedded to have forward compatible implementations.
@@ -69,6 +80,9 @@ func (UnimplementedCollectorServer) Set(context.Context, *SetRequest) (*SetRespo
 }
 func (UnimplementedCollectorServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedCollectorServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
 
 // UnsafeCollectorServer may be embedded to opt out of forward compatibility for this service.
@@ -118,6 +132,24 @@ func _Collector_Search_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Collector_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CollectorServer).Query(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/analytic_collector.Collector/Query",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CollectorServer).Query(ctx, req.(*QueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Collector_ServiceDesc is the grpc.ServiceDesc for Collector service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -132,6 +164,10 @@ var Collector_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _Collector_Search_Handler,
+		},
+		{
+			MethodName: "Query",
+			Handler:    _Collector_Query_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -22,6 +22,7 @@ type client struct {
 type Client interface {
 	Set(ctx context.Context, in setReq) (out SetRes, err error)
 	Search(ctx context.Context, in searchReq) (out SearchResponse, err error)
+	Query(ctx context.Context, uid string, offset int, params ...interface{}) (out QueryResult, err error)
 
 	NewSetReq() setReq
 	NewEvent(storage string, fields ...Field) event

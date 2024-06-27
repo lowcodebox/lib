@@ -15,6 +15,8 @@ cloud.google.com/go/storage v1.40.0 h1:VEpDQV5CJxFmJ6ueWNsKxcr1QAYOXEgxDa+sBbJah
 cloud.google.com/go/storage v1.40.0/go.mod h1:Rrj7/hKlG87BLqDJYtwR0fbPld8uJPbQ2ucUMY7Ir0g=
 git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3 h1:Rjvbk7XX3l7/HCsqWf5O7okVIX3ms0NDe/o1+aw4/L0=
 git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.3/go.mod h1:H+siJq/Iy6WEmygdLTBLVdI3gFdFjjGM5tta13Kzpc4=
+git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.7 h1:AqFebWkye495579Nyqj1yBgc8l26ij6KT8Q5KLxVWwQ=
+git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.7/go.mod h1:H+siJq/Iy6WEmygdLTBLVdI3gFdFjjGM5tta13Kzpc4=
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6 h1:lAeeDnjHS65HBPYqjYP6LbOrbzksMY3fGwOLqXOxRVc=
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6/go.mod h1:HL3NabJ27XFiV0BbcB2Ezs9G35A4qKb6KkkfHxQ3+JI=
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.40 h1:ShNF8Y0DJ5JFZew3/9xubdkucVJYOqQOG4CjOvmxroQ=
@@ -33,6 +35,8 @@ git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21 h1:Je9lFykQ79qWSI+mZ5UDd+wQl
 git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21/go.mod h1:EY11INWcfzSWRcNuOs9e/0cMe63/V2oOeXl2gw2+KS4=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22 h1:CdikrRdkOM45BwcT3UB/lQkgmnIgX3Yo4umR3eDz1CQ=
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.22/go.mod h1:DFbf9NCFgc+zmxRO+A6iwer+fmCkZ2O26DUW+0HoqBY=
+git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23 h1:z3F/Nle4hW4MXjMDrFDCgCCmEXnMNLja2husSzi/4Ds=
+git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23/go.mod h1:8NX9pDz7VLxWtonK6GfVX/kXgkrQ55948hNbWT5rCcE=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.41 h1:j5yZ9l7RoG1Ti5C5l3+omXQdW9CUaxipYZA+5J2Dyh4=
 git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.41/go.mod h1:uzhSJ9iRFnuW3Y2eu4/fT2d4A5NGrHEr02N9ekWjtW4=
 git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.2 h1:+Wgva9YBT1boYuA3ZrxUHFTJ9M4OvzXYOfCeawtMSPE=
@@ -45,10 +49,16 @@ git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1 h1:gQotQWr8NRH4B6YhQx
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer v0.0.1/go.mod h1:M/qHbs0+khM/tl/b9PhLeUuJhTYy8nqJhmfF1w+I1cQ=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30 h1:LX+CQHPjHpyypQggmoAUMRAX95sADIkU2otdhN/n48A=
 git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.30/go.mod h1:2qjMYMI1JJTaVtaYXOzoCSP4VSf1sB4PW9MA7spqQLY=
+git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.33 h1:myVBK7y13i3RkG2ubuq0ijxYmqQARlhKMgMFhFXHLGw=
+git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.33/go.mod h1:+FOmoR53HwA+uwJBbOVAcp7rAiYKlXhwX4Wrdexzogc=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.11 h1:8G9xVqdAUog0k3gRI5SjbdIHz2GLbInbDZ0hAr8bSl4=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.11/go.mod h1:YANOowRTYZB+JkvJTV85FiEWE3zyhuKct9uLT7K+ZE4=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.17 h1:sGiuVkXXDdvXNMFLK61nhND1DYezrSoLl4jTuhouaU8=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.17/go.mod h1:dkkxRdvq4FE7wnPaxW9kS2zTEECt6qXPEASJ6Sck8dY=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4 h1:f2ZfTmsUEl/wp4ZjXudUXzRhbZkGkOmVwJqFshirm84=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4/go.mod h1:aFAXEqwFoLHZq9cT5wLX8ufqNHmRktPPBrgqocm4fN0=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5 h1:tiv9Np7THdwLCDKsNifnj17GQfoPkCfDFN9mrvsVxDg=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5/go.mod h1:7OQXaRohakTO4rszGO6FfiPquIKD4kyJPeLwIQBgEp8=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible h1:fcYLmCpyNYRnvJbPerq7U0hS+6+I79yEDJBqVNcqUzU=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=

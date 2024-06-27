@@ -110,7 +110,8 @@ func SetupDefaultLogboxLogger(namespace string, cfg LogboxConfig, options map[st
 	}
 
 	enc := newStringCastingEncoder(zap.NewProductionEncoderConfig())
-	core := zapcore.NewCore(enc, ws, zap.NewAtomicLevelAt(zap.InfoLevel))
+	level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	core := zapcore.NewCore(enc, ws, level)
 
 	errOut, _, err := zap.Open("stderr")
 	if err != nil {

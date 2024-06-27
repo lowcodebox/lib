@@ -39,6 +39,7 @@ type Api interface {
 }
 
 type Obj interface {
+	Data(ctx context.Context, tpls, option, role, page, size string) (result models.ResponseData, err error)
 	ObjGet(ctx context.Context, uids string) (result models.ResponseData, err error)
 	ObjGetWithCache(ctx context.Context, uids string) (result *models.ResponseData, err error)
 	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
@@ -50,10 +51,38 @@ type Obj interface {
 	LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
 	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
+	Tpls(ctx context.Context, role, option string) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 	ElementWithCache(ctx context.Context, action, body string) (result models.ResponseData, err error)
+}
+
+// Data - получение объектов по шаблону. Параметр option опциональный
+func (a *api) Data(ctx context.Context, tpls, option, role, page, size string) (result models.ResponseData, err error) {
+	//_, err = o.cb.Execute(func() (interface{}, error) {
+	result, err = a.data(ctx, tpls, option, role, page, size)
+	//return result, err
+	//})
+	if err != nil {
+		logger.Error(ctx, "error data primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request data (primary route) err: %w", err)
+	}
+
+	return result, err
+}
+
+func (a *api) Tpls(ctx context.Context, role, option string) (result models.ResponseData, err error) {
+	//_, err = o.cb.Execute(func() (interface{}, error) {
+	result, err = a.tpls(ctx, role, option)
+	//return result, err
+	//})
+	if err != nil {
+		logger.Error(ctx, "error tpls primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request tpls (primary route) err: %w", err)
+	}
+
+	return result, err
 }
 
 // Search результат выводим в объект как при вызове Curl
