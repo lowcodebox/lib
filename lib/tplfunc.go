@@ -328,7 +328,7 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
-func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...string) analytics.QueryResult {
+func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) analytics.QueryResult {
 	out, err := t.analyticsClient.Query(context.Background(), queryUid, offset, params)
 	if err != nil {
 		out = append(out, map[string]interface{}{"error": err.Error()})
