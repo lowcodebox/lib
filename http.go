@@ -267,12 +267,12 @@ func getFieldCtx(ctx context.Context, name string) string {
 	if a == nil {
 		return ""
 	}
-	requestID, ok := a.(string)
+	str, ok := a.(string)
 	if !ok {
-		return ""
+		return fmt.Sprint(a)
 	}
 
-	return requestID
+	return str
 }
 
 func ExtractNameVersionString(target, defaultName, defaultVersion string) (name, version, host string, err error) {
