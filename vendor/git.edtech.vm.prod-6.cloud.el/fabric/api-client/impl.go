@@ -76,6 +76,8 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON, group string) 
 	}
 	handlers[headerServiceKey] = token
 
+	urlc := a.url + "/query/" + query
+
 	if group != "" {
 		cookies = append(cookies, &http.Cookie{
 			Path:     "/",
@@ -86,13 +88,14 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON, group string) 
 			Secure:   false,
 			SameSite: http.SameSiteLaxMode,
 		})
+
+		urlc += "/group"
 	}
 
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "Query", err, query, method, bodyJSON)
 	}
 
-	urlc := a.url + "/query/" + query
 	urlc = strings.Replace(urlc, "//query", "/query", 1)
 
 	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, cookies)
