@@ -67,13 +67,26 @@ func (a *api) data(ctx context.Context, tpls, option, role, page, size string) (
 }
 
 // Query результат выводим в объект как при вызове Curl
-func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
+func (a *api) query(ctx context.Context, query, method, bodyJSON, group string) (result string, err error) {
 	var handlers = map[string]string{}
+	var cookies []*http.Cookie
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
 	handlers[headerServiceKey] = token
+
+	if group != "" {
+		cookies = append(cookies, &http.Cookie{
+			Path:     "/",
+			Name:     "groupID",
+			Value:    group,
+			MaxAge:   30000,
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}
 
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "Query", err, query, method, bodyJSON)
@@ -82,7 +95,7 @@ func (a *api) query(ctx context.Context, query, method, bodyJSON string) (result
 	urlc := a.url + "/query/" + query
 	urlc = strings.Replace(urlc, "//query", "/query", 1)
 
-	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, nil)
+	res, err := lib.Curl(ctx, method, urlc, bodyJSON, nil, handlers, cookies)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
 	}
@@ -351,6 +364,45 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 	_, err = lib.Curl(ctx, "JSONTOPOST", urlc, string(payloadJson), &result, handlers, nil)
 	if err != nil {
 		err = fmt.Errorf("%s (url: %s)", err, urlc)
+	}
+
+	return result, err
+}
+
+func (a *api) tools(ctx context.Context, method, action string, params map[string]interface{}) (result models.ResponseData, err error) {
+	var handlers = map[string]string{}
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	if err != nil {
+		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
+	}
+	handlers[headerServiceKey] = token
+	if a.observeLog {
+		defer a.observeLogger(ctx, time.Now(), "Tools", err, method, action, params)
+	}
+
+	urlc, err := url.JoinPath(a.url, "tools", action)
+	if err != nil {
+		return result, err
+	}
+	bodyJSON := ""
+	// Если json - все параметры как тело, иначе как query
+	if method == http.MethodPost {
+		bytes, err := json.Marshal(params)
+		if err != nil {
+			return result, err
+		}
+		bodyJSON = string(bytes)
+	} else {
+		q := url.Values{}
+		for k, v := range params {
+			q.Set(k, fmt.Sprint(v))
+		}
+		urlc = urlc + "?" + q.Encode()
+	}
+
+	_, err = lib.Curl(ctx, method, urlc, bodyJSON, &result, handlers, nil)
+	if err != nil {
+		err = fmt.Errorf("%w (url: %s)", err, urlc)
 	}
 
 	return result, err

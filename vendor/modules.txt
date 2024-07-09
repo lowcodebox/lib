@@ -36,7 +36,7 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
-# git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.7
+# git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.9
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/api-client
 # git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6

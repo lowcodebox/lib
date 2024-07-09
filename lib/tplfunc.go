@@ -70,6 +70,7 @@ type Api interface {
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
 	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
+	QueryWithGroup(ctx context.Context, query, method, bodyJSON, group string) (result string, err error)
 	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
@@ -141,6 +142,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"apiobjdelete":        Funcs.apiObjDelete,
 		"apiobjget":           Funcs.apiObjGet,
 		"apiquery":            Funcs.apiQuery,
+		"apiquerywithgroup":   Funcs.apiQueryWithGroup, // доп.фильтр по группе
 		"apisearch":           Funcs.apiSearch,
 		"attr":                Funcs.attr,
 		"compare":             Funcs.compare,
@@ -1094,6 +1096,17 @@ func (t *FuncImpl) apiQuery(apiURL string, query, method, bodyJSON string) (res 
 	var err error
 	ctx := context.Background()
 	res, err = t.api.Query(ctx, query, method, bodyJSON)
+	if err != nil {
+		res = fmt.Sprint(err)
+	}
+
+	return res
+}
+
+func (t *FuncImpl) apiQueryWithGroup(apiURL string, query, method, bodyJSON, group string) (res string) {
+	var err error
+	ctx := context.Background()
+	res, err = t.api.QueryWithGroup(ctx, query, method, bodyJSON, group)
 	if err != nil {
 		res = fmt.Sprint(err)
 	}

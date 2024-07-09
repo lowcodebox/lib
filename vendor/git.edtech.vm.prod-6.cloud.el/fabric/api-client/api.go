@@ -53,9 +53,11 @@ type Obj interface {
 	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	Tpls(ctx context.Context, role, option string) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
+	QueryWithGroup(ctx context.Context, query, method, bodyJSON, group string) (result string, err error)
 	QueryWithCache(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	Element(ctx context.Context, action, body string) (result models.ResponseData, err error)
 	ElementWithCache(ctx context.Context, action, body string) (result models.ResponseData, err error)
+	Tools(ctx context.Context, method, action string, params map[string]interface{}) (result models.ResponseData, err error)
 }
 
 // Data - получение объектов по шаблону. Параметр option опциональный
@@ -138,9 +140,19 @@ func (a *api) SearchWithCache(ctx context.Context, query, method, bodyJSON strin
 // Query результат выводим в объект как при вызове Curl
 func (a *api) Query(ctx context.Context, query, method, bodyJSON string) (result string, err error) {
 	//_, err = a.cb.Execute(func() (interface{}, error) {
-	result, err = a.query(ctx, query, method, bodyJSON)
+	result, err = a.query(ctx, query, method, bodyJSON, "")
 	//return result, err
 	//})
+	if err != nil {
+		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Error(err))
+		return "", fmt.Errorf("error request Query (primary route). err: %s", err)
+	}
+
+	return result, err
+}
+
+func (a *api) QueryWithGroup(ctx context.Context, query, method, bodyJSON, group string) (result string, err error) {
+	result, err = a.query(ctx, query, method, bodyJSON, group)
 	if err != nil {
 		logger.Error(ctx, "error UpdateFilter primary haproxy", zap.Error(err))
 		return "", fmt.Errorf("error request Query (primary route). err: %s", err)
@@ -499,6 +511,19 @@ func (a *api) ObjDelete(ctx context.Context, uids string) (result models.Respons
 	if err != nil {
 		logger.Error(ctx, "error ObjDelete primary haproxy", zap.Error(err))
 		return result, fmt.Errorf("error request ObjDelete (primary route). err: %s", err)
+	}
+
+	return result, err
+}
+
+func (a *api) Tools(ctx context.Context, method, action string, params map[string]interface{}) (result models.ResponseData, err error) {
+	//_, err = a.cb.Execute(func() (interface{}, error) {
+	result, err = a.tools(ctx, method, action, params)
+	//return result, err
+	//})
+	if err != nil {
+		logger.Error(ctx, "error Tools primary haproxy", zap.Error(err))
+		return result, fmt.Errorf("error request Tools (primary route). err: %w", err)
 	}
 
 	return result, err
