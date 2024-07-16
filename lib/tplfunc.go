@@ -313,7 +313,7 @@ func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderF
 }
 
 // analyticsSet - сборщик
-func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
+func (t *FuncImpl) analyticsSet(storage string, params ...string) []string {
 	req := t.analyticsClient.NewSetReq()
 
 	fields := make([]analytics.Field, len(params)/2)
@@ -327,8 +327,11 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
 	ev := t.analyticsClient.NewEvent(storage, fields...)
 	req.AddEvent(ev)
 
-	_, err := t.analyticsClient.Set(context.Background(), req)
-	return err
+	out, err := t.analyticsClient.Set(context.Background(), req)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	return out.UIDs
 }
 
 func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) models.ResponseData {
