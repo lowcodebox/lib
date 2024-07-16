@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	pb "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk"
-	"time"
 )
 
 func (c *client) search(ctx context.Context, in searchReq) (out SearchResponse, err error) {
@@ -18,10 +17,13 @@ func (c *client) search(ctx context.Context, in searchReq) (out SearchResponse, 
 		return out, err
 	}
 
-	ctxWithDeadline, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
 	collectorClient := pb.NewCollectorClient(conn)
-	res, err := collectorClient.Search(ctxWithDeadline, in.SearchRequest)
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	res, err := collectorClient.Search(ctx, in.SearchRequest)
+
 	if err != nil {
 		return out, fmt.Errorf("error search message to collector. err: %w", err)
 	}

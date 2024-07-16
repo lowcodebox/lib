@@ -3,6 +3,7 @@ package logbox_client
 import (
 	"context"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"time"
 
 	"git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer"
@@ -15,14 +16,15 @@ var timeoutDefault = 1 * time.Second
 
 type client struct {
 	client     *grpcbalancer.Client
+	timeout    time.Duration
 	domain     string
 	projectKey string
 }
 
 type Client interface {
 	Set(ctx context.Context, in setReq) (out SetRes, err error)
-	Search(ctx context.Context, in searchReq) (out SearchResponse, err error)
-	Query(ctx context.Context, uid string, offset int, params ...interface{}) (out QueryResult, err error)
+	Search(ctx context.Context, in searchReq) (out models.ResponseData, err error)
+	Query(ctx context.Context, uid string, offset int, params ...interface{}) (out models.ResponseData, err error)
 
 	NewSetReq() setReq
 	NewEvent(storage string, fields ...Field) event
@@ -78,6 +80,7 @@ func New(ctx context.Context, urlstr string, reqTimeout time.Duration, projectKe
 		client:     b,
 		domain:     "", //strings.Join(splitUrl, "/"),
 		projectKey: projectKey,
+		timeout:    reqTimeout,
 	}, nil
 }
 

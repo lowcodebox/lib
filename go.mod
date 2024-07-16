@@ -11,7 +11,7 @@ require (
 	git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.2
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.33
-	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.13.0

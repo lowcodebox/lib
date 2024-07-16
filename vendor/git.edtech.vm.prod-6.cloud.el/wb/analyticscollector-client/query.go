@@ -5,7 +5,6 @@ import (
 	"fmt"
 	pb "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk"
 	"google.golang.org/protobuf/types/known/structpb"
-	"time"
 )
 
 func (c *client) query(ctx context.Context, uid string, offset int, params ...interface{}) (out QueryResult, err error) {
@@ -23,12 +22,11 @@ func (c *client) query(ctx context.Context, uid string, offset int, params ...in
 		return out, err
 	}
 
-	// добавил выход по контексту, для случаев, если соединение таймаутит
-	ctxWithDeadline, cancel := context.WithTimeout(ctx, 1*time.Second)
+	client := pb.NewCollectorClient(conn)
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	client := pb.NewCollectorClient(conn)
-	res, err := client.Query(ctxWithDeadline, &pb.QueryRequest{
+	res, err := client.Query(ctx, &pb.QueryRequest{
 		UID:    uid,
 		Offset: int64(offset),
 		Params: paramsList,

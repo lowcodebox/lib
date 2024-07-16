@@ -63,6 +63,8 @@ git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4 h1:f2ZfTmsUEl/
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.4/go.mod h1:aFAXEqwFoLHZq9cT5wLX8ufqNHmRktPPBrgqocm4fN0=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5 h1:tiv9Np7THdwLCDKsNifnj17GQfoPkCfDFN9mrvsVxDg=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5/go.mod h1:7OQXaRohakTO4rszGO6FfiPquIKD4kyJPeLwIQBgEp8=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9 h1:GbC4MO/TqqIAab1OUPXcibO7II4NyHo2Akak7BH/+os=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9/go.mod h1:7OQXaRohakTO4rszGO6FfiPquIKD4kyJPeLwIQBgEp8=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible h1:fcYLmCpyNYRnvJbPerq7U0hS+6+I79yEDJBqVNcqUzU=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=

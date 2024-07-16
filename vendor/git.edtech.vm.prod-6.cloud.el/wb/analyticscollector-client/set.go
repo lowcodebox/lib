@@ -21,10 +21,6 @@ func (c *client) set(ctx context.Context, in setReq) (out SetRes, err error) {
 
 	startTime := time.Now()
 
-	// добавил выход по контексту, для случаев, если соединение таймаутит
-	ctxWithDeadline, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-
 	events := &pb.SetRequest{}
 	for _, v := range in.Events {
 		ev := &pb.Event{
@@ -42,7 +38,11 @@ func (c *client) set(ctx context.Context, in setReq) (out SetRes, err error) {
 	}
 
 	client := pb.NewCollectorClient(conn)
-	res, err := client.Set(ctxWithDeadline, events)
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	res, err := client.Set(ctx, events)
 	if err != nil {
 		return out, fmt.Errorf("collector request timing: %f(c), err: %w", time.Since(startTime).Seconds(), err)
 	}

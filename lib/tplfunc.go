@@ -291,7 +291,7 @@ func (t *FuncImpl) analytics(storage string, params ...string) bool {
 // Если limit > максимального значения в колллекторе => limit = максимальному значению в колллекторе
 // Если offset <0 => offset = 0
 // Если orderField пустой, сортируется по datetime
-func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) analytics.SearchResponse {
+func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderField string, asc bool, params ...string) models.ResponseData {
 	fields := make([]analytics.Field, len(params)/2)
 	for i := 0; i < len(params)/2; i++ {
 		fields[i] = analytics.Field{
@@ -305,7 +305,8 @@ func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderF
 
 	req, err := t.analyticsClient.Search(context.Background(), searchReq)
 	if err != nil {
-		req.Data = append(req.Data, analytics.Event{Storage: "", Fields: []analytics.Field{analytics.Field{Name: "error", Value: err.Error()}}, Timestamp: time.Now(), Payload: ""})
+		req.Status.Error = err
+		return req
 	}
 
 	return req
@@ -330,10 +331,11 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) error {
 	return err
 }
 
-func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) analytics.QueryResult {
+func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) models.ResponseData {
 	out, err := t.analyticsClient.Query(context.Background(), queryUid, offset, params...)
 	if err != nil {
-		out = append(out, map[string]interface{}{"error": err.Error()})
+		out.Status.Error = err
+		return out
 	}
 	return out
 }

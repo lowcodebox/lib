@@ -81,7 +81,7 @@ git.edtech.vm.prod-6.cloud.el/packages/logger/types
 # git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.17
 ## explicit; go 1.22.2
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk
-# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5
+# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9
 ## explicit; go 1.22.2
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client
 # github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
