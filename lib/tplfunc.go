@@ -452,17 +452,12 @@ func (t *FuncImpl) logger(logtype, msg string, key string, params ...string) boo
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	kv := map[string]string{}
+	fields := make([]zap.Field, 0, len(params)/2)
 	for i := 0; i < len(params); i += 2 {
 		if i+1 >= len(params) {
 			break
 		}
-		kv[params[i]] = params[i+1]
-	}
-
-	fields := make([]zap.Field, 0, len(kv))
-	for k, v := range kv {
-		fields = append(fields, zap.String(k, v))
+		fields = append(fields, zap.String(params[i], params[i+1]))
 	}
 
 	switch strings.ToUpper(logtype) {
