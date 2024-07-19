@@ -33,7 +33,6 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
-	"git.edtech.vm.prod-6.cloud.el/packages/logger/types"
 	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 	"github.com/Masterminds/sprig"
 	"github.com/mileusna/useragent"
@@ -453,24 +452,24 @@ func (t *FuncImpl) logger(logtype, msg string, key string, params ...string) boo
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	kv := map[string]string{}
+	fields := make([]zap.Field, 0, len(params)/2)
 	for i := 0; i < len(params); i += 2 {
 		if i+1 >= len(params) {
 			break
 		}
-		kv[params[i]] = params[i+1]
+		fields = append(fields, zap.String(params[i], params[i+1]))
 	}
 
 	switch strings.ToUpper(logtype) {
 	case "INFO":
-		logger.Info(ctx, msg, types.StringMap(key, kv))
+		logger.Info(ctx, msg, fields...)
 	case "ERROR":
-		err := errors.New(params[len(params)-1])
-		logger.Error(ctx, msg, types.StringMap(key, kv), zap.Error(err))
+		fields = append(fields, zap.Error(errors.New(params[len(params)-1])))
+		logger.Error(ctx, msg, fields...)
 	case "WARN":
-		logger.Warn(ctx, msg, types.StringMap(key, kv))
+		logger.Warn(ctx, msg, fields...)
 	case "DEBUG":
-		logger.Debug(ctx, msg, types.StringMap(key, kv))
+		logger.Debug(ctx, msg, fields...)
 	}
 
 	return true
