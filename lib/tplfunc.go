@@ -465,7 +465,7 @@ func (t *FuncImpl) logger(logtype, msg string, key string, params ...string) boo
 	case "INFO":
 		logger.Info(ctx, msg, types.StringMap(key, kv))
 	case "ERROR":
-		err := fmt.Errorf("error: %s", params[len(params)-1])
+		err := errors.New(params[len(params)-1])
 		logger.Error(ctx, msg, types.StringMap(key, kv), zap.Error(err))
 	case "WARN":
 		logger.Warn(ctx, msg, types.StringMap(key, kv))
