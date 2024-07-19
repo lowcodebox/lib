@@ -42,28 +42,25 @@ git.edtech.vm.prod-6.cloud.el/fabric/api-client
 # git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client
-# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50
+# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.60
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
-# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17
+# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.18
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
-# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45
+# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/lib
 git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3
-# git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.21
-## explicit; go 1.20
+# git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.26
+## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/logbox/pkg/model/sdk
 # git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23
 ## explicit; go 1.22
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client
-# git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.41
+# git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.0
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/fabric/models
-# git.edtech.vm.prod-6.cloud.el/lovetsky/secrets v0.0.2
-## explicit; go 1.21.6
-git.edtech.vm.prod-6.cloud.el/lovetsky/secrets
 # git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 ## explicit; go 1.19
 git.edtech.vm.prod-6.cloud.el/packages/cache
@@ -74,11 +71,14 @@ git.edtech.vm.prod-6.cloud.el/packages/curl
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer
 git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer/multiresolver
-# git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.33
+# git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.34
 ## explicit; go 1.22
 git.edtech.vm.prod-6.cloud.el/packages/logger
 git.edtech.vm.prod-6.cloud.el/packages/logger/types
-# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.17
+# git.edtech.vm.prod-6.cloud.el/packages/secrets v0.0.2
+## explicit; go 1.21.6
+git.edtech.vm.prod-6.cloud.el/packages/secrets
+# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.23
 ## explicit; go 1.22.2
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk
 # git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9

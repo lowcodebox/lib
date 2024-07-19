@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -14,14 +15,12 @@ const (
 
 //nolint:gochecknoglobals
 var (
-	logKeys = make(map[key]struct{})
+	logKeys = make(map[string]struct{})
 	mtx     sync.RWMutex
 )
 
-type key string
-
 func SetFieldCtx(ctx context.Context, name, val string) context.Context {
-	nameKey := key("logger." + name)
+	nameKey := "logger." + name
 
 	mtx.RLock()
 	_, ok := logKeys[nameKey]
@@ -61,12 +60,12 @@ func GetFieldCtx(ctx context.Context, name string) string {
 	if a == nil {
 		return ""
 	}
-	requestID, ok := a.(string)
+	str, ok := a.(string)
 	if !ok {
-		return ""
+		return fmt.Sprint(a)
 	}
 
-	return requestID
+	return str
 }
 
 // SetRequestIDCtx sets request-id log field via context.

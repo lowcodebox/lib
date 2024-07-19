@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
 	"os"
 	"os/signal"
 	"strconv"
@@ -12,15 +11,20 @@ import (
 	"time"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
 	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/secrets"
+	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
-
 	implCache "git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/i18n"
@@ -29,47 +33,14 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
-
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
-	"git.edtech.vm.prod-6.cloud.el/lovetsky/secrets"
-	"git.edtech.vm.prod-6.cloud.el/packages/logger"
-	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 )
 
-const sep = string(os.PathSeparator)
-const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь, относительно bucket-а проекта
 var (
 	serviceVersion string
 	hashCommit     string
 )
 
 func main() {
-	//limit := 1
-	//burst := 1
-	//limiter := rate.NewLimiter(rate.Limit(limit), burst)
-	//ctx := context.Background()
-	//i := 0
-	//
-	//for {
-	//
-	//	fmt.Println("request", time.Now())
-	//
-	//	go func(lim *rate.Limiter, i int) {
-	//		fmt.Println(i, "------- - ", time.Now())
-	//		lim.Wait(ctx)
-	//		fmt.Println(i, " - ", time.Now())
-	//	}(limiter, i)
-	//
-	//	i++
-	//
-	//	time.Sleep(100 * time.Millisecond)
-	//	if i > 20 {
-	//		break
-	//	}
-	//}
-
-	//time.Sleep(100 * time.Second)
-
 	var err error
 
 	err = lib.RunServiceFuncCLI(context.Background(), Start)
@@ -158,6 +129,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 			logger.WithCustomField(logger.ServiceTypeKey, cfg.Type),
 		)
 	}
+
+	// задаем уровень логирования
+	logger.Logger(ctx).SetLevel(zapcore.DebugLevel)
 
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
