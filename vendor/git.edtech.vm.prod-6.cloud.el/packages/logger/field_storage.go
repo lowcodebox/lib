@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const storageKey key = "logger.field_storage"
+const storageKey = "logger.field_storage"
 
 type fieldMap map[string]Field
 

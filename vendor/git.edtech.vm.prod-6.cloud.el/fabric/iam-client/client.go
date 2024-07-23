@@ -56,6 +56,9 @@ func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, 
 	if err != nil {
 		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
 	}
+	if res.Data == nil {
+		return "", fmt.Errorf("profile is not found")
+	}
 
 	b2, _ := json.Marshal(res.Data)
 

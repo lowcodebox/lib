@@ -10,12 +10,11 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 )
 
-var reSecretsCheck = regexp.MustCompile(`(secret_([^" ]+))`)
+var reSecretsCheck = regexp.MustCompile(`"(secret[:_]([/\w.-]+))\\?"`)
 
 // ParseSecrets заменяет все строки вида secret_"key" на секреты из контроллера
 func ParseSecrets(ctx context.Context, cfgString, controllerURL, projectKey string, cfg interface{}) error {
 	client := contoller.New(controllerURL, false, projectKey)
-
 	matches := reSecretsCheck.FindAllStringSubmatch(cfgString, -1)
 	// сет замененных ключей
 	visited := map[string]struct{}{}
