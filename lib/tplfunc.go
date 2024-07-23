@@ -68,7 +68,7 @@ type Api interface {
 	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
 	ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error)
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
-	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	LinkGet(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error)
 	Query(ctx context.Context, query, method, bodyJSON string) (result string, err error)
 	QueryWithGroup(ctx context.Context, query, method, bodyJSON, group string) (result string, err error)
 	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
@@ -1085,11 +1085,11 @@ func (t *FuncImpl) apiObjAttrUpdate(apiURL string, uid, name, value, src, editor
 	return res
 }
 
-func (t *FuncImpl) apiLinkGet(apiURL string, tpl, obj, mode, short string) (res models.ResponseData) {
+func (t *FuncImpl) apiLinkGet(apiURL string, tpl, obj, mode, short string, page int) (res models.ResponseData) {
 	var err error
 	res = models.ResponseData{}
 	ctx := context.Background()
-	res, err = t.api.LinkGet(ctx, tpl, obj, mode, short)
+	res, err = t.api.LinkGet(ctx, tpl, obj, mode, short, page)
 	if err != nil {
 		res.Status.Error = err
 	}

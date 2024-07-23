@@ -45,10 +45,10 @@ type Obj interface {
 	ObjCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error)
 	ObjDelete(ctx context.Context, uids string) (result models.ResponseData, err error)
 	ObjAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error)
-	LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	LinkGet(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error)
 	LinkAdd(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
 	LinkDelete(ctx context.Context, element, from, to string) (result models.ResponseData, err error)
-	LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error)
+	LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error)
 	Search(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	SearchWithCache(ctx context.Context, query, method, bodyJSON string) (resp string, err error)
 	Tpls(ctx context.Context, role, option string) (result models.ResponseData, err error)
@@ -310,9 +310,9 @@ func (a *api) LinkAdd(ctx context.Context, element, from, to string) (result mod
 }
 
 // LinkGet - получение связанных объектов
-func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error) {
 	//_, err = a.cb.Execute(func() (interface{}, error) {
-	result, err = a.linkGet(ctx, tpl, obj, mode, short)
+	result, err = a.linkGet(ctx, tpl, obj, mode, short, page)
 	//return result, err
 	//})
 	if err != nil {
@@ -325,7 +325,7 @@ func (a *api) LinkGet(ctx context.Context, tpl, obj, mode, short string) (result
 
 // LinkGetWithCache - получение связанных объектов
 // (с кешем если задан TTL кеширования при инициализации кеша)
-func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error) {
 	var ok bool
 	var handlers = map[string]string{}
 	handlers[headerRequestId] = logger.GetRequestIDCtx(ctx)
@@ -339,7 +339,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 	if errors.Is(err, cache.ErrorKeyNotFound) {
 		var value interface{}
 		value, err = cache.Cache().Upsert(key, func() (res interface{}, err error) {
-			res, err = a.LinkGet(ctx, tpl, obj, mode, short)
+			res, err = a.LinkGet(ctx, tpl, obj, mode, short, page)
 			return res, err
 		}, a.cacheUpdateInterval)
 		if err == nil && value != nil {
@@ -356,7 +356,7 @@ func (a *api) LinkGetWithCache(ctx context.Context, tpl, obj, mode, short string
 	// повторяем запрос (без кеша)
 	if err != nil {
 		logger.Error(ctx, "error exec cache query", zap.String("func", "LinkGetWithCache"), zap.String("key", key), zap.Error(err))
-		cacheValue, err = a.LinkGet(ctx, tpl, obj, mode, short)
+		cacheValue, err = a.LinkGet(ctx, tpl, obj, mode, short, page)
 		if err == nil && cacheValue != nil {
 			res, ok := cacheValue.(models.ResponseData)
 			if ok {

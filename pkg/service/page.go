@@ -34,7 +34,7 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if in.Page == "" {
 		// получаем все страницы текущего приложения
-		objPages, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "")
+		objPages, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "", 1)
 		//s.tree.Curl("GET", "_link?obj="+s.cfg.DataUid+"&source="+s.cfg.TplAppPagesPointsrc+"&mode=in", "", &objPages, map[string]string{})
 
 		for _, v := range objPages.Data {
@@ -142,7 +142,7 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	// ДОДЕЛАТЬ СРОЧНО!!!
 
 	// 2 запрос на объекты блоков страницы
-	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
+	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "", 1)
 	if err != nil {
 		return result, fmt.Errorf("error. blocks is not found for this page: %s, err: %s", pageUID, err)
 	}

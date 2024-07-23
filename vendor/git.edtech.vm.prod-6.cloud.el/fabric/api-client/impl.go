@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -185,7 +186,7 @@ func (a *api) objGet(ctx context.Context, uids string) (result models.ResponseDa
 	return result, err
 }
 
-func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string) (result models.ResponseData, err error) {
+func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
 	if err != nil {
@@ -196,7 +197,7 @@ func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string) (result
 		defer a.observeLogger(ctx, time.Now(), "LinkGet", err, tpl, obj, mode, short)
 	}
 
-	urlc := a.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short
+	urlc := a.url + "/link/get?source=" + tpl + "&mode=" + mode + "&obj=" + obj + "&short=" + short + "&page=" + strconv.Itoa(page)
 	urlc = strings.Replace(urlc, "//link", "/link", 1)
 
 	_, err = lib.Curl(ctx, "GET", urlc, "", &result, handlers, nil)

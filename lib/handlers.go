@@ -94,7 +94,7 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	if page == "" {
 		// получаем все страницы текущего приложения
 		//c.Curl("GET", "_link?obj="+data_source+"&source="+tpl_app_pages_pointsrc+"&mode=out", "", &objPages, r.Cookies())
-		objPages, err = c.api.LinkGet(r.Context(), tpl_app_pages_pointsrc, data_source, "out", "")
+		objPages, err = c.api.LinkGet(r.Context(), tpl_app_pages_pointsrc, data_source, "out", "", 1)
 		if err != nil {
 			err = fmt.Errorf("error pages current user. err: %s", err)
 			return
@@ -327,7 +327,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage models.ResponseDat
 	//urlc = strings.Replace(urlc, "//_link", "/_link", 1)
 	//_, err = lib.Curl("GET", urlc, "", &objBlocks, handlers, r.Cookies())
 
-	objBlocks, err = l.api.LinkGet(r.Context(), blockSrc, pageUID, "in", "")
+	objBlocks, err = l.api.LinkGet(r.Context(), blockSrc, pageUID, "in", "", 1)
 	if err != nil {
 		err = fmt.Errorf("error pages current user. err: %s", err)
 		return
