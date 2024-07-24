@@ -256,9 +256,10 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"help":   Funcs.help,
 		"env":    Funcs.env,
 
-		"analyticsset":    Funcs.analyticsSet,
-		"analyticssearch": Funcs.analyticsSearch,
-		"analytycsquery":  Funcs.analyticsQuery,
+		"analyticsset":      Funcs.analyticsSet,
+		"analyticssetasync": Funcs.analyticsSetAsync,
+		"analyticssearch":   Funcs.analyticsSearch,
+		"analytycsquery":    Funcs.analyticsQuery,
 
 		"secretsget": Funcs.secretsGet,
 	}
@@ -311,7 +312,7 @@ func (t *FuncImpl) analyticsSearch(storage string, limit int, offset int, orderF
 	return req
 }
 
-// analyticsSet - сборщик
+// analyticsSet — запись в аналитику синхронно
 func (t *FuncImpl) analyticsSet(storage string, params ...string) []string {
 	req := t.analyticsClient.NewSetReq()
 
@@ -331,6 +332,24 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) []string {
 		return []string{err.Error()}
 	}
 	return out.UIDs
+}
+
+// analyticsSet — запись в аналитику асинхронно
+func (t *FuncImpl) analyticsSetAsync(storage string, params ...string) {
+	req := t.analyticsClient.NewSetReq()
+
+	fields := make([]analytics.Field, len(params)/2)
+	for i := 0; i < len(params)/2; i++ {
+		fields[i] = analytics.Field{
+			Name:  params[i*2],
+			Value: params[i*2+1],
+		}
+	}
+
+	ev := t.analyticsClient.NewEvent(storage, fields...)
+	req.AddEvent(ev)
+
+	t.analyticsClient.SetAsync(context.Background(), req)
 }
 
 func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) models.ResponseData {
