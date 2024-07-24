@@ -31,6 +31,8 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50 h1:vkz0j+sb8quLu4H+YcLO6q/A/1id
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.50/go.mod h1:/aTRjFRuvkbjH71j3LOI3pYQaV6+X3vaaGcG+yBTw4A=
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.60 h1:IZkirhdcfhiK9ekEXtgXFBLgVeEu8LMXrxQ4w8xgsZc=
 git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.60/go.mod h1:TQ1OHDt+6DHUjey7HT/zzbPz9pSfQH0Re7+Q6oVZfZA=
+git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61 h1:BULIyW2xlcVEEKy/gMBFDwk6F7Cxb3TvueSrIA3yuro=
+git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61/go.mod h1:TQ1OHDt+6DHUjey7HT/zzbPz9pSfQH0Re7+Q6oVZfZA=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15 h1:i7QxL1XKZBkq22IvXb9vLngMjqIXFVi6qkWWhEUETZw=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.15/go.mod h1:UwNChnMnFm2qeJgDK7kMZX0Iu7f4/ByaczSQEeSiYGA=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.16 h1:s4i2Gd0Zb/5rBipICD1ij1Qze3NEbMTyVNd6jwwVOgU=
@@ -39,6 +41,8 @@ git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17 h1:6iP2xvj83SDLaXR2tgAZ7
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.17/go.mod h1:NtrgA6fg1Pt88CqRqaLHf2HnfF/bp5+9L35p0xjylI4=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.18 h1:3lR+5fSHjBNGoYwTp2HOnljliwU8k9iAH235owWVmDg=
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.18/go.mod h1:NtrgA6fg1Pt88CqRqaLHf2HnfF/bp5+9L35p0xjylI4=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19 h1:gHjGs7NBIKCSEr37CZOoAtprfY15DCMBix0gENLk1nQ=
+git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19/go.mod h1:NtrgA6fg1Pt88CqRqaLHf2HnfF/bp5+9L35p0xjylI4=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45 h1:Cd55uHYyjSEm7nHGND4I1nqAQBu+3DVBrfewdDh9aN0=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.45/go.mod h1:NKdiWw62vT0DQCUTzPrNcAF5G/Tz3o6kHRXPYCfynCo=
 git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47 h1:zTtaE1iTAne3PTw6rmH5CPcmwCm/j++ENXDRMdTPwBI=
@@ -83,6 +87,8 @@ git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5 h1:tiv9Np7THdw
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.5/go.mod h1:7OQXaRohakTO4rszGO6FfiPquIKD4kyJPeLwIQBgEp8=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9 h1:GbC4MO/TqqIAab1OUPXcibO7II4NyHo2Akak7BH/+os=
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9/go.mod h1:7OQXaRohakTO4rszGO6FfiPquIKD4kyJPeLwIQBgEp8=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.10 h1:BndwLWO236Jr6WL/Q+X4svnpnI181bHnwzPP9tcglRM=
+git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.10/go.mod h1:ZrA+ZPZzV96uiDDoF+yAKP8yfEHI0oZJVAMbymJfTkA=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible h1:fcYLmCpyNYRnvJbPerq7U0hS+6+I79yEDJBqVNcqUzU=
 github.com/Azure/azure-sdk-for-go v68.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=

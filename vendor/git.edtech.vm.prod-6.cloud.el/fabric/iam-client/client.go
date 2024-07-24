@@ -65,6 +65,36 @@ func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, 
 	return string(b2), err
 }
 
+func (o *iam) profileChange(ctx context.Context, sessionID, profile string) (result string, err error) {
+	var res models.Response
+	var handlers = map[string]string{}
+
+	if sessionID == "" || profile == "" {
+		return "", fmt.Errorf("param is empty, session: %t, profile: %t", sessionID != "", profile != "")
+	}
+
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	handlers[headerServiceKey] = serviceKey
+	if o.observeLog {
+		defer o.observeLogger(ctx, time.Now(), "refresh", err, sessionID)
+	}
+
+	urlc := o.url + "/profile/change/" + sessionID + "/" + profile
+	urlc = strings.Replace(urlc, "//profile", "/profile", 1)
+
+	_, err = lib.Curl(ctx, "GET", urlc, "", &res, handlers, nil)
+	if err != nil {
+		return result, fmt.Errorf("urlc: %s, err: %s", urlc, err)
+	}
+	if res.Data == nil {
+		return "", fmt.Errorf("profile is not found")
+	}
+
+	b2, _ := json.Marshal(res.Data)
+
+	return string(b2), err
+}
+
 func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}

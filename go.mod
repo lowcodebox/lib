@@ -5,13 +5,13 @@ go 1.22.2
 require (
 	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.11
 	git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
-	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.18
+	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19
 	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47
 	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.0
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.34
 	git.edtech.vm.prod-6.cloud.el/packages/secrets v0.0.2
-	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9
+	git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.10
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/go-kit/kit v0.13.0
@@ -43,7 +43,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.8 // indirect
 	cloud.google.com/go/storage v1.40.0 // indirect
-	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.60 // indirect
+	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.26 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23 // indirect
 	git.edtech.vm.prod-6.cloud.el/packages/curl v0.0.1 // indirect

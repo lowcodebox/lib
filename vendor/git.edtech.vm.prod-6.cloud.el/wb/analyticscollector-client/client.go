@@ -3,26 +3,34 @@ package logbox_client
 import (
 	"context"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"time"
 
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/grpcbalancer"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
-var timeoutDefault = 1 * time.Second
+const (
+	defaultConnectTimeout = 1 * time.Second
+	defaultRequestTimeout = 5 * time.Second
+	defaultRetryInterval  = 5 * time.Second
+	defaultRetries        = 2000
+)
 
 type client struct {
-	client     *grpcbalancer.Client
-	timeout    time.Duration
-	domain     string
-	projectKey string
+	client        *grpcbalancer.Client
+	timeout       time.Duration
+	domain        string
+	projectKey    string
+	setRetries    int
+	retryInterval time.Duration
 }
 
 type Client interface {
 	Set(ctx context.Context, in setReq) (out SetRes, err error)
+	SetAsync(ctx context.Context, in setReq)
 	Search(ctx context.Context, in searchReq) (out models.ResponseData, err error)
 	Query(ctx context.Context, uid string, offset int, params ...interface{}) (out models.ResponseData, err error)
 
@@ -43,14 +51,14 @@ func (c *client) Close() error {
 	return c.client.Close()
 }
 
-func New(ctx context.Context, urlstr string, reqTimeout time.Duration, projectKey string) (Client, error) {
-	if reqTimeout == 0 {
-		reqTimeout = timeoutDefault
+func New(ctx context.Context, urlstr string, reqTimeout time.Duration, projectKey string, opts ...Option) (Client, error) {
+	if reqTimeout <= 0 {
+		reqTimeout = defaultRequestTimeout
 	}
 	b, err := grpcbalancer.New(
 		grpcbalancer.WithUrls(urlstr),
 		grpcbalancer.WithInsecure(),
-		grpcbalancer.WithTimeout(reqTimeout),
+		grpcbalancer.WithTimeout(defaultConnectTimeout),
 		grpcbalancer.WithChainUnaryInterceptors(GRPCUnaryClientInterceptor),
 	)
 	if err != nil {
@@ -76,12 +84,29 @@ func New(ctx context.Context, urlstr string, reqTimeout time.Duration, projectKe
 	//}
 	//splitUrl = splitUrl[1:3]
 
-	return &client{
+	c := &client{
 		client:     b,
 		domain:     "", //strings.Join(splitUrl, "/"),
 		projectKey: projectKey,
 		timeout:    reqTimeout,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	if c.setRetries < 1 {
+		c.setRetries = defaultRetries
+	}
+
+	if c.retryInterval <= 0 {
+		c.retryInterval = defaultRetryInterval
+	}
+	if c.retryInterval <= c.timeout {
+		c.retryInterval = c.timeout + time.Second
+	}
+
+	return c, nil
 }
 
 func GRPCUnaryClientInterceptor(

@@ -3,11 +3,21 @@ package logbox_client
 import (
 	"context"
 	"fmt"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 )
 
 func (c *client) Set(ctx context.Context, in setReq) (out SetRes, err error) {
-	return c.set(ctx, in)
+	return lib.Retrier(c.setRetries, c.retryInterval, true, func() (SetRes, error) {
+		return c.set(ctx, in)
+	})
+}
+
+func (c *client) SetAsync(ctx context.Context, in setReq) {
+	go lib.Retrier(c.setRetries, c.retryInterval, true, func() (SetRes, error) {
+		return c.set(ctx, in)
+	})
 }
 
 func (c *client) Search(ctx context.Context, in searchReq) (out models.ResponseData, err error) {

@@ -42,10 +42,10 @@ git.edtech.vm.prod-6.cloud.el/fabric/api-client
 # git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client
-# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.60
+# git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
-# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.18
+# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
 # git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47
@@ -81,7 +81,7 @@ git.edtech.vm.prod-6.cloud.el/packages/secrets
 # git.edtech.vm.prod-6.cloud.el/wb/analyticscollector v0.1.23
 ## explicit; go 1.22.2
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector/pkg/model/sdk
-# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.9
+# git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client v0.0.10
 ## explicit; go 1.22.2
 git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client
 # github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
