@@ -6,19 +6,24 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const authTokenName = "X-Auth-Key"
 
 type authResponse struct {
-	models.Response
-	Ref string `json:"ref"`
+	XAuthToken  string `json:"x_auth_token"`
+	UserUID     string `json:"user_uid"`
+	ProfileUID  string `json:"profile_uid"`
+	Ref         string `json:"ref"`
+	Code        string `json:"code"`
+	Description string `json:"description"`
 }
 
 func (h *handlers) AuthLogOut(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +63,32 @@ func (h *handlers) AuthLogIn(w http.ResponseWriter, r *http.Request) {
 	if er != nil {
 		err = h.transportError(r.Context(), w, 500, er, "[AuthLog] error exec AuthLog")
 		return
+	}
+
+	// устанавливаем сервисные куки после авторизации (для фронта)
+	for _, v := range strings.Split(h.cfg.CookieFrontLogin, ",") {
+		if v == "" {
+			continue
+		}
+
+		nv := strings.Split(v, "=")
+		if len(nv) < 2 {
+			continue
+		}
+		name := nv[0]
+		value := nv[1]
+
+		// заменяем куку у пользователя в браузере
+		c := &http.Cookie{
+			Path:     "/",
+			Name:     name,
+			Value:    value,
+			MaxAge:   5256000,
+			HttpOnly: false,
+			Secure:   false,
+		}
+
+		http.SetCookie(w, c)
 	}
 
 	out, er := h.authEncodeResponse(r.Context(), serviceResult)
@@ -120,18 +151,20 @@ func (h *handlers) authDecodeRequest(ctx *context.Context, r *http.Request) (in 
 }
 
 func (h *handlers) authEncodeResponse(ctx context.Context, serviceResult model.ServiceAuthOut) (response authResponse, err error) {
-	response.Data = serviceResult.XAuthToken
+	response.XAuthToken = serviceResult.XAuthToken
+	response.UserUID = serviceResult.UserUID
+	response.ProfileUID = serviceResult.ProfileUID
 	response.Ref = serviceResult.Ref
 
 	if serviceResult.Error == nil {
-		response.Status.Code = "Success"
-		response.Status.Description = "Авторизация успешна"
+		response.Code = "Success"
+		response.Description = "Авторизация успешна"
 	}
 	return response, err
 }
 
 func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request, out authResponse) (err error) {
-	token := fmt.Sprint(out.Response.Data)
+	token := fmt.Sprint(out.XAuthToken)
 
 	// редиректим страницу, передав в куку новый токен с просроченным временем
 	w.Header().Set(authTokenName, token)
@@ -140,9 +173,9 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 		Path:     "/",
 		Name:     authTokenName,
 		Value:    token,
-		MaxAge:   30000,
+		MaxAge:   5256000,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -162,11 +195,32 @@ func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err err
 		Expires: time.Unix(0, 0),
 		Value:   "",
 		MaxAge:  30000,
-		Secure:  true,
+		Secure:  false,
 	}
 
 	//// переписываем куку у клиента
 	http.SetCookie(w, cookie)
+
+	// удаляем сервисные куки если не авторизован (для фронта)
+	for _, name := range strings.Split(h.cfg.CookieFrontLogoutDelete, ",") {
+		if name == "" {
+			continue
+		}
+
+		// заменяем куку у пользователя в браузере
+		c := &http.Cookie{
+			Path:     "/",
+			Name:     name,
+			Expires:  time.Unix(0, 0),
+			Value:    "",
+			MaxAge:   56000,
+			HttpOnly: false,
+			Secure:   false,
+		}
+
+		http.SetCookie(w, c)
+	}
+
 	http.Redirect(w, r, r.Referer(), 302)
 
 	return err

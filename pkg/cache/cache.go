@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/function"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/packages/logger"
-	"github.com/labstack/gommon/color"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 
 	"github.com/restream/reindexer"
@@ -203,10 +202,7 @@ func (c *cache) Clear(links string) (count int, err error) {
 	return
 }
 
-func New(cfg model.Config, function function.Function) Cache {
-	ctx := context.Background()
-	done := color.Green("[OK]")
-	fail := color.Red("[Fail]")
+func New(cfg model.Config, function function.Function) (Cache, error) {
 	var cach = cache{
 		cfg:      cfg,
 		function: function,
@@ -217,16 +213,11 @@ func New(cfg model.Config, function function.Function) Cache {
 		cach.DB = reindexer.NewReindex(cfg.CachePointsrc)
 		err := cach.DB.OpenNamespace(cfg.Namespace, reindexer.DefaultNamespaceOptions(), model.ValueCache{})
 		if err != nil {
-			fmt.Printf("%s Error connecting to database. Plaese check this parameter in the configuration. %s\n", fail, cfg.CachePointsrc)
-			fmt.Printf("%s\n", err)
-			logger.Error(ctx, fmt.Sprintf("Error connecting to database. Plaese check this parameter in the configuration: %s", cfg.CachePointsrc), zap.Error(err))
-			return &cach
+			return &cach, err
 		} else {
-			fmt.Printf("%s Cache-service is running\n", done)
-			logger.Info(ctx, "Cache-service is running")
 			cach.active = true
 		}
 	}
 
-	return &cach
+	return &cach, nil
 }

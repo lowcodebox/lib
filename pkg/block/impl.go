@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 )
 
 // Get получение содержимого блока (с учетом операций с кешем)
 func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.Data, values map[string]interface{}) (moduleResult model.ModuleResult, err error) {
-	var result string
+	var result, key, cacheParams string
 	var addConditionPath, addConditionURL, flagExpired bool
 	var cacheInterval int
 
@@ -43,14 +43,18 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 	if s.cache.Active() && cacheInterval != 0 {
 
 		// читаем из кеша и отдаем (ВСЕГДА сразу)
-		key, cacheParams := s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addConditionPath, addConditionURL)
-		result, _, flagExpired, err = s.cache.Read(key)
+		if in.CacheSkip != "true" {
+			key, cacheParams = s.cache.GenKey(block.Uid, in.CachePath, in.CacheQuery, addConditionPath, addConditionURL)
+			result, _, flagExpired, err = s.cache.Read(key)
 
-		fmt.Printf("s.cache.GenKey result: ", key, result)
+			//logger.Info(ctx, "get block from cache", zap.Float64("timing", time.Since(t1).Seconds()),
+			//	zap.String("block", block.Uid), zap.String("block (id)", block.Id))
+		}
 
-		// 1 кеша нет (срабатывает только при первом формировании)
-		if err != nil {
-			logger.Error(ctx, "err get cache (GetBlock)", zap.String("step", "err get cache"),
+		// 1 кеша нет (срабатывает только при первом формировании или если пропускаем кеш)
+		if err != nil || in.CacheSkip == "true" {
+			logger.Info(ctx, "generate cache (GetBlock)",
+				zap.Bool("cache skip", in.CacheSkip == "true"),
 				zap.Float64("timing", time.Since(t1).Seconds()),
 				zap.String("result", result), zap.String("block.Id", block.Id), zap.String("key", key), zap.Error(err))
 
@@ -77,7 +81,12 @@ func (s *block) Get(ctx context.Context, in model.ServiceIn, block, page models.
 		}
 
 	} else {
+		t2 := time.Now()
 		mResult, err := s.generate(ctx, in, block, page, values)
+		logger.Info(ctx, "gen block (no cache)", zap.String("step", "s.block generate"),
+			zap.String("block", block.Uid), zap.String("block (id)", block.Id),
+			zap.Float64("timing", time.Since(t2).Seconds()))
+
 		if err != nil {
 			moduleResult.Result = ""
 			moduleResult.Err = err

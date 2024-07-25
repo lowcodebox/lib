@@ -5,65 +5,42 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	applib "git.lowcodeplatform.net/fabric/app/lib"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/packages/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/secrets"
+	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
-	implCache "git.lowcodeplatform.net/fabric/app/pkg/cache"
-	"git.lowcodeplatform.net/fabric/app/pkg/function"
-	"git.lowcodeplatform.net/fabric/app/pkg/i18n"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/servers"
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/app/pkg/session"
-
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/packages/logger"
+	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
+	implCache "git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/i18n"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 )
 
-const sep = string(os.PathSeparator)
-const prefixUploadURL = "upload" // адрес/_prefixUploadURL_/... - путь, относительно bucket-а проекта
 var (
 	serviceVersion string
 	hashCommit     string
 )
 
 func main() {
-	//limit := 1
-	//burst := 1
-	//limiter := rate.NewLimiter(rate.Limit(limit), burst)
-	//ctx := context.Background()
-	//i := 0
-	//
-	//for {
-	//
-	//	fmt.Println("request", time.Now())
-	//
-	//	go func(lim *rate.Limiter, i int) {
-	//		fmt.Println(i, "------- - ", time.Now())
-	//		lim.Wait(ctx)
-	//		fmt.Println(i, " - ", time.Now())
-	//	}(limiter, i)
-	//
-	//	i++
-	//
-	//	time.Sleep(100 * time.Millisecond)
-	//	if i > 20 {
-	//		break
-	//	}
-	//}
-
-	//time.Sleep(100 * time.Second)
-
 	var err error
 
 	err = lib.RunServiceFuncCLI(context.Background(), Start)
@@ -89,9 +66,13 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	defer cancel()
 
 	// инициируем пакеты
-	err = lib.ConfigLoad(configfile, &cfg)
+	cfgString, err := lib.ConfigLoad(configfile, &cfg)
 	if err != nil {
 		return fmt.Errorf("%s (%s)", "Error. Load config is failed.", err)
+	}
+	err = secrets.ParseSecrets(context.Background(), cfgString, cfg.ProxyPointsrc, cfg.ProjectKey, &cfg)
+	if err != nil {
+		return fmt.Errorf("error. Parse secrets is failed. (%w)", err)
 	}
 
 	cfg.ServiceVersion = serviceVersion
@@ -104,6 +85,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	cfg.ClientPath = "/" + cfg.Name + "/" + cfg.Version
 	cfg.HashRun = lib.UUID()
 	cfg.RunTime = time.Now()
+	cfg.Pid = strconv.Itoa(os.Getpid())
 
 	if cfg.Environment == "" {
 		cfg.Environment = cfg.EnvironmentPointsrc
@@ -111,6 +93,13 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	if cfg.Cluster == "" {
 		cfg.Cluster = cfg.ClusterPointsrc
 	}
+
+	go func() {
+		for {
+			cfg.UpTime = time.Now().Sub(cfg.RunTime).String()
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	// задаем значение бакера для текущего проекта
 	if cfg.VfsBucket == "" {
@@ -141,6 +130,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		)
 	}
 
+	// задаем уровень логирования
+	logger.Logger(ctx).SetLevel(zapcore.DebugLevel)
+
 	// подключаемся к файловому хранилищу
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
@@ -151,8 +143,10 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}()
 	//////////////////////////////////////////////////
 
+	time.Sleep(5 * time.Second)
+
 	fmt.Printf("%s Enabled logs (type: %s). LogboxEndpoint:%s, Dir:%s\n", done, initType, cfg.LogboxEndpoint, cfg.LogsDir)
-	logger.Info(ctx, "Запускаем app-сервис: ", zap.String("domain", cfg.Domain))
+	logger.Info(ctx, "Запускаем app-сервис", zap.String("domain", cfg.Domain))
 	//////////////////////////////////////////////////
 
 	// создаем метрики
@@ -172,6 +166,16 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	//	}
 	//}()
 
+	// клиент аналитики
+	analyticsClient, err := analytics.New(ctx, cfg.AnalyticsHost, cfg.LogboxRequestTimeout.Value, "/")
+	if err != nil {
+		fmt.Printf("%s Can't create analitics client\nHost: %s err: %s", fail, cfg.AnalyticsHost, err)
+		logger.Info(ctx, "can't create analitics client", zap.String("host", cfg.AnalyticsHost), zap.Error(err))
+		return err
+	}
+	// клиент контроллера
+	controllerClient := controller.New(cfg.ProxyPointsrc, false, cfg.ProjectKey)
+
 	msg := i18n.New()
 
 	api := api.New(
@@ -189,7 +193,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	fmt.Printf("%s Enabled API (url: %s)\n", done, cfg.UrlApi)
 
 	// инициализация FuncMap
-	applib.NewFuncMap(vfs, api, cfg.ProjectKey)
+	applib.NewFuncMap(vfs, api, &cfg, cfg.ProjectKey, analyticsClient, controllerClient)
 
 	// инициализировали переменную кеша
 	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
@@ -199,7 +203,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		api,
 	)
 
-	if ClearSlash(cfg.UrlIam) == "" {
+	if strings.TrimSuffix(cfg.UrlIam, "/") == "" {
 		logger.Error(ctx, "Error: UrlIam is empty", zap.Error(err))
 		fmt.Println("Error: UrlIam is empty")
 		return err
@@ -207,7 +211,7 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 
 	iam := iam.New(
 		ctx,
-		ClearSlash(cfg.UrlIam),
+		strings.TrimSuffix(cfg.UrlIam, "/"),
 		cfg.ProjectKey,
 		cfg.EnableObserverLogIam,
 		cfg.CbMaxRequests,
@@ -237,21 +241,45 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	}
 	cfg.PortApp = port
 
-	cache := implCache.New(
+	cache, err := implCache.New(
 		cfg,
 		fnc,
 	)
+	if err == nil {
+		fmt.Printf("%s Cache-service is running\n", done)
+		logger.Info(ctx, "cache is running")
+	} else {
+		fmt.Printf("%s Cache-service is not running\n (cfg.CachePointsrc: %s, err: %s)\n", fail, cfg.CachePointsrc, err)
+		logger.Info(ctx, "cache running is failed", zap.String("CachePointsrc", cfg.CachePointsrc), zap.Error(err))
+	}
+
+	fmt.Printf("%s Analitics client connected", done)
+	logger.Info(ctx, "analitics client connected")
 
 	// собираем сервис
 	src := service.New(
 		ctx,
-		cfg,
+		&cfg,
 		cache,
 		msg,
 		ses,
 		api,
 		iam,
 		vfs,
+	)
+
+	//TODO: сделать норм инициализацию, сделано так чтобы использовать DogParse()
+	app_lib := applib.New(
+		nil,
+		"",
+		"",
+		"",
+		nil,
+		"",
+		"",
+		nil,
+		vfs,
+		api,
 	)
 
 	// httpserver
@@ -262,6 +290,9 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 		iam,
 		ses,
 		vfs,
+		api,
+		app_lib,
+
 		serviceVersion,
 		hashCommit,
 	)
@@ -289,15 +320,4 @@ func Start(ctxm context.Context, configfile, dir, port, mode, proxy, loader, reg
 	case err := <-errChannel:
 		return err
 	}
-}
-
-func ClearSlash(str string) (result string) {
-	if len(str) > 1 {
-		if str[len(str)-1:] == "/" {
-			result = str[:len(str)-1]
-		} else {
-			result = str
-		}
-	}
-	return result
 }

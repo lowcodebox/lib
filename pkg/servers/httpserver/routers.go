@@ -5,15 +5,14 @@ import (
 	"net/http/pprof"
 	"strings"
 
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver/handlers"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver/handlers"
 )
 
 type Result struct {
@@ -32,9 +31,8 @@ type Routes []Route
 
 func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	router := mux.NewRouter().StrictSlash(true)
-	handler := handlers.New(h.src, h.cfg)
+	handler := handlers.New(h.src, h.cfg, h.api, h.vfs, h.app_lib)
 
-	router.HandleFunc("/alive", handler.Alive).Methods("GET")
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
@@ -45,8 +43,11 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 	}
 
 	router.Handle("/upload/{params:.+}", proxy).Methods(http.MethodGet)
+	router.Name("Metrics").Path("/metrics").Handler(promhttp.Handler())
+	router.Name("Storage").Path("/assets/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
+	router.Name("Storage").Path("/templates/{params:.+}").Methods(http.MethodGet).HandlerFunc(handler.Storage)
 
-	prometheus.MustRegister(version.NewCollector(h.cfg.Name))
+	//prometheus.MustRegister(version.NewCollector(h.cfg.Name))
 	version.Version = h.serviceVersion
 	version.Revision = h.hashCommit
 
@@ -69,7 +70,8 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 
 	var routes = Routes{
 		// запросы (настроенные)
-		Route{"ProxyPing", "GET", "/ping", handler.Ping},
+		Route{"Alive", "GET", "/alive", handler.Alive},
+		Route{"Ping", "GET", "/ping", handler.Ping},
 
 		// обновить роль в сессии
 		Route{"AuthChangeRole", "GET", "/auth/change", handler.AuthChangeRole},
@@ -77,10 +79,11 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"AuthLogOut", "GET", "/auth/logout", handler.AuthLogOut},
 
 		Route{"Cache", "GET", "/tools/cacheclear", handler.Cache},
+		Route{"FileLoad", "POST", "/tools/load", handler.FileLoad},
 
 		//Route{"Storage", "GET", "/upload/{params:.+}", handler.Storage},
-		Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
-		Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
+		//Route{"Storage", "GET", "/assets/{params:.+}", handler.Storage},
+		//Route{"Storage", "GET", "/templates/{params:.+}", handler.Storage},
 
 		Route{"Page", "GET", "/", handler.Page},
 		Route{"Page", "GET", "/{page}", handler.Page},
@@ -99,17 +102,22 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"pprofIndex", "GET", "/debug/pprof/profile", pprof.Profile},
 		Route{"pprofIndex", "GET", "/debug/pprof/symbol", pprof.Symbol},
 		Route{"pprofIndex", "GET", "/debug/pprof/trace", pprof.Trace},
+		Route{"pprofIndex", "GET", "/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP},
+		Route{"pprofIndex", "GET", "/debug/pprof/heap", pprof.Handler("heap").ServeHTTP},
+		Route{"CToolsLoadfile", "POST", "/load", handler.FileLoad},
 	}
 
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
-		handler = h.MiddleLogger(handler, route.Name)
-
-		router.Name("Metrics").Path("/metrics").Handler(promhttp.Handler())
+		handler = h.MiddleLogger(handler, route.Name, route.Pattern)
+		handler = h.XServiceKeyProcessor(handler, h.cfg)
 
 		// проверяем адреса для исключения SSRF-уязвимостей
-		handler = h.MiddleSecurity(handler, route.Name)
+		// проверяем на защищенный доступ через авторизацию
+		if h.cfg.SkipSecurityMiddleware != "checked" {
+			handler = h.MiddleSecurity(handler, route.Name)
+		}
 
 		for _, v := range strings.Split(route.Method, ",") {
 			router.
@@ -120,7 +128,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		}
 	}
 
-	//router.Use(h.Recover)
+	router.Use(h.Recover)
 
 	// проверяем на возможность переадресации только для HTTP запросов
 	if checkHttpsOnly && h.cfg.HttpsOnly != "" {

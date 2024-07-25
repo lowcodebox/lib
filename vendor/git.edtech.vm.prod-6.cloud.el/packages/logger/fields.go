@@ -1,0 +1,103 @@
+package logger
+
+import (
+	"context"
+	"fmt"
+	"sync"
+)
+
+const (
+	requestIDField string = "request-id"
+	userIDField    string = "user-id"
+	serviceIDField string = "service-id"
+	configIDField  string = "config-id"
+)
+
+//nolint:gochecknoglobals
+var (
+	logKeys = make(map[string]struct{})
+	mtx     sync.RWMutex
+)
+
+func SetFieldCtx(ctx context.Context, name, val string) context.Context {
+	nameKey := "logger." + name
+
+	mtx.RLock()
+	_, ok := logKeys[nameKey]
+	mtx.RUnlock()
+
+	if !ok {
+		mtx.Lock()
+		logKeys[nameKey] = struct{}{}
+		mtx.Unlock()
+	}
+
+	return context.WithValue(ctx, nameKey, val)
+}
+
+// WithFieldsContext получение контекста из полей явного типа,
+// при логировании поля будут прописаны в external логгер (zap).
+func WithFieldsContext(ctx context.Context, fields ...Field) context.Context {
+	storage, isNew := getStorageFromCtx(ctx)
+	for _, field := range fields {
+		storage.SetField(field)
+	}
+
+	if isNew {
+		// если в контексте не был записан storage возвращаем с родительским контекстом
+		return withStorageContext(ctx, storage)
+	}
+	// если он уже есть, достаточно вернуть текущий контекст, тк storage ссылочный
+	return ctx
+}
+
+func GetFieldCtx(ctx context.Context, name string) string {
+	if ctx == nil {
+		return ""
+	}
+	nameKey := "logger." + name
+	a := ctx.Value(nameKey)
+	if a == nil {
+		return ""
+	}
+	str, ok := a.(string)
+	if !ok {
+		return fmt.Sprint(a)
+	}
+
+	return str
+}
+
+// SetRequestIDCtx sets request-id log field via context.
+// Tip: use HTTPMiddleware instead.
+func SetRequestIDCtx(ctx context.Context, val string) context.Context {
+	return SetFieldCtx(ctx, requestIDField, val)
+}
+
+func SetUserIDCtx(ctx context.Context, val string) context.Context {
+	return SetFieldCtx(ctx, userIDField, val)
+}
+
+func GetRequestIDCtx(ctx context.Context) string {
+	return GetFieldCtx(ctx, requestIDField)
+}
+
+func GetUserIDCtx(ctx context.Context) string {
+	return GetFieldCtx(ctx, userIDField)
+}
+
+func SetServiceIDCtx(ctx context.Context, val string) context.Context {
+	return SetFieldCtx(ctx, serviceIDField, val)
+}
+
+func GetServiceIDCtx(ctx context.Context) string {
+	return GetFieldCtx(ctx, serviceIDField)
+}
+
+func SetConfigIDCtx(ctx context.Context, val string) context.Context {
+	return SetFieldCtx(ctx, configIDField, val)
+}
+
+func GetConfigIDCtx(ctx context.Context) string {
+	return GetFieldCtx(ctx, configIDField)
+}

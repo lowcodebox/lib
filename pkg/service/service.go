@@ -6,30 +6,33 @@ import (
 	"net/http"
 	"time"
 
-	api "git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/block"
-	"git.lowcodeplatform.net/fabric/app/pkg/cache"
-	"git.lowcodeplatform.net/fabric/app/pkg/function"
-	"git.lowcodeplatform.net/fabric/app/pkg/i18n"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/session"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/block"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/i18n"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 )
 
 const queryPublicPages = "sys_public_pages"
 
 // список роутеров, для который пропускается авторизация клиента
 var constPublicLink = map[string]bool{
-	"/ping":      true,
-	"/templates": true,
-	"/upload":    true,
-	"/logout":    true,
-	"/login":     true,
-	"/metrics":   true,
+	"ping":      true,
+	"assets":    true,
+	"templates": true,
+	"upload":    true,
+	"logout":    true,
+	"login":     true,
+	"metrics":   true,
+	"signinl":   true,
 }
 
 // динамические параметры, которые могут меняться через асинхронные шедулеры (повышение производительности)
@@ -40,7 +43,7 @@ type dynamicParams struct {
 
 type service struct {
 	ctx      context.Context
-	cfg      model.Config
+	cfg      *model.Config
 	cache    cache.Cache
 	block    block.Block
 	function function.Function
@@ -69,7 +72,7 @@ type Service interface {
 
 func New(
 	ctx context.Context,
-	cfg model.Config,
+	cfg *model.Config,
 	cache cache.Cache,
 	msg i18n.I18n,
 	session session.Session,
@@ -82,9 +85,9 @@ func New(
 		PublicRoutes: constPublicLink,
 	}
 
-	var tplfunc = function.NewTplFunc(cfg, api)
-	var function = function.New(cfg, api)
-	var blocks = block.New(cfg, function, tplfunc, api, vfs, cache)
+	var tplfunc = function.NewTplFunc(*cfg, api)
+	var function = function.New(*cfg, api)
+	var blocks = block.New(*cfg, function, tplfunc, api, vfs, cache)
 
 	// асинхронно обновляем список публичный страниц/блоков
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
@@ -130,6 +133,13 @@ func reloadPublicPages(ctx context.Context, d *dynamicParams, api api.Api, inter
 
 			resD := map[string]bool{}
 			for _, v := range objs.Data {
+
+				// если стартовая страница публичная, то надо добавить еще и /
+				def, _ := v.Attr("default", "value")
+				if def == "checked" {
+					resD["/"] = true
+				}
+
 				resD[v.Uid] = true
 				if v.Id != "" {
 					resD[v.Id] = true

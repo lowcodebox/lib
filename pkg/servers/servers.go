@@ -4,9 +4,9 @@ package servers
 import (
 	"strings"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/servers/httpserver"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/httpserver"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
 )
 
 type servers struct {

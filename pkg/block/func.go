@@ -12,11 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+)
+
+var (
+	re = regexp.MustCompile("(?m)^\\s+")
 )
 
 func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.Data, page models.Data, values map[string]interface{}) (result model.ModuleResult, err error) {
@@ -39,6 +43,8 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 		}
 	}()
 
+	t1 := time.Now()
+
 	// заменяем в State localhost на адрес домена (если это подпроцесс то все норм, но если это корневой сервис,
 	// то у него url_proxy - localhost и узнать реньше адрес мы не можем, ибо еще домен не инициировался
 	// а значит подменяем localhost при каждом обращении к модулю
@@ -50,7 +56,6 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 	bl.Mx.Lock()
 	defer bl.Mx.Unlock()
 
-	t1 := time.Now()
 	stat := map[string]interface{}{}
 	stat["start"] = t1
 	stat["status"] = "OK"
@@ -215,6 +220,11 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 		}
 	}
 
+	logger.Info(ctx, "gen block",
+		zap.String("step", "подготовка к генерации"),
+		zap.Float64("timing", time.Since(t1).Seconds()),
+		zap.String("block", block.Id), zap.String("rnd", uuid))
+
 	bl.Data = dataSet
 	bl.Page = page
 	bl.Configuration = conf
@@ -238,11 +248,18 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 		}
 	} else {
 		uidModule, _ := block.Attr("module", "src")
-		var objModule models.ResponseData
+		var objModule *models.ResponseData
+
+		t0 := time.Now()
 
 		// запрос на объект HTML
-		objModule, err = b.api.ObjGet(ctx, uidModule)
+		objModule, err = b.api.ObjGetWithCache(ctx, uidModule)
 		//_, err = b.tree.Curl("GET", "_objs/"+uidModule, "", &objModule, map[string]string{})
+
+		logger.Info(ctx, "gen block", zap.Float64("timing", time.Since(t0).Seconds()),
+			zap.String("step", "запрос на объект HTML ObjGetWithCache"),
+			zap.String("block", block.Id),
+			zap.String("rnd", uuid))
 
 		if err != nil {
 			err = fmt.Errorf("%s (%s)", "Error: Get object Module is failed!", err)
@@ -268,7 +285,14 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 			htmlCode = htmlCode + codetpl
 		}
 
-		c, err = b.generateBlockFromField(htmlCode, bl)
+		t2 := time.Now()
+		c, err = b.generateBlockFromField(htmlCode, bl, block.Id)
+
+		logger.Info(ctx, "gen block", zap.Float64("timing", time.Since(t2).Seconds()),
+			zap.String("step", "generateBlockFromField full"),
+			zap.String("block", block.Id),
+			zap.String("rnd", uuid))
+
 	}
 
 	// ошибка при генерации страницы
@@ -284,11 +308,15 @@ func (b *block) generate(ctx context.Context, in model.ServiceIn, block models.D
 	blockBody := c.String()
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	blockBody = re.ReplaceAllString(blockBody, "")
 
 	result.Result = template.HTML(blockBody)
 	result.Stat = stat
+
+	logger.Info(ctx, "gen block", zap.Float64("timing", time.Since(t1).Seconds()),
+		zap.String("step", "full"),
+		zap.String("block", block.Id),
+		zap.String("rnd", uuid))
 
 	return result, err
 }
@@ -324,13 +352,26 @@ func (b *block) generateBlockFromFile(ctx context.Context, tplName string, bl mo
 }
 
 // GenerateBlockFromField генерируем блок из переданного текста
-func (b *block) generateBlockFromField(value string, bl model.Block) (c bytes.Buffer, err error) {
+func (b *block) generateBlockFromField(value string, bl model.Block, block string) (c bytes.Buffer, err error) {
+	t1 := time.Now()
+	rnd := lib.UUID()
 	tmpl, err := template.New("name").Funcs(b.tplfunc.GetFuncMap()).Parse(value)
 	if err != nil {
 		return
 	}
 
+	logger.Info(context.Background(), "gen block",
+		zap.String("step", "Parse"),
+		zap.String("block", block),
+		zap.Float64("timing", time.Since(t1).Seconds()), zap.String("rnd", rnd))
+
+	t2 := time.Now()
+
 	err = tmpl.Execute(&c, bl)
+
+	logger.Info(context.Background(), "gen block", zap.String("step", "Execute"),
+		zap.String("block", block),
+		zap.Float64("timing", time.Since(t2).Seconds()), zap.String("rnd", rnd))
 
 	return c, err
 }

@@ -5,12 +5,13 @@ import (
 	"path/filepath"
 	"sync"
 
-	"git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/cache"
-	"git.lowcodeplatform.net/fabric/app/pkg/function"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/cache"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/function"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const sep = string(filepath.Separator)

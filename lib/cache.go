@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"github.com/restream/reindexer"
 )
 
@@ -52,12 +52,17 @@ func (l *app) SetCahceKey(r *http.Request, p models.Data) (key, keyParam string)
 // option - объект блока (запроса и тд) то, где хранится время кеширования
 func (l *app) СacheGet(key string, block models.Data, r *http.Request, page models.Data, values map[string]interface{}, url string) (string, bool) {
 	var res string
-	var rows *reindexer.Iterator
 
-	rows = l.cache.Query(l.ConfigGet("namespace")).
+	rows := l.cache.Query(l.ConfigGet("namespace")).
 		Where("Uid", reindexer.EQ, key).
 		ReqTotal().
 		Exec()
+
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		}
+	}()
 
 	// если есть значение, то обязательно отдаем его, но поменяем
 	for rows.Next() {

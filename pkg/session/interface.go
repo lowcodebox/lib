@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	api "git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/fabric/models"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 )
 
 type session struct {
@@ -20,7 +20,7 @@ type session struct {
 }
 
 type SessionRegistry struct {
-	Mx sync.Mutex
+	Mx *sync.RWMutex
 	M  map[string]SessionRec
 }
 
@@ -40,7 +40,9 @@ type Session interface {
 }
 
 func New(ctx context.Context, cfg model.Config, api api.Api, iam iam.IAM) Session {
-	registrySession := SessionRegistry{}
+	registrySession := SessionRegistry{
+		Mx: &sync.RWMutex{},
+	}
 
 	return &session{
 		ctx,

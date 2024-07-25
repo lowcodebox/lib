@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	api "git.lowcodeplatform.net/fabric/api-client"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
-	uuid "github.com/satori/go.uuid"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"github.com/segmentio/ksuid"
 )
 
 type function struct {
@@ -94,6 +94,10 @@ type DogFunc interface {
 	DogSendmail(arg []string) (result string, err error)
 }
 
+var (
+	pattern = regexp.MustCompile(`@(\w+)\(\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?\)`)
+)
+
 ////////////////////////////////////////////////////////////
 // !!! ПОКА ТОЛЬКО ПОСЛЕДОВАТЕЛЬНАЯ ОБРАБОТКА (без сложений)
 ////////////////////////////////////////////////////////////
@@ -126,7 +130,6 @@ func (p *formula) Parse() (err error) {
 
 	value := p.value
 
-	pattern := regexp.MustCompile(`@(\w+)\(\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?(?:,\s*('[^']*'|#[^#]*#|[^,()@]*?)\s*)?\)`)
 	allIndexes := pattern.FindAllStringSubmatch(value, -1)
 
 	for _, loc := range allIndexes {
@@ -209,7 +212,7 @@ func (p *formula) Calculate() (err error) {
 		case "QUERY":
 			result, err = p.dogfunc.Query(p.request.RequestRaw, v.dogfuncs.arguments)
 		case "RAND":
-			uuid := uuid.NewV4().String()
+			uuid := ksuid.New().String()
 			result = uuid[1:6]
 		case "SENDMAIL":
 			result, err = p.dogfunc.DogSendmail(v.dogfuncs.arguments)

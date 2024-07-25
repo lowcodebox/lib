@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 )
 
 type ServiceCacheIn struct {
@@ -30,6 +30,7 @@ type ServiceIn struct {
 
 	CachePath  string `json:"cache_path"`
 	CacheQuery string `json:"cache_url"`
+	CacheSkip  string `json:"cache_skip"`
 
 	RequestRaw *http.Request
 }
@@ -61,6 +62,8 @@ type ServiceAuthChangeIn struct {
 
 type ServiceAuthOut struct {
 	XAuthToken string
+	ProfileUID string
+	UserUID    string
 	Result     models.ResponseData
 	Error      error
 	Ref        string

@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"net/http"
 
-	iam "git.lowcodeplatform.net/fabric/iam-client"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	iam "git.edtech.vm.prod-6.cloud.el/fabric/iam-client"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/labstack/gommon/color"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/service"
-	"git.lowcodeplatform.net/fabric/app/pkg/session"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/service"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/session"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
+
 	// should be so!
-	_ "git.lowcodeplatform.net/fabric/app/pkg/servers/docs"
+	_ "git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/servers/docs"
 )
 
 type httpserver struct {
@@ -28,6 +31,8 @@ type httpserver struct {
 	iam     iam.IAM
 	session session.Session
 	vfs     lib.Vfs
+	api     api.Api
+	app_lib applib.App
 
 	serviceVersion string
 	hashCommit     string
@@ -84,6 +89,8 @@ func New(
 	iam iam.IAM,
 	session session.Session,
 	vfs lib.Vfs,
+	api api.Api,
+	app_lib applib.App,
 	serviceVersion string,
 	hashCommit string,
 ) Server {
@@ -94,6 +101,8 @@ func New(
 		iam,
 		session,
 		vfs,
+		api,
+		app_lib,
 		serviceVersion,
 		hashCommit,
 	}

@@ -1,6 +1,6 @@
 # swag
 
-🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md) ∙ [Português](README_pt.md)*
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
@@ -44,26 +44,35 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [How to use security annotations](#how-to-use-security-annotations)
 	- [Add a description for enum items](#add-a-description-for-enum-items)
 	- [Generate only specific docs file types](#generate-only-specific-docs-file-types)
+    - [How to use Go generic types](#how-to-use-generics)
 - [About the Project](#about-the-project)
 
 ## Getting started
 
 1. Add comments to your API source code, See [Declarative Comments Format](#declarative-comments-format).
 
-2. Download swag by using:
+2. Install swag by using:
 ```sh
-$ go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.18 or newer).
+
+Alternatively you can run the docker image:
+```sh
+docker run --rm -v $(pwd):/code ghcr.io/swaggo/swag:latest
+```
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
-$ swag init
+swag init
 ```
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
+  ```go
+  import _ "example-module-name/docs"
+  ```
   ```sh
   swag init -g http/api.go
   ```
@@ -77,7 +86,7 @@ $ swag init
 ## swag cli
 
 ```sh
-$ swag init -h
+swag init -h
 NAME:
    swag init - Create docs.go
 
@@ -85,6 +94,7 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
+   --quiet, -q                            Make the logger quiet. (default: false)
    --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value                  Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                        Exclude directories and files when searching, comma separated
@@ -97,10 +107,15 @@ OPTIONS:
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
-   --requiredByDefault                    Set validation required for all fields by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
+   --requiredByDefault                    Set validation required for all fields by default (default: false)
    --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
+   --parseGoList                          Parse dependency via 'go list' (default: true)
+   --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
+   --templateDelims value, --td value     Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
+   --collectionFormat value, --cf value   Set default collection format (default: "csv")
+   --state value                          Initial state for the state machine (default: ""), @HostState in root file, @State in other files
    --help, -h                             show help (default: false)
 ```
 
@@ -131,11 +146,13 @@ OPTIONS:
 - [flamingo](https://github.com/i-love-flamingo/swagger)
 - [fiber](https://github.com/gofiber/swagger)
 - [atreugo](https://github.com/Nerzal/atreugo-swagger)
+- [hertz](https://github.com/hertz-contrib/swagger)
 
 ## How to use it with Gin
 
 Find the example source code [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
+Finish the steps in [Getting started](#getting-started)
 1. After using `swag init` to generate Swagger 2.0 docs, import the following packages:
 ```go
 import "github.com/swaggo/gin-swagger" // gin-swagger middleware
@@ -161,6 +178,9 @@ import "github.com/swaggo/files" // swagger embed files
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	r := gin.Default()
 
@@ -290,7 +310,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 ```
 
 ```console
-$ swag init
+swag init
 ```
 
 4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
@@ -310,6 +330,28 @@ swag fmt
 Exclude folder：
 ```shell
 swag fmt -d ./ --exclude ./internal
+```
+
+When using `swag fmt`, you need to ensure that you have a doc comment for the function to ensure correct formatting.
+This is due to `swag fmt` indenting swag comments with tabs, which is only allowed *after* a standard doc comment.
+
+For example, use
+
+```go
+// ListAccounts lists all existing accounts
+//
+//  @Summary      List accounts
+//  @Description  get accounts
+//  @Tags         accounts
+//  @Accept       json
+//  @Produce      json
+//  @Param        q    query     string  false  "name search by q"  Format(email)
+//  @Success      200  {array}   model.Account
+//  @Failure      400  {object}  httputil.HTTPError
+//  @Failure      404  {object}  httputil.HTTPError
+//  @Failure      500  {object}  httputil.HTTPError
+//  @Router       /accounts [get]
+func (c *Controller) ListAccounts(ctx *gin.Context) {
 ```
 
 ## Implementation Status
@@ -360,6 +402,8 @@ swag fmt -d ./ --exclude ./internal
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     | // @produce json |
 | query.collection.format | The default collection(array) param format in query,enums:csv,multi,pipes,tsv,ssv. If not set, csv is the default.| // @query.collection.format multi
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
+| externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
+| externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
 | x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
 ### Using markdown descriptions
@@ -381,25 +425,26 @@ When a short string in your documentation is insufficient, or you need images, c
 [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
 
-| annotation  | description                                                                                                                |
-|-------------|----------------------------------------------------------------------------------------------------------------------------|
-| description | A verbose explanation of the operation behavior.                                                                           |
-| description.markdown     |  A short description of the application. The description will be read from a file.  E.g. `@description.markdown details` will load `details.md`| // @description.file endpoint.description.markdown  |
-| id          | A unique string used to identify the operation. Must be unique among all API operations.                                   |
-| tags        | A list of tags to each API operation that separated by commas.                                                             |
-| summary     | A short summary of what the operation does.                                                                                |
-| accept      | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types).                     |
-| produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     |
-| param       | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
-| security    | [Security](#security) to each API operation.                                                                               |
-| success     | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                   |
-| failure     | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                    |
-| response    | As same as `success` and `failure` |
-| header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
-| router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
-| x-name      | The extension key, must be start by x- and take only json value.                                                           |
-| x-codeSample      | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                      |
-| deprecated  | Mark endpoint as deprecated.                                                                                               |
+| annotation           | description                                                                                                                                                                                       |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| description          | A verbose explanation of the operation behavior.                                                                                                                                                  |
+| description.markdown | A short description of the application. The description will be read from a file.  E.g. `@description.markdown details` will load `details.md`                                                    | // @description.file endpoint.description.markdown  |
+| id                   | A unique string used to identify the operation. Must be unique among all API operations.                                                                                                          |
+| tags                 | A list of tags to each API operation that separated by commas.                                                                                                                                    |
+| summary              | A short summary of what the operation does.                                                                                                                                                       |
+| accept               | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types). |
+| produce              | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                                                                                            |
+| param                | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)`                                                                        |
+| security             | [Security](#security) to each API operation.                                                                                                                                                      |
+| success              | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
+| failure              | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
+| response             | As same as `success` and `failure`                                                                                                                                                                |
+| header               | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                                                                                                   |
+| router               | Path definition that separated by spaces. `path`,`[httpMethod]`                                                                                                                                   |
+| deprecatedrouter     | As same as router, but deprecated.                                                                                                                                                     |
+| x-name               | The extension key, must be start by x- and take only json value.                                                                                                                                  |
+| x-codeSample         | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                                                   |
+| deprecated           | Mark endpoint as deprecated.                                                                                                                                                                      |
 
 
 
@@ -439,6 +484,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - integer (int, uint, uint32, uint64)
 - number (float32)
 - boolean (bool)
+- file (param data type when uploading)
 - user defined struct
 
 ## Security
@@ -541,20 +587,20 @@ type Account struct {
 
 ### Function scoped struct declaration
 
-You can declare your request response structs inside a function body. 
+You can declare your request response structs inside a function body.
 You must have to follow the naming convention `<package-name>.<function-name>.<struct-name> `.
 
 ```go
 package main
 
-// @Param request body main.MyHandler.request true "query params" 
+// @Param request body main.MyHandler.request true "query params"
 // @Success 200 {object} main.MyHandler.response
 // @Router /test [post]
 func MyHandler() {
 	type request struct {
 		RequestField string
 	}
-	
+
 	type response struct {
 		ResponseField string
 	}
@@ -874,6 +920,31 @@ By default `swag` command generates Swagger specification in three different fil
 - swagger.yaml
 
 If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
+
+### How to use Generics
+
+```go
+// @Success 200 {object} web.GenericNestedResponse[types.Post]
+// @Success 204 {object} web.GenericNestedResponse[types.Post, Types.AnotherOne]
+// @Success 201 {object} web.GenericNestedResponse[web.GenericInnerType[types.Post]]
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	_ = web.GenericNestedResponse[types.Post]{}
+}
+```
+See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details 
+and other examples.
+
+### Change the default Go Template action delimiters
+[#980](https://github.com/swaggo/swag/issues/980)
+[#1177](https://github.com/swaggo/swag/issues/1177)
+
+If your swagger annotations or struct fields contain "{{" or "}}", the template generation will most likely fail, as these are the default delimiters for [go templates](https://pkg.go.dev/text/template#Template.Delims).
+
+To make the generation work properly, you can change the default delimiters with `-td`. For example:
+```console
+swag init -g http/api.go -td "[[,]]"
+```
+The new delimiter is a string with the format "`<left delimiter>`,`<right delimiter>`".
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).

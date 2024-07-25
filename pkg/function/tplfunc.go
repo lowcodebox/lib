@@ -18,15 +18,15 @@ import (
 	"strings"
 	"time"
 
-	api "git.lowcodeplatform.net/fabric/api-client"
-	applib "git.lowcodeplatform.net/fabric/app/lib"
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/app/pkg/tree"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	api "git.edtech.vm.prod-6.cloud.el/fabric/api-client"
+	applib "git.edtech.vm.prod-6.cloud.el/fabric/app/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/tree"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/Masterminds/sprig"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
+	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 )
 
@@ -342,8 +342,7 @@ func (t *tplfunc) Attr(name, element string, data interface{}) (result interface
 }
 
 func (t *tplfunc) UUID() string {
-	stUUID := uuid.NewV4()
-	return stUUID.String()
+	return ksuid.New().String()
 }
 
 func (t *tplfunc) Rand() string {

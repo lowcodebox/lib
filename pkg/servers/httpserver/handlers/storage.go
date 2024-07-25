@@ -7,18 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 )
 
 func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var in model.StorageIn
+	var serviceResult, response model.StorageOut
 
 	defer func() {
 		if err != nil {
 			logger.Error(h.ctx, "[Storage] Error response execution",
+				zap.String("url", r.RequestURI),
 				zap.String("in", fmt.Sprintf("%+v", in)),
 				zap.Error(err))
 		}
@@ -30,21 +32,21 @@ func (h *handlers) Storage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceResult, er := h.service.Storage(r.Context(), in)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 404, er, "[Storage] error exec service.Storage")
+	serviceResult, err = h.service.Storage(r.Context(), in)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 404, err, "[Storage] error exec service.Storage")
 		return
 	}
 
-	response, er := storageEncodeResponse(r.Context(), serviceResult)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec storageEncodeResponse")
+	response, err = storageEncodeResponse(r.Context(), serviceResult)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec storageEncodeResponse")
 		return
 	}
 
 	err = h.transportByte(w, response.MimeType, response.Body)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Storage] error exec transportByte")
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Storage] error exec transportByte")
 		return
 	}
 

@@ -12,6 +12,7 @@ type Config struct {
 
 	RunTime time.Time `envconfig:"RUN_TIME" default:""`
 	UpTime  string    `envconfig:"UP_TIME" default:""`
+	Pid     string    `envconfig:"PID" default:""`
 
 	ServiceVersion      string `envconfig:"SERVICE_VERSION" default:""`
 	HashCommit          string `envconfig:"HASH_COMMIT" default:""`
@@ -20,6 +21,11 @@ type Config struct {
 	EnvironmentPointsrc string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
 	Cluster             string `envconfig:"CLUSTER" default:"alpha"`
 	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
+	DC                  string `envconfig:"DC" default:"el"`
+
+	CookieFront             string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение,имя=значение)"`
+	CookieFrontLogin        string `envconfig:"COOKIE_FRONT_LOGIN" default:"" description:"ставим куки на беке для фронта (после авторизации)"`
+	CookieFrontLogoutDelete string `envconfig:"COOKIE_FRONT_LOGOUT_DELETE" default:"" description:"удаляем куки на беке для фронта (после выхода)(формат имя,имя)"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
@@ -79,7 +85,7 @@ type Config struct {
 	LogboxEndpoint       string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`
 	LogboxAccessKeyId    string   `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
 	LogboxSecretKey      string   `envconfig:"LOGBOX_SECRET_KEY" default:""`
-	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"5s"`
 
 	// LOGBOX-client CircuitBreaker
 	CbMaxRequestsLogbox uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
@@ -162,8 +168,12 @@ type Config struct {
 	ReplicasApp Int    `envconfig:"REPLICAS_APP" default:""`
 	Robot       string `envconfig:"ROBOT" default:""`
 
-	Signin    string `envconfig:"SIGNIN" default:""`
-	SigninUrl string `envconfig:"SIGNIN_URL" default:""`
+	Signin                 string `envconfig:"SIGNIN" default:""`
+	SigninUrl              string `envconfig:"SIGNIN_URL" default:""`
+	SkipSecurityMiddleware string `envconfig:"SKIP_SECURITY_MIDDLEWARE" default:""`
+
+	MaxCountRetries Int      `envconfig:"PROXY_MAX_COUNT_RETRIES" default:"2"`
+	TimeRetries     Duration `envconfig:"PROXY_TIME_RETRIES" default:"1s"`
 
 	Title                   string `envconfig:"TITLE" default:""`
 	ToBuild                 string `envconfig:"TO_BUILD" default:""`
@@ -180,4 +190,7 @@ type Config struct {
 	UrlFs string `envconfig:"URL_FS" default:""`
 
 	Workingdir string `envconfig:"WORKINGDIR" default:""`
+
+	// Analytics
+	AnalyticsHost string `envconfig:"ANALYTICS_HOST" default:"localhost:8999"`
 }

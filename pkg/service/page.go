@@ -11,15 +11,22 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
+)
+
+var (
+	re = regexp.MustCompile("(?m)^\\s+")
 )
 
 // Page ...
 func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.ServicePageOut, err error) {
+	defer s.monitoringTimingService("Page", time.Now())
+	defer s.monitoringError("Page", err)
+
 	var objPages models.ResponseData
 	var objPage *models.ResponseData
 
@@ -27,7 +34,7 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	// ПЕРЕДЕЛАТЬ или на кеширование страниц и на доп.проверку
 	if in.Page == "" {
 		// получаем все страницы текущего приложения
-		objPages, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "")
+		objPages, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppPagesPointsrc, s.cfg.DataUid, "in", "", 1)
 		//s.tree.Curl("GET", "_link?obj="+s.cfg.DataUid+"&source="+s.cfg.TplAppPagesPointsrc+"&mode=in", "", &objPages, map[string]string{})
 
 		for _, v := range objPages.Data {
@@ -57,6 +64,11 @@ func (s *service) Page(ctx context.Context, in model.ServiceIn) (out model.Servi
 	}
 
 	//log.Printf("\n\nполучаем (с кешем) объект страницы) s.api.ObjGetWithCache %fc reqID: %s\n", time.Since(t2).Seconds(), logger.GetRequestIDCtx(ctx))
+
+	if objPage == nil {
+		err = fmt.Errorf("%s (%s)", "Error: Fail GET-request! (response is empty)")
+		return out, err
+	}
 
 	// ФИКС! иногда в разных приложениях называют одинаково страницы.
 	// удаляем из объекта objPage значения не текущего приложения
@@ -130,11 +142,19 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	// ДОДЕЛАТЬ СРОЧНО!!!
 
 	// 2 запрос на объекты блоков страницы
-	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "")
+	objBlocks, err = s.api.LinkGetWithCache(ctx, s.cfg.TplAppBlocksPointsrc, pageUID, "in", "", 1)
+	if err != nil {
+		return result, fmt.Errorf("error. blocks is not found for this page: %s, err: %s", pageUID, err)
+	}
+	//if len(objBlocks.Data) != 0 {
+	//	return result, fmt.Errorf("error. blocks is not found for this page: %s, tpl: %s", pageUID, s.cfg.TplAppBlocksPointsrc)
+	//}
 
 	// 3 запрос на объект макета
 	objMaket, err = s.api.ObjGetWithCache(ctx, maketUID)
-
+	if objMaket == nil {
+		return result, fmt.Errorf("%s (uid: %s)", "Error. Object maket is empty.", maketUID)
+	}
 	if len(objMaket.Data) == 0 {
 		return result, fmt.Errorf("%s (uid: %s)", "Error. Object maket is empty.", maketUID)
 	}
@@ -325,7 +345,6 @@ func (s *service) BPage(ctx context.Context, in model.ServiceIn, objPage models.
 	result = c.String()
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	result = re.ReplaceAllString(result, "")
 
 	return

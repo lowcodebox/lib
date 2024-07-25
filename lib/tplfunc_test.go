@@ -1,12 +1,22 @@
 package app_lib
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"reflect"
 	"testing"
+	"time"
 
-	"git.lowcodeplatform.net/fabric/lib"
-	"git.lowcodeplatform.net/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/fabric/controller-client"
+
+	"git.edtech.vm.prod-6.cloud.el/packages/cache"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
+	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
 )
 
 var config struct {
@@ -20,12 +30,23 @@ var config struct {
 	VfsRegion      string `envconfig:"VFS_REGION" default:""`
 	VfsComma       string `envconfig:"VFS_COMMA" default:""`
 	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:""`
+
+	// LOGBOX
+	LogboxEndpoint       string        `envconfig:"LOGBOX_ENDPOINT" default:"http://127.0.0.1:8999"`
+	LogboxAccessKeyId    string        `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
+	LogboxSecretKey      string        `envconfig:"LOGBOX_SECRET_KEY" default:""`
+	LogboxRequestTimeout time.Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+
+	// LOGBOX-client CircuitBreaker
+	CbMaxRequestsLogbox uint32        `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	CbTimeoutLogbox     time.Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	CbIntervalLogbox    time.Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
 }
 
-func Test_csvtosliсemap(t *testing.T) {
+func Test_csvtoslicemap(t *testing.T) {
 	in := "field1;field2\n2;3"
 
-	NewFuncMap(nil, nil, "")
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res, err := Funcs.csvtosliсemap([]byte(in))
 	if err != nil {
 		t.Errorf("Should not produce an error")
@@ -51,7 +72,7 @@ func Test_unzip(t *testing.T) {
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 	in := "WMS.zip"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 	status := Funcs.unzip(in, "")
 
 	fmt.Println(status)
@@ -71,7 +92,7 @@ func Test_parsescorm(t *testing.T) {
 
 	vfs := lib.NewVfs(cfg.VfsKind, cfg.VfsEndpoint, cfg.VfsAccessKeyId, cfg.VfsSecretKey, cfg.VfsRegion, cfg.VfsBucket, cfg.VfsComma, cfg.VfsCertCA)
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 	index := Funcs.parsescorm(in, "")
 	fmt.Printf("index: %s", index)
 }
@@ -92,7 +113,7 @@ func Test_imgResize(t *testing.T) {
 
 	in := "landing/ludam.png"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgResize(in, 100, 100)
 
@@ -115,7 +136,7 @@ func Test_imgCrop(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 
@@ -138,7 +159,7 @@ func Test_imgCropAndResize(t *testing.T) {
 
 	in := "landing/katya.jpg"
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.imgCrop(in, 500, 500, true, false, 0, 0)
 	res = Funcs.imgResize(res, 100, 100)
@@ -162,7 +183,7 @@ func Test_sliceuint8delete(t *testing.T) {
 
 	in := []uint8{1, 2, 3, 4, 5, 6}
 
-	NewFuncMap(vfs, nil, "")
+	NewFuncMap(vfs, nil, nil, "", nil, nil)
 
 	res := Funcs.sliceuint8delete(in, 2)
 
@@ -1937,7 +1958,7 @@ func Test_sortbyfield(t *testing.T) {
 
 	fmt.Println("-----------------")
 
-	NewFuncMap(nil, nil, "")
+	NewFuncMap(nil, nil, nil, "", nil, nil)
 	res, err := Funcs.sortbyfield(obj, "", "rev", true)
 	if err != nil {
 		t.Errorf("Should not produce an error, err: %s", err)
@@ -1953,4 +1974,304 @@ func Test_sortbyfield(t *testing.T) {
 	for _, v := range obj2.Data {
 		println(v.Attr("", "rev"))
 	}
+}
+
+func Test_funcMap_convert(t1 *testing.T) {
+	// Создание фейковых данных для тестирования
+	contentUTF8 := []byte("Пример текста на русском языке")
+	contentUTF8BOM := append([]byte{0xEF, 0xBB, 0xBF}, contentUTF8...)
+	contentWindows1251 := []byte{207, 240, 232, 236, 229, 240, 32, 242, 229, 234, 241, 242, 224, 32, 237, 224, 32, 240, 243, 241, 241, 234, 238, 236, 32, 255, 231, 251, 234, 229}
+
+	type args struct {
+		content        []byte
+		targetEncoding string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantEncodedData []byte
+	}{
+		// UTF-8
+		{
+			name: "UTF-8 to UTF-8",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "UTF-8 to UTF-8 BOM",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "UTF-8 to windows-1251",
+			args: args{
+				content:        contentUTF8,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+
+		// UTF-8 BOM
+		{
+			name: "UTF-8 BOM to UTF-8",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "UTF-8 BOM to UTF-8 BOM",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "UTF-8 BOM to windows-1251",
+			args: args{
+				content:        contentUTF8BOM,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+		// windows-1251
+		{
+			name: "windows-1251 to UTF-8",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "UTF-8",
+			},
+			wantEncodedData: contentUTF8,
+		},
+		{
+			name: "windows-1251 to UTF-8 BOM",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "UTF-8 BOM",
+			},
+			wantEncodedData: contentUTF8BOM,
+		},
+		{
+			name: "windows-1251 to windows-1251",
+			args: args{
+				content:        contentWindows1251,
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: contentWindows1251,
+		},
+
+		{
+			name: "err",
+			args: args{
+				content:        []byte(""),
+				targetEncoding: "windows-1251",
+			},
+			wantEncodedData: []byte(""),
+		},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := &FuncImpl{}
+			if gotEncodedData := t.convert(tt.args.content, tt.args.targetEncoding); !reflect.DeepEqual(gotEncodedData, tt.wantEncodedData) {
+				t1.Errorf("convert() = %v, want %v", gotEncodedData, tt.wantEncodedData)
+			}
+		})
+	}
+}
+
+func Test_funcMap_fastjsonforkey(t1 *testing.T) {
+	body := "{\n    \"first_name\": \"adadad\",\n    \"last_name\": \"awdawda\",\n    \"phone\": \"79063056130\",\n    \"employee_id\": 1234567,\n    \"user_id\": \"1234567\"\n}"
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	result1 := Funcs.fastjsonforkey(body, "employee_id")
+	fmt.Println(result1)
+}
+
+func Test_decodebase64(t *testing.T) {
+	in := "user1:passw0rd"
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+	res := Funcs.decodebase64(in)
+
+	fmt.Println(res)
+	res = Funcs.encodebase64(res)
+
+	fmt.Println(res)
+}
+
+func Test_loggert(t *testing.T) {
+	cfg := config
+
+	cfg.CbMaxRequestsLogbox = 3
+	cfg.CbTimeoutLogbox = 5 * time.Second
+	cfg.CbIntervalLogbox = 5 * time.Second
+	cfg.LogboxEndpoint = "127.0.0.1:8999"
+	cfg.CbMaxRequestsLogbox = 3
+	cfg.CbTimeoutLogbox = 5 * time.Second
+	cfg.CbIntervalLogbox = 5 * time.Second
+
+	err := logger.SetupDefaultLogboxLogger("1/2", logger.LogboxConfig{
+		Endpoint:       cfg.LogboxEndpoint,
+		AccessKeyID:    cfg.LogboxAccessKeyId,
+		SecretKey:      cfg.LogboxSecretKey,
+		RequestTimeout: cfg.LogboxRequestTimeout,
+		CbMaxRequests:  cfg.CbMaxRequestsLogbox,
+		CbTimeout:      cfg.CbTimeoutLogbox,
+		CbInterval:     cfg.CbIntervalLogbox,
+	}, map[string]string{
+		logger.ServiceIDKey:   lib.Hash(lib.UUID()),
+		logger.ConfigIDKey:    "app",
+		logger.ServiceTypeKey: "app",
+	})
+
+	time.Sleep(10 * time.Second)
+
+	if err != nil {
+		fmt.Println(err)
+		logger.SetupDefaultLogger("/",
+			logger.WithCustomField(logger.ServiceIDKey, lib.Hash(lib.UUID())),
+			logger.WithCustomField(logger.ConfigIDKey, "cfg.UidService"),
+			logger.WithCustomField(logger.ServiceTypeKey, "cfg.Type"),
+		)
+	}
+
+	//logger.Info(context.Background(), "msg", zap.String("df", "sdf"))
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+	res := Funcs.logger("info", "test", "key", "sdf", "sdf")
+
+	fmt.Println(res)
+}
+
+func Test_analyticsSet(t *testing.T) {
+	client, err := analytics.New(context.Background(), "localhost:8999", 5*time.Second, "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	NewFuncMap(nil, nil, nil, "", client, nil)
+	err = Funcs.analyticsSet("attempt", "parent", "test", "other", "idunno")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_secretsGet(t *testing.T) {
+	client := controller.New("https://localhost:8001", false, "LKHlhb899Y09olUi")
+	NewFuncMap(nil, nil, nil, "", nil, client)
+	value := Funcs.secretsGet("key1")
+	if value == "" {
+		t.Fatal("No value")
+	}
+	t.Log(value)
+}
+
+func Test_funcMap_limiter(t1 *testing.T) {
+	ctx := context.Background()
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
+
+	tests := []struct {
+		name  string
+		arg   http.Request
+		sleep int
+		want  bool
+	}{
+		{
+			name: "1",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.123",
+			},
+			sleep: 0,
+			want:  true,
+		},
+		{
+			name: "2",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.123",
+			},
+			sleep: 2,
+			want:  false,
+		},
+		{
+			name: "3",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.124",
+			},
+			sleep: 0,
+			want:  true,
+		},
+		{
+			name: "3",
+			arg: http.Request{
+				RemoteAddr: "192.168.123.124",
+			},
+			sleep: 5,
+			want:  true,
+		},
+	}
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+
+			time.Sleep(time.Duration(tt.sleep) * time.Second)
+			if got := Funcs.limiter(tt.arg.RemoteAddr); got != tt.want {
+				t1.Errorf("limiter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_funcMap_useragentstr(t1 *testing.T) {
+	ctx := context.Background()
+	cache.Init(ctx, 10*time.Hour, 10*time.Minute)
+
+	type args struct {
+		header string
+		param  string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "1",
+			args: args{
+				header: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36",
+				param:  "OS",
+			},
+			want: "macOS",
+		},
+	}
+
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			if got := Funcs.parseUserAgent(tt.args.header, tt.args.param); got != tt.want {
+				t1.Errorf("parseUserAgent() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleFuncMap_useragentstr() {
+	NewFuncMap(nil, nil, nil, "", nil, nil)
+
+	result := Funcs.parseUserAgent(
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36",
+		"OS")
+
+	fmt.Println(result) // Output: macOS
 }

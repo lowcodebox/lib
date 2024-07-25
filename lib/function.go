@@ -22,13 +22,17 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/labstack/gommon/log"
 )
 
 const sep = string(os.PathSeparator)
 const clientHttpTimeout = 60 * time.Second
+
+var (
+	re = regexp.MustCompile("(?m)^\\s+")
+)
 
 func (c *app) hash(str string) string {
 	h := sha1.New()
@@ -140,9 +144,12 @@ func (c *app) Curl(method, urlc, bodyJSON string, response interface{}, cookies 
 	if !flagExtRequest {
 		// дополняем путем до API если не передан вызов внешнего запроса через http://
 		if urlc[:1] != "/" {
-			urlc = c.urlORM + "/" + urlc
+			urlc, err = url.JoinPath(c.urlORM, urlc)
 		} else {
-			urlc = c.urlAPI + "/" + urlc
+			urlc, err = url.JoinPath(c.urlAPI, urlc)
+		}
+		if err != nil {
+			return
 		}
 	}
 
@@ -517,7 +524,6 @@ func (l *app) ModuleBuild(block models.Data, r *http.Request, page models.Data, 
 	}
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	blockBody = re.ReplaceAllString(blockBody, "")
 
 	result.result = template.HTML(blockBody)
@@ -815,7 +821,6 @@ func (l *app) ModuleBuildParallel(ctxM context.Context, p models.Data, r *http.R
 	stat["time"] = time.Since(t1)
 
 	// чистим от лишних пробелов
-	re := regexp.MustCompile("(?m)^\\s+")
 	blockBody = re.ReplaceAllString(blockBody, "")
 
 	result.result = template.HTML(blockBody)

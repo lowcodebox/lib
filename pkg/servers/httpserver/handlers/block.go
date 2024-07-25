@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"net/http"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -20,34 +22,43 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/block [get]
 func (h *handlers) Block(w http.ResponseWriter, r *http.Request) {
+	var serviceResult model.ServiceBlockOut
+	var in model.ServiceIn
+	var response template.HTML
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Block] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.String("in", fmt.Sprintf("%+v", in)),
+				zap.Error(err))
 		}
 	}()
 
-	in, er := blockDecodeRequest(r.Context(), r)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockDecodeRequest")
+	in, err = blockDecodeRequest(r.Context(), r)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockDecodeRequest")
 		return
 	}
 
-	serviceResult, er := h.service.Block(r.Context(), in)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec service.Block")
+	serviceResult, err = lib.Retrier(h.cfg.MaxCountRetries.Value, h.cfg.TimeRetries.Value, true, func() (model.ServiceBlockOut, error) {
+		serviceResult, err = h.service.Block(r.Context(), in)
+		return serviceResult, err
+	})
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec service.Block")
 		return
 	}
 
-	response, _ := blockEncodeResponse(r.Context(), &serviceResult)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec blockEncodeResponse")
+	response, err = blockEncodeResponse(r.Context(), &serviceResult)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec blockEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, string(response))
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Block] error exec transportResponseHTTP")
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Block] error exec transportResponseHTTP")
 		return
 	}
 
@@ -71,6 +82,7 @@ func blockDecodeRequest(ctx context.Context, r *http.Request) (in model.ServiceI
 	in.Host = r.Host
 	in.Method = r.Method
 	in.Query = r.URL.Query()
+	in.CacheSkip = r.FormValue("skip_cache") // true/false
 
 	in.RequestRaw = r
 

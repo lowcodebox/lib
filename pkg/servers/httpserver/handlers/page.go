@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -22,37 +23,43 @@ import (
 // @Failure 500 {object} model.Pong
 // @Router /api/v1/page [get]
 func (h *handlers) Page(w http.ResponseWriter, r *http.Request) {
+	var serviceResult model.ServicePageOut
+	var in model.ServiceIn
 	var err error
+	var response string
 	//t := time.Now()
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Alive] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Page] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.Error(err))
 		}
 	}()
 
-	in, er := pageDecodeRequest(r.Context(), r)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageDecodeRequest")
+	in, err = pageDecodeRequest(r.Context(), r)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageDecodeRequest")
 		return
 	}
 
-	serviceResult, er := h.service.Page(r.Context(), in)
-	//log.Printf("\n\nservice.Page %v", time.Since(t).Seconds())
-
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec service.Page")
+	serviceResult, err = lib.Retrier(h.cfg.MaxCountRetries.Value, h.cfg.TimeRetries.Value, true, func() (model.ServicePageOut, error) {
+		serviceResult, err = h.service.Page(r.Context(), in)
+		return serviceResult, err
+	})
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec service.Page")
 		return
 	}
 
-	response, er := pageEncodeResponse(r.Context(), &serviceResult)
-	if er != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec pageEncodeResponse")
+	response, err = pageEncodeResponse(r.Context(), &serviceResult)
+	if err != nil {
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec pageEncodeResponse")
 		return
 	}
 
 	err = h.transportResponseHTTP(w, response)
 	if err != nil {
-		err = h.transportError(r.Context(), w, 500, er, "[Page] error exec transportResponseHTTP")
+		err = h.transportError(r.Context(), w, 500, err, "[Page] error exec transportResponseHTTP")
 		return
 	}
 

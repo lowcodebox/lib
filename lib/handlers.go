@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/gorilla/mux"
 )
 
@@ -94,7 +94,7 @@ func (c *app) PIndex(w http.ResponseWriter, r *http.Request) {
 	if page == "" {
 		// получаем все страницы текущего приложения
 		//c.Curl("GET", "_link?obj="+data_source+"&source="+tpl_app_pages_pointsrc+"&mode=out", "", &objPages, r.Cookies())
-		objPages, err = c.api.LinkGet(r.Context(), tpl_app_pages_pointsrc, data_source, "out", "")
+		objPages, err = c.api.LinkGet(r.Context(), tpl_app_pages_pointsrc, data_source, "out", "", 1)
 		if err != nil {
 			err = fmt.Errorf("error pages current user. err: %s", err)
 			return
@@ -327,7 +327,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage models.ResponseDat
 	//urlc = strings.Replace(urlc, "//_link", "/_link", 1)
 	//_, err = lib.Curl("GET", urlc, "", &objBlocks, handlers, r.Cookies())
 
-	objBlocks, err = l.api.LinkGet(r.Context(), blockSrc, pageUID, "in", "")
+	objBlocks, err = l.api.LinkGet(r.Context(), blockSrc, pageUID, "in", "", 1)
 	if err != nil {
 		err = fmt.Errorf("error pages current user. err: %s", err)
 		return
@@ -500,7 +500,7 @@ func (l *app) BPage(r *http.Request, blockSrc string, objPage models.ResponseDat
 
 	// в режиме отладки пересборка шаблонов происходит при каждом запросе
 	if debugMode {
-		//t = template.Must(template.New(maketFile).Funcs(funcMap).ParseFiles(maketFile))
+		//t = template.Must(template.New(maketFile).Funcs(FuncImpl).ParseFiles(maketFile))
 		//t = template.Must(template.ParseFiles(maketFile))
 		tmp := template.New(maketFile)
 		t, err = tmp.Parse(dataFile)

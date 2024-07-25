@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"git.lowcodeplatform.net/fabric/models"
-	"git.lowcodeplatform.net/packages/logger"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +21,9 @@ func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
-			logger.Error(h.ctx, "[Ping] Error response execution", zap.Error(err))
+			logger.Error(h.ctx, "[Ping] Error response execution",
+				zap.String("url", r.RequestURI),
+				zap.Error(err))
 		}
 	}()
 

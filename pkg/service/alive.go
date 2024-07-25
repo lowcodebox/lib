@@ -2,14 +2,17 @@ package service
 
 import (
 	"context"
+	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
-	"git.lowcodeplatform.net/fabric/lib"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 )
 
 // Alive ...
 func (s *service) Alive(ctx context.Context) (out model.AliveOut, err error) {
 	//out.Cache = s.cache.Active()
+	defer s.monitoringTimingService("Alive", time.Now())
+	defer s.monitoringError("Alive", err)
 
 	temp := s.cfg
 	temp.VfsCertCA = lib.HideExceptFirstAndLast(temp.VfsCertCA)

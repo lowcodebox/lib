@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"git.lowcodeplatform.net/fabric/app/pkg/model"
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 // AuthChangeRole - функция обновления токена с новой ролью
@@ -16,6 +17,9 @@ import (
 // 2. обновляем токен на клиенте через редирект на страницу с новой кукой,
 // в которой полученный от IAM валидный, но завершенный токен
 func (s *service) AuthChangeRole(ctx context.Context, in model.ServiceAuthChangeIn) (out model.ServiceAuthChangeOut, err error) {
+	defer s.monitoringTimingService("AuthChangeRole", time.Now())
+	defer s.monitoringError("AuthChangeRole", err)
+
 	status, _, refreshToken, err := s.iam.Verify(s.ctx, fmt.Sprint(ctx.Value("token")))
 	if err != nil {
 		return out, fmt.Errorf("%s", "Error verify from AuthChangeRole")
