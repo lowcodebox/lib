@@ -79,7 +79,8 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (index string
 
 			for _, resource := range manifest.Resources.Resource {
 				if resource.Identifier == resourceId {
-					index = resource.Href
+					indexSlice := strings.Split(resource.Href, "?")
+					index = indexSlice[0]
 				}
 			}
 
