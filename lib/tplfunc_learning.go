@@ -33,17 +33,30 @@ type Resources struct {
 	Resource []Resource `xml:"resource"`
 }
 
+type Metadata struct {
+	Schema        string `xml:"schema"`
+	Schemaversion string `xml:"schemaversion"`
+}
+
 type Manifest struct {
 	Resources     Resources     `xml:"resources"`
 	Organizations Organizations `xml:"organizations"`
+	Metadata      Metadata      `xml:"metadata"`
 }
 
-func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (index string) {
+type ScormRes struct {
+	Version string
+	Index   string
+	Error   string
+}
+
+func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (sr ScormRes) {
 	folder := t.unzip(zipFilename, destPath)
 
 	files, err := t.vfs.List(context.Background(), folder, math.MaxInt32)
 	if err != nil {
-		return fmt.Sprintf("error parsescorm vfs.List, err: %s", err)
+		sr.Error = fmt.Sprintf("error parsescorm vfs.List, err: %s", err)
+		return
 	}
 
 	for _, file := range files {
@@ -60,27 +73,31 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (index string
 		if strings.Contains(file.Name(), ImsManifest) {
 			rc, err := file.Open()
 			if err != nil {
-				return fmt.Sprintf("error parsescorm file.Open, err: %s", err)
+				sr.Error = fmt.Sprintf("error parsescorm file.Open, err: %s", err)
+				return
 			}
 			defer rc.Close()
 
 			d, err := io.ReadAll(rc)
 			if err != nil {
-				return fmt.Sprintf("error parsecorm io.ReadAll, err: %s", err)
+				sr.Error = fmt.Sprintf("error parsecorm io.ReadAll, err: %s", err)
+				return
 			}
 
 			var manifest Manifest
 			err = xml.Unmarshal(d, &manifest)
 			if err != nil {
-				return fmt.Sprintf("error parsescorm xml.Unmarshal, err: %s", err)
+				sr.Error = fmt.Sprintf("error parsescorm xml.Unmarshal, err: %s", err)
+				return
 			}
 
+			sr.Version = manifest.Metadata.Schemaversion
 			resourceId := manifest.Organizations.Organization[0].Item.Identifierref
 
 			for _, resource := range manifest.Resources.Resource {
 				if resource.Identifier == resourceId {
 					indexSlice := strings.Split(resource.Href, "?")
-					index = indexSlice[0]
+					sr.Index = indexSlice[0]
 				}
 			}
 
@@ -90,11 +107,11 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (index string
 
 	//до этого нашли название файла, а теперь ищем полный путь до него
 	for _, file := range files {
-		if strings.Contains(file.Name(), index) {
-			index = file.Name()
-			return index
+		if strings.Contains(file.Name(), sr.Index) {
+			sr.Index = file.Name()
+			return
 		}
 	}
-
-	return "error index file not found"
+	sr.Error = "error index file not found"
+	return
 }
