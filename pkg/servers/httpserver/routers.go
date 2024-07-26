@@ -140,6 +140,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		router.Use(h.AuthProcessor)
 	}
 
+	router.Use(h.AuthV3Middleware)
 	// добавление request-id в логер
 	router.Use(logger.HTTPMiddleware)
 	router.StrictSlash(true)
