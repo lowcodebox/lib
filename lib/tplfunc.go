@@ -335,7 +335,7 @@ func (t *FuncImpl) analyticsSet(storage string, params ...string) []string {
 }
 
 // analyticsSet — запись в аналитику асинхронно
-func (t *FuncImpl) analyticsSetAsync(storage string, params ...string) {
+func (t *FuncImpl) analyticsSetAsync(storage string, params ...string) bool {
 	req := t.analyticsClient.NewSetReq()
 
 	fields := make([]analytics.Field, len(params)/2)
@@ -350,6 +350,8 @@ func (t *FuncImpl) analyticsSetAsync(storage string, params ...string) {
 	req.AddEvent(ev)
 
 	t.analyticsClient.SetAsync(context.Background(), req)
+
+	return true
 }
 
 func (t *FuncImpl) analyticsQuery(queryUid string, offset int, params ...interface{}) models.ResponseData {
