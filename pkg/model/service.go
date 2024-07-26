@@ -101,3 +101,12 @@ type StorageOut struct {
 	Body     []byte `json:"body"`
 	MimeType string
 }
+
+type InParseToken struct {
+	WBTokenV3        string `json:"access_token"`
+	WbxValidationKey string `json:"wbx_validation_key"`
+}
+
+type OutParseToken struct {
+	UserID string `json:"user_id"`
+}

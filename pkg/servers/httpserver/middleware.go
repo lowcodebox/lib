@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -158,6 +159,129 @@ func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler
 			}
 		}
 
+		next.ServeHTTP(w, r.WithContext(r.Context()))
+	})
+}
+
+// AuthV3Middleware - авторизует запрос, если нет X-Auth-Key, но есть токен от AuthV3
+// Авторизация проходит в 3 этапа:
+// 1. Ходим в oauth3, чтобы спарсить токен при помощи validationKey. На выходе получаем user_id
+// 2. Ходим в IAM для получения X-Auth-Key
+// 3. Пробуем ставить куку X-Auth-Key
+func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		// defer
+		defer func() {
+			if err != nil {
+				logger.Error(r.Context(), "AuthV3Middleware", zap.Error(err), types.Any("input", r.Cookies()))
+			}
+			next.ServeHTTP(w, r)
+		}()
+
+		// проверяем X-Auth-Key в cookie, если есть, то нет смысла идти дальше
+		cookie, _ := r.Cookie("X-Auth-Key")
+		if cookie != nil {
+			// возможно X-Auth-Key остался, а value пустое
+			if cookie.Value != "" {
+				return
+			}
+		}
+
+		// Пробуем получить cookie с токеном от authV3
+		cookie, _ = r.Cookie(h.cfg.NameCookieWBTokenV3)
+		if cookie == nil {
+			return
+		}
+		if cookie.Value == "" {
+			return
+		}
+		WBTokenV3 := cookie.Value
+
+		// Пробуем получить cookie с validationKey от authV3
+		cookie, err = r.Cookie(h.cfg.NameCookieWbxValidationKey)
+		if cookie == nil {
+			return
+		}
+		if cookie.Value == "" {
+			return
+		}
+		WbxValidationKey := cookie.Value
+
+		// формируем payload для нашего сервиса oauth3
+		payloadOAuth3 := model.InParseToken{
+			WBTokenV3:        WBTokenV3,
+			WbxValidationKey: WbxValidationKey,
+		}
+
+		// конвертим в []bytes для lib.Curl
+		var bytesInputOAuth3 []byte
+		bytesInputOAuth3, err = json.Marshal(payloadOAuth3)
+		if err != nil {
+			return
+		}
+
+		// пробудем спарсить payload и получить user_id
+		resp := model.Response{}
+		_, err = lib.Curl(r.Context(), http.MethodPost, h.cfg.URLUserIDFromTokenAuthV3, string(bytesInputOAuth3), &resp, nil, nil)
+		if err != nil {
+			return
+		}
+
+		dataBytes, err := json.Marshal(resp.Data)
+		if err != nil {
+			return
+		}
+
+		out := model.OutParseToken{}
+
+		err = json.Unmarshal(dataBytes, &out)
+		if err != nil {
+			return
+		}
+
+		// если user_id пустой, значит произошла ошибка, пробрасываем в defer err и логируем
+		if out.UserID == "" {
+			err = fmt.Errorf("user_id is empty. Input: %s", string(bytesInputOAuth3))
+			return
+		}
+
+		// формируем payload для IAM
+		profile := models.ProfileData{
+			Identity: "user_id",
+			UserId:   out.UserID,
+		}
+
+		bytes, err := json.Marshal(profile)
+		if err != nil {
+			return
+		}
+
+		in := model.ServiceAuthIn{
+			Ref:     "",
+			Payload: string(bytes),
+		}
+
+		// получаем X-Auth-Key
+		auth, err := h.src.AuthLogIn(r.Context(), in)
+		if err != nil {
+			return
+		}
+
+		// формируем и ставим cookie
+		XAuthKeyCookie := http.Cookie{
+			Path:     "/",
+			Name:     "X-Auth-Key",
+			Value:    auth.XAuthToken,
+			MaxAge:   5256000,
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
+		}
+		http.SetCookie(w, &XAuthKeyCookie)
+
+		// пропускаем дальше запрос
 		next.ServeHTTP(w, r.WithContext(r.Context()))
 	})
 }
