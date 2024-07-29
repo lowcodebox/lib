@@ -8,10 +8,15 @@ steps:
     image: golang:1.22.2-alpine3.18
     commands:
       - cd /drone/src
-      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_linux_amd64 cmd/app/main.go
-      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_amd64_${DRONE_TAG}
-      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_386
-      - cp /opt/releases/app_linux_amd64 /opt/releases/app_linux_386_${DRONE_TAG}
+      - cleartag="$(echo "${DRONE_TAG}" | sed -r 's/^.*?\b(v\d+(\.\d+)*).*$/\1/')"
+      - env="$(echo "${DRONE_TAG}" | sed -r 's/^(\w+)-.+|.+-(\w+)$|.+/\1\2/')"
+      - latest="$(test -n "$env" && echo "_$env" || echo "")"
+      - envprint="$(test -n "$env" && echo "$env" || echo "prod")"
+      - echo -e "\nEnv        → \e[32m$envprint\e[0m\nClear tag  → \e[36m$cleartag\e[0m\nLatest suf → \e[35m$latest\e[0m\n"
+      - GOOS=linux GOARCH=amd64 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_linux_amd64_${DRONE_TAG} cmd/app/main.go
+      - cp /opt/releases/app_linux_amd64_${DRONE_TAG} /opt/releases/app_linux_amd64$latest
+      - cp /opt/releases/app_linux_amd64_${DRONE_TAG} /opt/releases/app_linux_386_${DRONE_TAG}
+      - cp /opt/releases/app_linux_amd64_${DRONE_TAG} /opt/releases/app_linux_386$latest
     volumes:
       - name: releases
         path: /opt/releases
@@ -54,8 +59,13 @@ steps:
     image: golang:1.22.2-alpine3.18
     commands:
       - cd /drone/src
-      - GOOS=darwin GOARCH=arm64 go build -ldflags "-extldflags '-static'" -o /opt/releases/app_darwin_arm64 cmd/app/main.go
-      - cp /opt/releases/app_darwin_arm64 /opt/releases/app_darwin_arm64_${DRONE_TAG}
+      - cleartag="$(echo "${DRONE_TAG}" | sed -r 's/^.*?\b(v\d+(\.\d+)*).*$/\1/')"
+      - env="$(echo "${DRONE_TAG}" | sed -r 's/^(\w+)-.+|.+-(\w+)$|.+/\1\2/')"
+      - latest="$(test -n "$env" && echo "_$env" || echo "")"
+      - envprint="$(test -n "$env" && echo "$env" || echo "prod")"
+      - echo -e "\nEnv        → \e[32m$envprint\e[0m\nClear tag  → \e[36m$cleartag\e[0m\nLatest suf → \e[35m$latest\e[0m\n"
+      - GOOS=darwin GOARCH=arm64 go build -ldflags "-extldflags '-static' -X 'main.serviceVersion=${DRONE_TAG}' -X 'main.hashCommit=${DRONE_COMMIT}'" -o /opt/releases/app_darwin_arm64_${DRONE_TAG} cmd/app/main.go
+      - cp /opt/releases/app_darwin_arm64_${DRONE_TAG} /opt/releases/app_darwin_arm64$latest
     volumes:
       - name: releases
         path: /opt/releases
