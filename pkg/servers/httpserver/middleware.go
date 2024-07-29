@@ -23,6 +23,7 @@ const errorReferer = "421 Misdirected Request"
 
 const defaultName = "lms"
 const defaultVersion = "ru"
+const XAuthKey = "X-Auth-Key"
 
 // список роутеров, для который пропускается без авторизации
 var constPublicLink = map[string]bool{
@@ -181,7 +182,7 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 		}()
 
 		// проверяем X-Auth-Key в cookie, если есть, то нет смысла идти дальше
-		cookie, _ := r.Cookie("X-Auth-Key")
+		cookie, _ := r.Cookie(XAuthKey)
 		if cookie != nil {
 			// возможно X-Auth-Key остался, а value пустое
 			if cookie.Value != "" {
@@ -272,7 +273,7 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 		// формируем и ставим cookie
 		XAuthKeyCookie := http.Cookie{
 			Path:     "/",
-			Name:     "X-Auth-Key",
+			Name:     XAuthKey,
 			Value:    auth.XAuthToken,
 			MaxAge:   5256000,
 			HttpOnly: true,
@@ -281,8 +282,10 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 		}
 		http.SetCookie(w, &XAuthKeyCookie)
 
+		ctx := context.WithValue(r.Context(), XAuthKey, auth.XAuthToken)
+
 		// пропускаем дальше запрос
-		next.ServeHTTP(w, r.WithContext(r.Context()))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -407,13 +410,20 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		// берем токен (всегда, даже если публичная страница)
-		authKeyHeader := r.Header.Get("X-Auth-Key")
+		authKeyHeader := r.Header.Get(XAuthKey)
 		if authKeyHeader != "" {
 			authKey = authKeyHeader
 		} else {
-			authKeyCookie, err := r.Cookie("X-Auth-Key")
+			authKeyCookie, err := r.Cookie(XAuthKey)
 			if err == nil {
 				authKey = authKeyCookie.Value
+			}
+		}
+
+		if authKey == "" {
+			authKeyCtx, ok := r.Context().Value(XAuthKey).(string)
+			if ok {
+				authKey = authKeyCtx
 			}
 		}
 
@@ -482,7 +492,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					// заменяем куку у пользователя в браузере
 					cookie := &http.Cookie{
 						Path:     "/",
-						Name:     "X-Auth-Key",
+						Name:     XAuthKey,
 						Value:    authKey,
 						MaxAge:   5256000,
 						HttpOnly: true,
