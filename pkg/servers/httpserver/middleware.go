@@ -190,6 +190,11 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			}
 		}
 
+		token := r.Header.Get(XAuthKey)
+		if token != "" {
+			return
+		}
+
 		// Пробуем получить cookie с токеном от authV3
 		cookie, _ = r.Cookie(h.cfg.NameCookieWBTokenV3)
 		if cookie == nil {
@@ -270,22 +275,10 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// формируем и ставим cookie
-		XAuthKeyCookie := http.Cookie{
-			Path:     "/",
-			Name:     XAuthKey,
-			Value:    auth.XAuthToken,
-			MaxAge:   5256000,
-			HttpOnly: true,
-			Secure:   false,
-			SameSite: http.SameSiteLaxMode,
-		}
-		http.SetCookie(w, &XAuthKeyCookie)
-
-		ctx := context.WithValue(r.Context(), XAuthKey, auth.XAuthToken)
+		r.Header.Add(XAuthKey, auth.XAuthToken)
 
 		// пропускаем дальше запрос
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(r.Context()))
 	})
 }
 
@@ -417,13 +410,6 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			authKeyCookie, err := r.Cookie(XAuthKey)
 			if err == nil {
 				authKey = authKeyCookie.Value
-			}
-		}
-
-		if authKey == "" {
-			authKeyCtx, ok := r.Context().Value(XAuthKey).(string)
-			if ok {
-				authKey = authKeyCtx
 			}
 		}
 
