@@ -178,7 +178,9 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			if err != nil {
 				logger.Error(r.Context(), "AuthV3Middleware", zap.Error(err), types.Any("input", r.Cookies()))
 			}
+
 			next.ServeHTTP(w, r)
+			return
 		}()
 
 		// проверяем X-Auth-Key в cookie, если есть, то нет смысла идти дальше
@@ -275,10 +277,19 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		r.Header.Add(XAuthKey, auth.XAuthToken)
+		// формируем и ставим cookie
+		XAuthKeyCookie := http.Cookie{
+			Path:     "/",
+			Name:     "X-Auth-Key",
+			Value:    auth.XAuthToken,
+			MaxAge:   5256000,
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
+		}
 
-		// пропускаем дальше запрос
-		next.ServeHTTP(w, r.WithContext(r.Context()))
+		http.SetCookie(w, &XAuthKeyCookie)
+		r.Header.Add(XAuthKey, auth.XAuthToken)
 	})
 }
 
