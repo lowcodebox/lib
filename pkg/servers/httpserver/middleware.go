@@ -23,6 +23,7 @@ const errorReferer = "421 Misdirected Request"
 
 const defaultName = "lms"
 const defaultVersion = "ru"
+const XAuthKey = "X-Auth-Key"
 
 // список роутеров, для который пропускается без авторизации
 var constPublicLink = map[string]bool{
@@ -177,16 +178,23 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			if err != nil {
 				logger.Error(r.Context(), "AuthV3Middleware", zap.Error(err), types.Any("input", r.Cookies()))
 			}
+
 			next.ServeHTTP(w, r)
+			return
 		}()
 
 		// проверяем X-Auth-Key в cookie, если есть, то нет смысла идти дальше
-		cookie, _ := r.Cookie("X-Auth-Key")
+		cookie, _ := r.Cookie(XAuthKey)
 		if cookie != nil {
 			// возможно X-Auth-Key остался, а value пустое
 			if cookie.Value != "" {
 				return
 			}
+		}
+
+		token := r.Header.Get(XAuthKey)
+		if token != "" {
+			return
 		}
 
 		// Пробуем получить cookie с токеном от authV3
@@ -279,10 +287,9 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			Secure:   false,
 			SameSite: http.SameSiteLaxMode,
 		}
-		http.SetCookie(w, &XAuthKeyCookie)
 
-		// пропускаем дальше запрос
-		next.ServeHTTP(w, r.WithContext(r.Context()))
+		http.SetCookie(w, &XAuthKeyCookie)
+		r.Header.Add(XAuthKey, auth.XAuthToken)
 	})
 }
 
@@ -407,11 +414,11 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 		}
 
 		// берем токен (всегда, даже если публичная страница)
-		authKeyHeader := r.Header.Get("X-Auth-Key")
+		authKeyHeader := r.Header.Get(XAuthKey)
 		if authKeyHeader != "" {
 			authKey = authKeyHeader
 		} else {
-			authKeyCookie, err := r.Cookie("X-Auth-Key")
+			authKeyCookie, err := r.Cookie(XAuthKey)
 			if err == nil {
 				authKey = authKeyCookie.Value
 			}
@@ -482,7 +489,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					// заменяем куку у пользователя в браузере
 					cookie := &http.Cookie{
 						Path:     "/",
-						Name:     "X-Auth-Key",
+						Name:     XAuthKey,
 						Value:    authKey,
 						MaxAge:   5256000,
 						HttpOnly: true,
