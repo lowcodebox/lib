@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -137,7 +137,7 @@ func (h *handlers) authDecodeRequest(ctx *context.Context, r *http.Request) (in 
 	}
 
 	// если передали в json в теле post-а
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error(r.Context(), "error. readAll request is failed", zap.Error(err))
 		return in, fmt.Errorf("error. readAll request is failed. err: %s", err)
@@ -189,39 +189,31 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err error) {
 	w.Header().Set("X-Auth-Key", "")
 
-	cookie := &http.Cookie{
-		Path:    "/",
-		Name:    "X-Auth-Key",
-		Expires: time.Unix(0, 0),
-		Value:   "",
-		MaxAge:  30000,
-		Secure:  false,
-	}
-
-	//// переписываем куку у клиента
-	http.SetCookie(w, cookie)
+	setExpiredCookie(w, authTokenName)
+	setExpiredCookie(w, h.cfg.NameCookieWBTokenV3)
+	setExpiredCookie(w, h.cfg.NameCookieWbxValidationKey)
 
 	// удаляем сервисные куки если не авторизован (для фронта)
 	for _, name := range strings.Split(h.cfg.CookieFrontLogoutDelete, ",") {
 		if name == "" {
 			continue
 		}
-
-		// заменяем куку у пользователя в браузере
-		c := &http.Cookie{
-			Path:     "/",
-			Name:     name,
-			Expires:  time.Unix(0, 0),
-			Value:    "",
-			MaxAge:   56000,
-			HttpOnly: false,
-			Secure:   false,
-		}
-
-		http.SetCookie(w, c)
+		setExpiredCookie(w, name)
 	}
 
-	http.Redirect(w, r, r.Referer(), 302)
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 
 	return err
+}
+
+func setExpiredCookie(w http.ResponseWriter, name string) {
+	cookie := &http.Cookie{
+		Name:    name,
+		Value:   "",
+		Path:    "/",
+		Expires: time.Unix(0, 0), // Устанавливаем истечение
+	}
+
+	//// переписываем куку у клиента
+	http.SetCookie(w, cookie)
 }
