@@ -5,7 +5,7 @@ name: app
 steps:
   - name: linux amd64/386
     failure: ignore
-    image: golang:1.22.2-alpine3.18
+    image: golang:1.22.5-alpine3.19
     commands:
       - cd /drone/src
       - cleartag="$(echo "${DRONE_TAG}" | sed -r 's/^.*?\b(v\d+(\.\d+)*).*$/\1/')"
@@ -56,7 +56,7 @@ steps:
 
   - name: darwin arm64
     failure: ignore
-    image: golang:1.22.2-alpine3.18
+    image: golang:1.22.5-alpine3.19
     commands:
       - cd /drone/src
       - cleartag="$(echo "${DRONE_TAG}" | sed -r 's/^.*?\b(v\d+(\.\d+)*).*$/\1/')"
