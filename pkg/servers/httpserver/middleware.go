@@ -24,6 +24,8 @@ const errorReferer = "421 Misdirected Request"
 const defaultName = "lms"
 const defaultVersion = "ru"
 const XAuthKey = "X-Auth-Key"
+const XServiceKey = "X-Service-Key"
+const XServiceClient = "X-Service-Client"
 
 // список роутеров, для который пропускается без авторизации
 var constPublicLink = map[string]bool{
@@ -116,11 +118,11 @@ func (h *httpserver) XServiceKeyProcessor(next http.Handler, cfg model.Config) h
 		}
 
 		// он приватный - проверяем на валидность токена
-		authKeyHeader := r.Header.Get("X-Service-Key")
+		authKeyHeader := r.Header.Get(XServiceKey)
 		if authKeyHeader != "" {
 			authKey = authKeyHeader
 		} else {
-			authKeyCookie, err := r.Cookie("X-Service-Key")
+			authKeyCookie, err := r.Cookie(XServiceKey)
 			if err == nil {
 				authKey = authKeyCookie.Value
 			}
@@ -137,11 +139,13 @@ func (h *httpserver) XServiceKeyProcessor(next http.Handler, cfg model.Config) h
 			return
 		}
 
-		status := lib.CheckXServiceKey(name+"/"+version, []byte(cfg.ProjectKey), authKey)
+		status, client := lib.CheckXServiceKey(name+"/"+version, []byte(cfg.ProjectKey), authKey)
 		if !status {
 			err = fmt.Errorf("token is not valid")
 			return
 		}
+
+		r.Header.Set(XServiceClient, client)
 	})
 }
 

@@ -21,7 +21,7 @@ import (
 func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval, xServiceKeyClient)
 	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "refresh", err, token, profile, expire)
@@ -43,7 +43,7 @@ func (o *iam) refresh(ctx context.Context, token, profile string, expire bool) (
 func (o *iam) profileGet(ctx context.Context, sessionID string) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval, xServiceKeyClient)
 	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "refresh", err, sessionID)
@@ -73,7 +73,7 @@ func (o *iam) profileChange(ctx context.Context, sessionID, profile string) (res
 		return "", fmt.Errorf("param is empty, session: %t, profile: %t", sessionID != "", profile != "")
 	}
 
-	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval, xServiceKeyClient)
 	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "refresh", err, sessionID)
@@ -98,7 +98,7 @@ func (o *iam) profileChange(ctx context.Context, sessionID, profile string) (res
 func (o *iam) profileList(ctx context.Context) (result string, err error) {
 	var res models.Response
 	var handlers = map[string]string{}
-	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval, xServiceKeyClient)
 	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer o.observeLogger(ctx, time.Now(), "profileList", err)
@@ -120,7 +120,7 @@ func (o *iam) profileList(ctx context.Context) (result string, err error) {
 func (o *iam) auth(ctx context.Context, suser, ref string) (status bool, token, userUID, profileUID string, err error) {
 	var res AuthResponse
 	var handlers = map[string]string{}
-	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval)
+	serviceKey, err := lib.GenXServiceKey(o.domain, []byte(o.projectKey), tokenInterval, xServiceKeyClient)
 	handlers[headerServiceKey] = serviceKey
 	if o.observeLog {
 		defer func() {

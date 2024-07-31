@@ -24,6 +24,7 @@ const headerServiceKey = "X-Service-Key"
 const tokenInterval = 1 * time.Minute
 const constOperationDelete = "delete"
 const constOperationAdd = "add"
+const xServiceKeyClient = "api"
 
 type api struct {
 	url        string

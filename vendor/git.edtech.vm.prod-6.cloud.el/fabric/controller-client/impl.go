@@ -5,11 +5,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
-	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"time"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
+	"go.uber.org/zap"
 
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 )
@@ -30,7 +31,7 @@ type secretsOut struct {
 
 func (c *controller) upsertSecret(ctx context.Context, key, value string) error {
 	handlers := map[string]string{}
-	err := c.generateKey(handlers)
+	err := c.generateKey(c.domain, handlers)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (c *controller) upsertSecret(ctx context.Context, key, value string) error 
 
 func (c *controller) getSecret(ctx context.Context, key string) (string, error) {
 	handlers := map[string]string{}
-	err := c.generateKey(handlers)
+	err := c.generateKey(c.domain, handlers)
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +95,7 @@ func (c *controller) getSecret(ctx context.Context, key string) (string, error) 
 
 func (c *controller) listSecrets(ctx context.Context) (res map[string]string, err error) {
 	handlers := map[string]string{}
-	err = c.generateKey(handlers)
+	err = c.generateKey("secret/list", handlers)
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +130,8 @@ func (c *controller) listSecrets(ctx context.Context) (res map[string]string, er
 	return
 }
 
-func (c *controller) generateKey(handlers map[string]string) (err error) {
-	token, err := lib.GenXServiceKey(c.domain, []byte(c.projectKey), tokenInterval)
+func (c *controller) generateKey(domain string, handlers map[string]string) (err error) {
+	token, err := lib.GenXServiceKey(domain, []byte(c.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return fmt.Errorf("error GenXServiceKey. err: %w", err)
 	}

@@ -10,6 +10,7 @@ import (
 const headerRequestId = "X-Request-Id"
 const headerServiceKey = "X-Service-Key"
 const tokenInterval = 1 * time.Minute
+const xServiceKeyClient = "controller"
 
 type controller struct {
 	url        string

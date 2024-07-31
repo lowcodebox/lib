@@ -3,11 +3,11 @@ module git.edtech.vm.prod-6.cloud.el/fabric/app
 go 1.22.5
 
 require (
-	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.11
-	git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
-	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19
-	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47
-	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.0
+	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.12
+	git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.9
+	git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.20
+	git.edtech.vm.prod-6.cloud.el/fabric/lib v0.4.0
+	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.1
 	git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23
 	git.edtech.vm.prod-6.cloud.el/packages/logger v0.1.34
 	git.edtech.vm.prod-6.cloud.el/packages/secrets v0.0.2

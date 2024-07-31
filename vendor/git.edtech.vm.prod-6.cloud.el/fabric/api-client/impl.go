@@ -23,7 +23,7 @@ func (a *api) data(ctx context.Context, tpls, option, role, page, size string) (
 	}
 
 	var headers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	headers[headerServiceKey] = token
 	if a.observeLog {
 		defer a.observeLogger(ctx, time.Now(), "Data", err)
@@ -71,7 +71,7 @@ func (a *api) data(ctx context.Context, tpls, option, role, page, size string) (
 func (a *api) query(ctx context.Context, query, method, bodyJSON, group string) (result string, err error) {
 	var handlers = map[string]string{}
 	var cookies []*http.Cookie
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -113,7 +113,7 @@ func (a *api) tpls(ctx context.Context, role, option string) (result models.Resp
 	}
 
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -143,7 +143,7 @@ func (a *api) tpls(ctx context.Context, role, option string) (result models.Resp
 // search результат выводим в объект как при вызове Curl
 func (a *api) search(ctx context.Context, query, method, bodyJSON string) (resp string, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return resp, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -166,7 +166,7 @@ func (a *api) search(ctx context.Context, query, method, bodyJSON string) (resp 
 
 func (a *api) objGet(ctx context.Context, uids string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -188,7 +188,7 @@ func (a *api) objGet(ctx context.Context, uids string) (result models.ResponseDa
 
 func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string, page int) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -210,7 +210,7 @@ func (a *api) linkGet(ctx context.Context, tpl, obj, mode, short string, page in
 
 func (a *api) linkOperation(ctx context.Context, operation, element, from, to string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -238,7 +238,7 @@ func (a *api) linkOperation(ctx context.Context, operation, element, from, to st
 // ObjAttrUpdate изменение значения аттрибута объекта
 func (a *api) objAttrUpdate(ctx context.Context, uid, name, value, src, editor string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -278,7 +278,7 @@ func (a *api) objAttrUpdate(ctx context.Context, uid, name, value, src, editor s
 func (a *api) element(ctx context.Context, action, body string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	var urlc string
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -313,7 +313,7 @@ func (a *api) element(ctx context.Context, action, body string) (result models.R
 func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	var urlc string
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -348,7 +348,7 @@ func (a *api) objCreate(ctx context.Context, bodymap map[string]string) (result 
 func (a *api) objDelete(ctx context.Context, uids string) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
 	var urlc string
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}
@@ -375,7 +375,7 @@ func (a *api) objDelete(ctx context.Context, uids string) (result models.Respons
 
 func (a *api) tools(ctx context.Context, method, action string, params map[string]interface{}) (result models.ResponseData, err error) {
 	var handlers = map[string]string{}
-	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval)
+	token, err := lib.GenXServiceKey(a.domain, []byte(a.projectKey), tokenInterval, xServiceKeyClient)
 	if err != nil {
 		return result, fmt.Errorf("error GenXServiceKey. err: %s", err)
 	}

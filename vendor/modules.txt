@@ -42,19 +42,19 @@ git.edtech.vm.prod-6.cloud.el/extensions/collector/pkg/model/sdk
 # git.edtech.vm.prod-6.cloud.el/extensions/collector-client v0.0.2
 ## explicit; go 1.22.5
 git.edtech.vm.prod-6.cloud.el/extensions/collector-client
-# git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.11
+# git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.12
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/api-client
-# git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.6
+# git.edtech.vm.prod-6.cloud.el/fabric/controller-client v0.0.9
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/controller-client
 # git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam/pkg/i18n
-# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.19
+# git.edtech.vm.prod-6.cloud.el/fabric/iam-client v0.1.20
 ## explicit; go 1.21.6
 git.edtech.vm.prod-6.cloud.el/fabric/iam-client
-# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.3.47
+# git.edtech.vm.prod-6.cloud.el/fabric/lib v0.4.0
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/lib
 git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3
@@ -64,7 +64,7 @@ git.edtech.vm.prod-6.cloud.el/fabric/logbox/pkg/model/sdk
 # git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23
 ## explicit; go 1.22
 git.edtech.vm.prod-6.cloud.el/fabric/logbox-client
-# git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.0
+# git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.1
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/fabric/models
 # git.edtech.vm.prod-6.cloud.el/packages/cache v0.1.23

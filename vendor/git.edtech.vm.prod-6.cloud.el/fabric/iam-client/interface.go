@@ -18,6 +18,7 @@ import (
 const headerRequestId = "X-Request-Id"
 const headerServiceKey = "X-Service-Key"
 const tokenInterval = 1 * time.Minute
+const xServiceKeyClient = "iam"
 
 type iam struct {
 	ctx        context.Context
@@ -51,6 +52,8 @@ func (a *iam) Refresh(ctx context.Context, token, profile string, expire bool) (
 	return result, err
 }
 
+// ProfileChange - обновляем значения по-умолчанию на iam-e
+// подобное делает Refresh - если передать ?profile=
 func (a *iam) ProfileChange(ctx context.Context, sessionID, profile string) (result string, err error) {
 	//_, err = a.cb.Execute(func() (interface{}, error) {
 	result, err = a.profileChange(ctx, sessionID, profile)

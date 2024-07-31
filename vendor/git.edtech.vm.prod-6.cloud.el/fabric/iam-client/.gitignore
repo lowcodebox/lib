@@ -1,0 +1,9 @@
+.history
+.idea
+.vscode
+.DS_Store
+*~merged*
+*~merged
+/public
+.env
+cmd/cli

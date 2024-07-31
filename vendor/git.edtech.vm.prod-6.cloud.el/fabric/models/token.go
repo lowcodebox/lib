@@ -21,5 +21,6 @@ type Roles struct {
 
 type XServiceKey struct {
 	Domain  string
+	Client  string
 	Expired int64
 }
