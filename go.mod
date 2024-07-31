@@ -3,7 +3,7 @@ module git.edtech.vm.prod-6.cloud.el/fabric/lib
 go 1.18
 
 require (
-	git.edtech.vm.prod-6.cloud.el/fabric/models v0.1.39
+	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.1
 	github.com/BurntSushi/toml v1.2.0
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/aws/aws-sdk-go v1.40.45

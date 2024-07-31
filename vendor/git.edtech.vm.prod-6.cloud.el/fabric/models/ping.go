@@ -30,6 +30,9 @@ type Pong struct {
 	ServiceVersion string `json:"service_version"`
 	HashCommit     string `json:"hash_commit"`
 
+	Code  int    `json:"code"`
+	Error string `json:"error"`
+
 	//deprecated
 	Port         int    `json:"port"`
 	State        string `json:"state"`

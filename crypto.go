@@ -109,10 +109,13 @@ func Decrypt(key []byte, text string) (string, error) {
 }
 
 // GenXServiceKey создаем токен
-func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duration) (token string, err error) {
+// domain - домен, для которого будет выдан токен (валидируется)
+// client - наименование клиента, которому был выдан токен (не валидируется)
+func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duration, client string) (token string, err error) {
 	t := models.XServiceKey{
 		Domain:  domain,
 		Expired: time.Now().Add(tokenInterval).Unix(),
+		Client:  client,
 	}
 	strJson, err := json.Marshal(t)
 	if err != nil {
@@ -129,18 +132,19 @@ func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duratio
 
 // CheckXServiceKey берем из заголовка X-Service-Key. если он есть, то он должен быть расшифровать
 // и валидируем содержимое
-func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool {
+// client - возвращает имя клиента, которому был выдан токен (опционально)
+func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) (valid bool, client string) {
 	var xsKeyValid bool
 	var xsKey models.XServiceKey
 
 	if xServiceKey == "" {
-		return false
+		return false, ""
 	}
 
 	v, err := Decrypt(projectKey, xServiceKey)
 	err = json.Unmarshal([]byte(v), &xsKey)
 	if err != nil {
-		return false
+		return false, ""
 	}
 
 	if xsKey.Domain == domain && xsKey.Expired > time.Now().Unix() {
@@ -152,7 +156,7 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) bool
 		}
 	}
 
-	return xsKeyValid
+	return xsKeyValid, xsKey.Client
 }
 
 type paramsArgon2 struct {
