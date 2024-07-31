@@ -29,11 +29,13 @@ import (
 	"strings"
 	"time"
 
+	extensions "git.edtech.vm.prod-6.cloud.el/extensions/collector-client"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/cache"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	analytics "git.edtech.vm.prod-6.cloud.el/wb/analyticscollector-client"
+
 	"github.com/Masterminds/sprig"
 	"github.com/mileusna/useragent"
 	"github.com/nfnt/resize"
@@ -85,6 +87,7 @@ type FuncImpl struct {
 	projectKey       string
 	analyticsClient  analytics.Client
 	controllerClient ControllerClient
+	extensionsClient extensions.Client
 	cfg              *model.Config
 }
 
@@ -123,13 +126,14 @@ func (r *readerAt) Len() (n int) {
 	return len(p)
 }
 
-func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient) {
+func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analyticsClient analytics.Client, controllerClient ControllerClient, extensionsClient extensions.Client) {
 	Funcs = FuncImpl{
 		vfs,
 		api,
 		projectKey,
 		analyticsClient,
 		controllerClient,
+		extensionsClient,
 		cfg,
 	}
 
@@ -261,6 +265,8 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"analyticssearch":   Funcs.analyticsSearch,
 		"analytycsquery":    Funcs.analyticsQuery,
 
+		"extension": Funcs.extension,
+
 		"secretsget": Funcs.secretsGet,
 	}
 }
@@ -279,6 +285,22 @@ func (t *FuncImpl) env() (result map[string]string) {
 // help
 func (t *FuncImpl) help() map[string]any {
 	return FuncMap
+}
+
+// extension вызов клиента коллектора расширений
+// все внешние сервисы интегрированы через коллектор и могут быть использованы внутри шаблонизатора
+// service, method - код сервиса, метод (см. в описании коллектора)
+// params - тело в json (передаётся напрямую в сервис)
+func (t *FuncImpl) extension(service, method, params string) (out extension) {
+	r, id, err := t.extensionsClient.Exec(context.Background(), service, method, params)
+	out.Id = id
+	if err != nil {
+		out.Error = err
+		return out
+	}
+
+	out.Result = r
+	return out
 }
 
 // analytics - аналитика......

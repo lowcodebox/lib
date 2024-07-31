@@ -26,6 +26,12 @@ type app struct {
 	api            api.Api
 }
 
+type extension struct {
+	Id     string `json:"id"`
+	Result string `json:"result"`
+	Error  error  `json:"error"`
+}
+
 type Cfg struct {
 	payload map[string]string
 	mx      sync.Mutex

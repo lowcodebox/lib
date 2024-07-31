@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package collector;
+
+option go_package = ".";
+
+message ExecIn {
+	string service = 1;
+	string method = 2;
+	string params = 3;
+}
+
+message ExecOut {
+	string result = 1;
+	string id = 2;
+}
+
+service Collector {
+	rpc Exec(ExecIn) returns (ExecOut);
+}

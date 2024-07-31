@@ -194,6 +194,10 @@ type Config struct {
 	// Analytics
 	AnalyticsHost string `envconfig:"ANALYTICS_HOST" default:"localhost:8999"`
 
+	// Extensions
+	ExtensionsHost           string   `envconfig:"EXTENSIONS_HOST" default:"localhost:8999"`
+	ExtensionsRequestTimeout Duration `envconnfig:"EXTENSIONS_REQUEST_TIMEOUT" default:"5s"`
+
 	URLUserIDFromTokenAuthV3   string `envconfig:"URL_USER_ID_TOKEN_AUTH_V3" default:"http://localhost:8029/v1/user_id"`
 	NameCookieWbxValidationKey string `envconfig:"NAME_COOKIE_WBX_VALIDATION_KEY" default:"wbx-validation-key"`
 	NameCookieWBTokenV3        string `envconfig:"NAME_COOKIE_WB_TOKEN_V3" default:"WBTokenV3"`

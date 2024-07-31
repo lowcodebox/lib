@@ -1,6 +1,6 @@
 module git.edtech.vm.prod-6.cloud.el/fabric/app
 
-go 1.22.2
+go 1.22.5
 
 require (
 	git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.11
@@ -43,6 +43,8 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.8 // indirect
 	cloud.google.com/go/storage v1.40.0 // indirect
+	git.edtech.vm.prod-6.cloud.el/extensions/collector v0.0.2 // indirect
+	git.edtech.vm.prod-6.cloud.el/extensions/collector-client v0.0.2 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/iam v0.2.61 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox v0.2.26 // indirect
 	git.edtech.vm.prod-6.cloud.el/fabric/logbox-client v0.1.23 // indirect

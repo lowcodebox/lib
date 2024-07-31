@@ -36,6 +36,12 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
+# git.edtech.vm.prod-6.cloud.el/extensions/collector v0.0.2
+## explicit; go 1.22.5
+git.edtech.vm.prod-6.cloud.el/extensions/collector/pkg/model/sdk
+# git.edtech.vm.prod-6.cloud.el/extensions/collector-client v0.0.2
+## explicit; go 1.22.5
+git.edtech.vm.prod-6.cloud.el/extensions/collector-client
 # git.edtech.vm.prod-6.cloud.el/fabric/api-client v0.3.11
 ## explicit; go 1.18
 git.edtech.vm.prod-6.cloud.el/fabric/api-client
