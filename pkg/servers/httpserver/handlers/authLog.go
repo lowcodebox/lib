@@ -176,7 +176,7 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 		MaxAge:   5256000,
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: h.cfg.GetCookieSameSite(),
+		SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 	}
 
 	//// переписываем куку у клиента

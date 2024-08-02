@@ -74,7 +74,7 @@ func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Re
 		MaxAge:   5256000,
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: h.cfg.GetCookieSameSite(),
+		SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 	}
 
 	//// переписываем куку у клиента

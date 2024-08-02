@@ -29,7 +29,7 @@ type Config struct {
 	CookieFront             string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение,имя=значение)"`
 	CookieFrontLogin        string `envconfig:"COOKIE_FRONT_LOGIN" default:"" description:"ставим куки на беке для фронта (после авторизации)"`
 	CookieFrontLogoutDelete string `envconfig:"COOKIE_FRONT_LOGOUT_DELETE" default:"" description:"удаляем куки на беке для фронта (после выхода)(формат имя,имя)"`
-	CookieSameSite          string `envconfig:"X_AUTH_KEY_COOKIE_SAME_SITE" default:"lax"`
+	CookieSameSite          string `envconfig:"COOKIE_SAME_SITE" default:"lax"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
