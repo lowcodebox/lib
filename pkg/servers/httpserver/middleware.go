@@ -288,7 +288,7 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			Value:    auth.XAuthToken,
 			MaxAge:   5256000,
 			HttpOnly: true,
-			Secure:   false,
+			Secure:   true,                  //false,
 			SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 		}
 
@@ -497,7 +497,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 						Value:    authKey,
 						MaxAge:   5256000,
 						HttpOnly: true,
-						Secure:   false,
+						Secure:   true,                  //false,
 						SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 					}
 

@@ -175,7 +175,7 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 		Value:    token,
 		MaxAge:   5256000,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,                  //false,
 		SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 	}
 

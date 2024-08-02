@@ -73,7 +73,7 @@ func (h *handlers) changeroleTransportResponse(w http.ResponseWriter, r *http.Re
 		Value:    out.Token,
 		MaxAge:   5256000,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,                  //false,
 		SameSite: http.SameSiteNoneMode, //h.cfg.GetCookieSameSite(),
 	}
 
