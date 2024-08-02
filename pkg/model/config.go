@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type Config struct {
 	HttpsOnly  string `envconfig:"HTTPS_ONLY" default:""`
@@ -26,6 +29,7 @@ type Config struct {
 	CookieFront             string `envconfig:"COOKIE_FRONT" default:"" description:"ставим куки на беке для фронта (формат имя=значение,имя=значение)"`
 	CookieFrontLogin        string `envconfig:"COOKIE_FRONT_LOGIN" default:"" description:"ставим куки на беке для фронта (после авторизации)"`
 	CookieFrontLogoutDelete string `envconfig:"COOKIE_FRONT_LOGOUT_DELETE" default:"" description:"удаляем куки на беке для фронта (после выхода)(формат имя,имя)"`
+	CookieSameSite          string `envconfig:"X_AUTH_KEY_COOKIE_SAME_SITE" default:"lax"`
 
 	MetricIntervalCached Duration `envconfig:"METRIC_INTERVAL_CACHED" default:"10s"`
 
@@ -201,4 +205,17 @@ type Config struct {
 	URLUserIDFromTokenAuthV3   string `envconfig:"URL_USER_ID_TOKEN_AUTH_V3" default:"http://localhost:8029/v1/user_id"`
 	NameCookieWbxValidationKey string `envconfig:"NAME_COOKIE_WBX_VALIDATION_KEY" default:"wbx-validation-key"`
 	NameCookieWBTokenV3        string `envconfig:"NAME_COOKIE_WB_TOKEN_V3" default:"WBTokenV3"`
+}
+
+func (c *Config) GetCookieSameSite() http.SameSite {
+	switch c.CookieSameSite {
+	case "lax":
+		return http.SameSiteLaxMode
+	case "none":
+		return http.SameSiteNoneMode
+	case "strict":
+		return http.SameSiteStrictMode
+	}
+
+	return http.SameSiteDefaultMode
 }

@@ -289,7 +289,7 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 			MaxAge:   5256000,
 			HttpOnly: true,
 			Secure:   false,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: h.cfg.GetCookieSameSite(),
 		}
 
 		http.SetCookie(w, &XAuthKeyCookie)
@@ -498,7 +498,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 						MaxAge:   5256000,
 						HttpOnly: true,
 						Secure:   false,
-						SameSite: http.SameSiteLaxMode,
+						SameSite: h.cfg.GetCookieSameSite(),
 					}
 
 					// после обновления получаем текущий токен
