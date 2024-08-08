@@ -20,6 +20,7 @@ import (
 var (
 	ErrInvalidHash         = errors.New("the encoded hash is not in the correct format")
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
+	ErrNoServiceKey        = errors.New("empty service key")
 )
 
 // Пример использования
@@ -157,6 +158,46 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) (val
 	}
 
 	return xsKeyValid, xsKey.Client
+}
+
+func SetCheckCert(projectKey []byte, xServiceKey string, checkCert bool) (token string, err error) {
+	var xsKey models.XServiceKey
+
+	if xServiceKey == "" {
+		return "", ErrNoServiceKey
+	}
+	v, err := Decrypt(projectKey, xServiceKey)
+	if err != nil {
+		return token, err
+	}
+	err = json.Unmarshal([]byte(v), &xsKey)
+	xsKey.CheckCert = checkCert
+
+	strJson, err := json.Marshal(xsKey)
+	if err != nil {
+		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
+	}
+
+	token, err = Encrypt(projectKey, string(strJson))
+	if err != nil {
+		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
+	}
+
+	return token, nil
+}
+
+func GetCheckCert(projectKey []byte, xServiceKey string) (checkCert bool, err error) {
+	var xsKey models.XServiceKey
+
+	if xServiceKey == "" {
+		return false, ErrNoServiceKey
+	}
+	v, err := Decrypt(projectKey, xServiceKey)
+	if err != nil {
+		return false, err
+	}
+	err = json.Unmarshal([]byte(v), &xsKey)
+	return xsKey.CheckCert, err
 }
 
 type paramsArgon2 struct {
