@@ -139,6 +139,10 @@ func (p *Data) AttrSet(name, element, value string) bool {
 	return false
 }
 
+func (p *Data) HasError() bool {
+	return p.Type == "error"
+}
+
 // RemoveData удаляем элемент из слайса
 func (p *ResponseData) RemoveData(i int) bool {
 

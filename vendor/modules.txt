@@ -19,7 +19,7 @@ cloud.google.com/go/storage
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/stubs
-# git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.1
+# git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.3
 ## explicit; go 1.17
 git.edtech.vm.prod-6.cloud.el/fabric/models
 # github.com/Azure/azure-sdk-for-go v32.5.0+incompatible
@@ -46,8 +46,6 @@ github.com/Azure/go-autorest/tracing
 ## explicit; go 1.16
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
-# github.com/ReneKroon/ttlcache v1.7.0
-## explicit; go 1.14
 # github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 ## explicit; go 1.12
 github.com/araddon/dateparse
