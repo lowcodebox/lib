@@ -376,7 +376,7 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var authKey string
 		var err error
-		var flagPublicPages, flagPublicRoutes bool
+		var flagPublicPages, flagPublicRoutes, flagForbiddenPages bool
 		var currentProfile *models.ProfileData
 		var skipRedirect bool
 		var action = ""
@@ -450,7 +450,20 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 					}
 				}
 
-				http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
+				if !flagForbiddenPages {
+					http.Redirect(w, r, h.cfg.SigninUrl+"?ref="+refURL, 302)
+				} else {
+					w.WriteHeader(403)
+					d, _ := json.Marshal(models.Response{
+						Status: models.RestStatus{
+							Code:        "forbidden",
+							Status:      http.StatusForbidden,
+							Error:       fmt.Errorf("403 Forbidden"),
+							Description: "Access Dined",
+						},
+					})
+					_, err = w.Write(d)
+				}
 			}
 
 			if action == "redirect500" {
@@ -526,6 +539,15 @@ func (h *httpserver) AuthProcessor(next http.Handler) http.Handler {
 			for k, _ := range dps.PublicRoutes {
 				if strings.Contains(r.URL.Path, "/"+k) {
 					flagPublicRoutes = true
+					break
+				}
+			}
+		}
+		// обращение к странице/блоку, которая вернет 403, а не редирект
+		if !flagForbiddenPages {
+			for k, _ := range dps.ForbiddenPages {
+				if strings.Contains(r.URL.Path, "/"+k) {
+					flagForbiddenPages = true
 					break
 				}
 			}

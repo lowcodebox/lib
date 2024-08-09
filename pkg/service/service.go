@@ -22,6 +22,7 @@ import (
 )
 
 const queryPublicPages = "sys_public_pages"
+const queryForbiddenPages = "sys_forbidden_pages"
 
 // список роутеров, для который пропускается авторизация клиента
 var constPublicLink = map[string]bool{
@@ -37,8 +38,9 @@ var constPublicLink = map[string]bool{
 
 // динамические параметры, которые могут меняться через асинхронные шедулеры (повышение производительности)
 type dynamicParams struct {
-	PublicPages  map[string]bool
-	PublicRoutes map[string]bool
+	PublicPages    map[string]bool
+	PublicRoutes   map[string]bool
+	ForbiddenPages map[string]bool // если требуется авторизация - отдаем 403 (не переадресуем на страницу авторизации)
 }
 
 type service struct {
@@ -92,6 +94,9 @@ func New(
 	// асинхронно обновляем список публичный страниц/блоков
 	go reloadPublicPages(ctx, &dps, api, 10*time.Second)
 
+	// асинхронно обновляем список страниц/блоков, которые отдаеют 403 вместо редиректа на авторизацию
+	go reloadForbiddenPages(ctx, &dps, api, 10*time.Second)
+
 	return &service{
 		ctx,
 		cfg,
@@ -107,7 +112,7 @@ func New(
 	}
 }
 
-// ReloadFromPG обновляем meta если обновилось время в кипере (изменили данные и нажали - обновить в сервисе)
+// reloadPublicPages обновляем meta если обновилось время в кипере (изменили данные и нажали - обновить в сервисе)
 func reloadPublicPages(ctx context.Context, d *dynamicParams, api api.Api, intervalReload time.Duration) {
 	var objs = models.ResponseData{}
 	ticker := time.NewTicker(intervalReload)
@@ -146,6 +151,44 @@ func reloadPublicPages(ctx context.Context, d *dynamicParams, api api.Api, inter
 				}
 			}
 			d.PublicPages = resD
+
+			ticker = time.NewTicker(intervalReload)
+		}
+	}
+}
+
+// reloadForbiddenPages обновляем meta если обновилось время в кипере (изменили данные и нажали - обновить в сервисе)
+func reloadForbiddenPages(ctx context.Context, d *dynamicParams, api api.Api, intervalReload time.Duration) {
+	var objs = models.ResponseData{}
+	ticker := time.NewTicker(intervalReload)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			res, err := api.Query(ctx, queryForbiddenPages, http.MethodGet, "")
+			if err != nil {
+				logger.Error(ctx, "error api.Query", zap.String("query", queryForbiddenPages), zap.Error(err))
+				ticker = time.NewTicker(intervalReload)
+				continue
+			}
+			err = json.Unmarshal([]byte(res), &objs)
+			if err != nil {
+				logger.Error(ctx, "error Unmarshal api.Query", zap.String("query", queryForbiddenPages), zap.Error(err))
+				ticker = time.NewTicker(intervalReload)
+				continue
+			}
+
+			resD := map[string]bool{}
+			for _, v := range objs.Data {
+				resD[v.Uid] = true
+				if v.Id != "" {
+					resD[v.Id] = true
+				}
+			}
+			d.ForbiddenPages = resD
 
 			ticker = time.NewTicker(intervalReload)
 		}
