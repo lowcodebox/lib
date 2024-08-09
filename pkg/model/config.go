@@ -205,6 +205,9 @@ type Config struct {
 	URLUserIDFromTokenAuthV3   string `envconfig:"URL_USER_ID_TOKEN_AUTH_V3" default:"http://localhost:8029/v1/user_id"`
 	NameCookieWbxValidationKey string `envconfig:"NAME_COOKIE_WBX_VALIDATION_KEY" default:"wbx-validation-key"`
 	NameCookieWBTokenV3        string `envconfig:"NAME_COOKIE_WB_TOKEN_V3" default:"WBTokenV3"`
+
+	// UserID
+	NameHeaderUserId string `envconfig:"NAME_HEADER_USER_ID" default:"User-Id"`
 }
 
 func (c *Config) GetCookieSameSite() http.SameSite {
