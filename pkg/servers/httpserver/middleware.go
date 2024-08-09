@@ -168,6 +168,78 @@ func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler
 	})
 }
 
+func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		// defer
+		defer func() {
+			if err != nil {
+				logger.Error(r.Context(), "UserIDMiddleware", zap.Error(err), types.Any("input", r.Cookies()))
+			}
+
+			next.ServeHTTP(w, r)
+			return
+		}()
+
+		// проверяем X-Auth-Key в cookie, если есть, то нет смысла идти дальше
+		cookie, _ := r.Cookie(XAuthKey)
+		if cookie != nil {
+			// возможно X-Auth-Key остался, а value пустое
+			if cookie.Value != "" {
+				return
+			}
+		}
+
+		token := r.Header.Get(XAuthKey)
+		if token != "" {
+			return
+		}
+
+		userID := r.Header.Get(h.cfg.NameHeaderUserId)
+		if userID == "" {
+			err = fmt.Errorf("empty user_id in header")
+			return
+		}
+
+		// формируем payload для IAM
+		profile := models.ProfileData{
+			Identity: "user_id",
+			UserId:   userID,
+		}
+
+		bytes, err := json.Marshal(profile)
+		if err != nil {
+			return
+		}
+
+		in := model.ServiceAuthIn{
+			Ref:     "",
+			Payload: string(bytes),
+		}
+
+		// получаем X-Auth-Key
+		auth, err := h.src.AuthLogIn(r.Context(), in)
+		if err != nil {
+			return
+		}
+
+		// формируем и ставим cookie
+		XAuthKeyCookie := http.Cookie{
+			Path:     "/",
+			Name:     XAuthKey,
+			Value:    auth.XAuthToken,
+			MaxAge:   5256000,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		}
+
+		http.SetCookie(w, &XAuthKeyCookie)
+		r.Header.Add(XAuthKey, auth.XAuthToken)
+	})
+}
+
 // AuthV3Middleware - авторизует запрос, если нет X-Auth-Key, но есть токен от AuthV3
 // Авторизация проходит в 3 этапа:
 // 1. Ходим в oauth3, чтобы спарсить токен при помощи validationKey. На выходе получаем user_id
@@ -284,7 +356,7 @@ func (h *httpserver) AuthV3Middleware(next http.Handler) http.Handler {
 		// формируем и ставим cookie
 		XAuthKeyCookie := http.Cookie{
 			Path:     "/",
-			Name:     "X-Auth-Key",
+			Name:     XAuthKey,
 			Value:    auth.XAuthToken,
 			MaxAge:   5256000,
 			HttpOnly: true,

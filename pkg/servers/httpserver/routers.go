@@ -135,6 +135,7 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		router.Use(h.HttpsOnly)
 	}
 
+	router.Use(h.UserIDMiddleware)
 	router.Use(h.AuthV3Middleware)
 
 	// проверяем на защищенный доступ через авторизацию
