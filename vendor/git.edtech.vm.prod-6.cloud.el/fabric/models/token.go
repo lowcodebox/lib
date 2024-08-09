@@ -24,4 +24,5 @@ type XServiceKey struct {
 	Client    string
 	Expired   int64
 	CheckCert bool
+	WhiteURI  string
 }
