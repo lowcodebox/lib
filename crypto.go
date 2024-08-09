@@ -118,17 +118,8 @@ func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duratio
 		Expired: time.Now().Add(tokenInterval).Unix(),
 		Client:  client,
 	}
-	strJson, err := json.Marshal(t)
-	if err != nil {
-		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
-	}
 
-	token, err = Encrypt(projectKey, string(strJson))
-	if err != nil {
-		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
-	}
-
-	return token, nil
+	return encodeServiceKey(t, projectKey)
 }
 
 // CheckXServiceKey берем из заголовка X-Service-Key. если он есть, то он должен быть расшифровать
@@ -136,14 +127,7 @@ func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duratio
 // client - возвращает имя клиента, которому был выдан токен (опционально)
 func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) (valid bool, client string) {
 	var xsKeyValid bool
-	var xsKey models.XServiceKey
-
-	if xServiceKey == "" {
-		return false, ""
-	}
-
-	v, err := Decrypt(projectKey, xServiceKey)
-	err = json.Unmarshal([]byte(v), &xsKey)
+	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
 	if err != nil {
 		return false, ""
 	}
@@ -160,44 +144,68 @@ func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) (val
 	return xsKeyValid, xsKey.Client
 }
 
+// SetCheckCert устанавливает поле CheckCert в токене
 func SetCheckCert(projectKey []byte, xServiceKey string, checkCert bool) (token string, err error) {
-	var xsKey models.XServiceKey
-
-	if xServiceKey == "" {
-		return "", ErrNoServiceKey
-	}
-	v, err := Decrypt(projectKey, xServiceKey)
+	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
 	if err != nil {
 		return token, err
 	}
-	err = json.Unmarshal([]byte(v), &xsKey)
 	xsKey.CheckCert = checkCert
 
-	strJson, err := json.Marshal(xsKey)
-	if err != nil {
-		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
-	}
-
-	token, err = Encrypt(projectKey, string(strJson))
-	if err != nil {
-		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
-	}
-
-	return token, nil
+	return encodeServiceKey(xsKey, projectKey)
 }
 
+// GetCheckCert получает поле CheckCert из токена
 func GetCheckCert(projectKey []byte, xServiceKey string) (checkCert bool, err error) {
-	var xsKey models.XServiceKey
+	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
+	return xsKey.CheckCert, nil
+}
 
-	if xServiceKey == "" {
-		return false, ErrNoServiceKey
+// SetValidURI устанавливает доступные пути для токена
+// пустая строка означает, что достпуны все
+// несколько доменов разделяются запятой (без пробелов)
+func SetValidURI(uris string, projectKey []byte, xServiceKey string) (token string, err error) {
+	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
+	if err != nil {
+		return token, err
 	}
-	v, err := Decrypt(projectKey, xServiceKey)
+	xsKey.WhiteURI = uris
+	return encodeServiceKey(xsKey, projectKey)
+}
+
+// IsValidURI проверяет, есть ли дотуп у токена к запрашиваемому пути
+func IsValidURI(checkUri string, projectKey []byte, xServiceKey string) (isValidURI bool, err error) {
+	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
 	if err != nil {
 		return false, err
 	}
-	err = json.Unmarshal([]byte(v), &xsKey)
-	return xsKey.CheckCert, err
+
+	// Пустая строка = пропустить на все
+	if xsKey.WhiteURI == "" {
+		return true, nil
+	}
+
+	uris := strings.Split(xsKey.WhiteURI, ",")
+	for _, uri := range uris {
+		// Не в префиксе - нет доступа
+		if !strings.HasPrefix(checkUri, uri) {
+			continue
+		}
+		lUri := len(uri)
+		// Полное вхождение. Разрешен
+		if lUri == len(checkUri) {
+			return true, nil
+		}
+		// Если следующий символ / или ? - тоже разрешено
+		switch checkUri[lUri] {
+		case '/':
+			return true, nil
+		case '?':
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 type paramsArgon2 struct {
@@ -315,4 +323,29 @@ func decodeHash(encodedHash string) (p *paramsArgon2, salt, hash []byte, err err
 	p.keyLength = uint32(len(hash))
 
 	return p, salt, hash, nil
+}
+
+// decodeServiceKey расшифровыет модель XServiceKey из токена
+func decodeServiceKey(projectKey []byte, xServiceKey string) (xsKey models.XServiceKey, err error) {
+	if xServiceKey == "" {
+		return xsKey, ErrNoServiceKey
+	}
+
+	v, err := Decrypt(projectKey, xServiceKey)
+	err = json.Unmarshal([]byte(v), &xsKey)
+	return
+}
+
+// encodeServiceKey шифрует модель XServiceKey в токен
+func encodeServiceKey(xsKey models.XServiceKey, projectKey []byte) (token string, err error) {
+	strJson, err := json.Marshal(xsKey)
+	if err != nil {
+		return "", fmt.Errorf("error Marshal XServiceKey, err: %s", err)
+	}
+
+	token, err = Encrypt(projectKey, string(strJson))
+	if err != nil {
+		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
+	}
+	return token, nil
 }
