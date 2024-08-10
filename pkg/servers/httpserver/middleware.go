@@ -224,6 +224,24 @@ func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if auth.ProfileUID != "" {
+			client := r.Header.Get(XServiceClient)
+			task := model.TaskForProfileUpdater{
+				ProfileUID:      auth.ProfileUID,
+				GlobalDirection: client,
+			}
+
+			body, err := json.Marshal(task)
+			if err != nil {
+				logger.Error(r.Context(), "UserIDMiddleware err marshal",
+					zap.Error(err), types.Any("task", task))
+			} else {
+				result, err := lib.Curl(r.Context(), http.MethodPost, h.cfg.UrlProfileUpdaterTask, string(body), nil, nil, nil)
+				logger.Error(r.Context(), "UserIDMiddleware err profileupdater",
+					zap.Error(err), zap.String("result", string(body)), types.Any("result", result))
+			}
+		}
+
 		// формируем и ставим cookie
 		XAuthKeyCookie := http.Cookie{
 			Path:     "/",

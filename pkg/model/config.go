@@ -207,7 +207,8 @@ type Config struct {
 	NameCookieWBTokenV3        string `envconfig:"NAME_COOKIE_WB_TOKEN_V3" default:"WBTokenV3"`
 
 	// UserID
-	NameHeaderUserId string `envconfig:"NAME_HEADER_USER_ID" default:"User-Id"`
+	NameHeaderUserId      string `envconfig:"NAME_HEADER_USER_ID" default:"User-Id"`
+	UrlProfileUpdaterTask string `envconfig:"URL_PROFILE_UPDATER" default:""`
 }
 
 func (c *Config) GetCookieSameSite() http.SameSite {
