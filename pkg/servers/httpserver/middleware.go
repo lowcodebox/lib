@@ -242,7 +242,6 @@ func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
 			result, err = lib.Curl(r.Context(), http.MethodPost, h.cfg.UrlProfileUpdaterTask, string(body), nil, nil, nil)
 			if err != nil {
 				err = fmt.Errorf("err profileupdater, task: %+v, body: %+v, result: %+v", task, body, result)
-				return
 			}
 
 			// формируем и ставим cookie
