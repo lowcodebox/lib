@@ -187,7 +187,9 @@ func (h *handlers) authTransportResponse(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *handlers) deleteCookie(w http.ResponseWriter, r *http.Request) (err error) {
-	w.Header().Set("X-Auth-Key", "")
+	w.Header().Set(authTokenName, "")
+	w.Header().Set(h.cfg.NameHeaderXServiceClient, "")
+	w.Header().Set(h.cfg.NameHeaderUserId, "")
 
 	setExpiredCookie(w, authTokenName)
 	setExpiredCookie(w, h.cfg.NameCookieWBTokenV3)

@@ -110,3 +110,8 @@ type InParseToken struct {
 type OutParseToken struct {
 	UserID string `json:"user_id"`
 }
+
+type TaskForProfileUpdater struct {
+	ProfileUID      string `json:"profile_uid"`
+	GlobalDirection string `json:"global_direction"`
+}

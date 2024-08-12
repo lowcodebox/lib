@@ -25,7 +25,6 @@ const defaultName = "lms"
 const defaultVersion = "ru"
 const XAuthKey = "X-Auth-Key"
 const XServiceKey = "X-Service-Key"
-const XServiceClient = "X-Service-Client"
 
 // список роутеров, для который пропускается без авторизации
 var constPublicLink = map[string]bool{
@@ -145,7 +144,7 @@ func (h *httpserver) XServiceKeyProcessor(next http.Handler, cfg model.Config) h
 			return
 		}
 
-		r.Header.Set(XServiceClient, client)
+		r.Header.Set(h.cfg.NameHeaderXServiceClient, client)
 	})
 }
 
@@ -171,11 +170,13 @@ func (h *httpserver) MiddleSecurity(next http.Handler, name string) http.Handler
 func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
+		var body []byte
+		var result interface{}
 
 		// defer
 		defer func() {
 			if err != nil {
-				logger.Error(r.Context(), "UserIDMiddleware", zap.Error(err), types.Any("input", r.Cookies()))
+				logger.Error(r.Context(), "UserIDMiddleware", zap.Error(err))
 			}
 
 			next.ServeHTTP(w, r)
@@ -198,7 +199,7 @@ func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
 
 		userID := r.Header.Get(h.cfg.NameHeaderUserId)
 		if userID == "" {
-			err = fmt.Errorf("empty user_id in header")
+			err = fmt.Errorf("empty user_id in header: %s", h.cfg.NameHeaderUserId)
 			return
 		}
 
@@ -224,19 +225,39 @@ func (h *httpserver) UserIDMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// формируем и ставим cookie
-		XAuthKeyCookie := http.Cookie{
-			Path:     "/",
-			Name:     XAuthKey,
-			Value:    auth.XAuthToken,
-			MaxAge:   5256000,
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
-		}
+		client := r.Header.Get(h.cfg.NameHeaderXServiceClient)
 
-		http.SetCookie(w, &XAuthKeyCookie)
-		r.Header.Add(XAuthKey, auth.XAuthToken)
+		if auth.ProfileUID != "" && client != "" {
+			task := model.TaskForProfileUpdater{
+				ProfileUID:      auth.ProfileUID,
+				GlobalDirection: client,
+			}
+
+			body, err = json.Marshal(task)
+			if err != nil {
+				err = fmt.Errorf("err marshal task, task: %+v", task)
+				return
+			}
+
+			result, err = lib.Curl(r.Context(), http.MethodPost, h.cfg.UrlProfileUpdaterTask, string(body), nil, nil, nil)
+			if err != nil {
+				err = fmt.Errorf("err profileupdater, task: %+v, body: %+v, result: %+v", task, body, result)
+			}
+
+			// формируем и ставим cookie
+			XAuthKeyCookie := http.Cookie{
+				Path:     "/",
+				Name:     XAuthKey,
+				Value:    auth.XAuthToken,
+				MaxAge:   5256000,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteNoneMode,
+			}
+
+			http.SetCookie(w, &XAuthKeyCookie)
+			r.Header.Add(XAuthKey, auth.XAuthToken)
+		}
 	})
 }
 
