@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger/types"
 	"go.uber.org/zap"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const headerReferer = "Referer"
@@ -74,8 +75,8 @@ func (h *httpserver) MiddleLogger(next http.Handler, name, pattern string) http.
 				zap.Float64("timing", timeInterval.Seconds()),
 			)
 
-			h.monitoringTiming(start, pattern, r.Method)
-			h.monitoringStatusCode(pattern, r.Method, wrapper.code)
+			h.monitoringTiming(start, r.URL.Path, r.Method)
+			h.monitoringStatusCode(r.URL.Path, r.Method, wrapper.code)
 		}
 
 		// сохраняем статистику всех запросов, в том числе и пинга (потому что этот запрос фиксируется в количестве)
