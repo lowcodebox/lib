@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
@@ -85,6 +87,7 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	var objResp models.Response
 	var path = ""
 	objResp.Status.Status = 200
+	contentLength := 0.0
 	flagCKEditor := false
 	fileField := "uploadfile"
 
@@ -144,6 +147,50 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 		path = filepath.Join(path, v)
 	}
 
+	contentLengthString := r.Header.Get("Content-Length")
+	if contentLengthString != "" {
+		contentLength, err = strconv.ParseFloat(contentLengthString, 64)
+		if err != nil {
+			objResp.Status.Error = err
+			return
+		}
+	}
+
+	obj, err := h.api.ObjGet(r.Context(), objuid)
+	if err != nil {
+		objResp.Status.Error = err
+		return
+	}
+	for _, v := range obj.Data {
+		source := v.Source
+
+		elements, err := h.api.Element(h.ctx, "elements", source)
+		if err != nil {
+			objResp.Status.Error = errors.New("error getting elements")
+			return
+		}
+
+		for _, el := range elements.Data {
+			id := el.Id
+			if id == getField {
+				maxSizeString, f := el.Attr("max_size", "value")
+				if !f {
+					//Не нашелся аттрибут max_size значит не задали макс размер, значит по умолчанию пропускаем все размеры
+					break
+				}
+				maxSize, err := strconv.ParseFloat(maxSizeString, 64)
+				if err != nil {
+					//Аттрибут max_size нашелся, но его стерли поэтому не может запарсить, пропускаем как размер по умолчанию
+					break
+				}
+				if (contentLength != 0.0) && (contentLength > maxSize*1000000) {
+					objResp.Status.Error = errors.New("error too big file")
+					return
+				}
+			}
+		}
+	}
+
 	// все операции с файлами происходят через VFS
 	// полный путь к файлу
 	thisFilePath := path + sep + handler.Filename
@@ -186,7 +233,6 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	// иначе подменяем значение старого пути
 	var sliceFiles = []string{}
 	if mode == "multi" {
-		obj, err := h.api.ObjGet(r.Context(), objuid)
 		if err != nil {
 			objResp.Status.Error = err
 		}
