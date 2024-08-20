@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"strings"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/app/pkg/model"
 )
 
 const ImsManifest = "imsmanifest.xml"
@@ -114,4 +117,19 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (sr ScormRes)
 	}
 	sr.Error = "error index file not found"
 	return
+}
+
+func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, recursiveLevel int) {
+	var rd model.ResponseData
+	parentRD, err := t.api.ObjGet(context.Background(), parentUid)
+	if err != nil {
+		rd.Status.Error = err
+		return
+	}
+	parentSource := parentRD.Data[0].Source
+
+	searchParams := map[string]string{}{
+		
+	}
+	children, err := t.api.Search(ctx, "apiSearch", http.MethodPost, string(b1))
 }
