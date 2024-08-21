@@ -14,6 +14,7 @@ import (
 	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"git.edtech.vm.prod-6.cloud.el/packages/logger"
 	"github.com/labstack/gommon/log"
+	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 )
 
@@ -87,9 +88,10 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	var objResp models.Response
 	var path = ""
 	objResp.Status.Status = 200
-	contentLength := 0.0
 	flagCKEditor := false
 	fileField := "uploadfile"
+
+	contentLength := 0.0
 
 	defer func() {
 		// NO TESTED
@@ -141,6 +143,7 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	r.Form.Set("os", "linux")
 
 	objuid := r.FormValue("objuid")
+
 	urlPath := strings.Split(getPath, "/")
 
 	for _, v := range urlPath {
@@ -156,60 +159,121 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	obj, err := h.api.ObjGet(r.Context(), objuid)
-	if err != nil {
-		objResp.Status.Error = err
-		return
-	}
-	for _, v := range obj.Data {
-		source := v.Source
-
-		elements, err := h.api.Element(h.ctx, "elements", source)
-		if err != nil {
-			objResp.Status.Error = errors.New("error getting elements")
-			return
-		}
-
-		for _, el := range elements.Data {
-			id := el.Id
-			if id == getField {
-				maxSizeString, f := el.Attr("max_size", "value")
-				if !f {
-					//Не нашелся аттрибут max_size значит не задали макс размер, значит по умолчанию пропускаем все размеры
-					break
-				}
-				maxSize, err := strconv.ParseFloat(maxSizeString, 64)
-				if err != nil {
-					//Аттрибут max_size нашелся, но его стерли поэтому не может запарсить, пропускаем как размер по умолчанию
-					break
-				}
-				if (contentLength != 0.0) && (contentLength > maxSize*1000000) {
-					objResp.Status.Error = errors.New("error too big file")
-					return
-				}
-			}
-		}
-	}
-
 	// все операции с файлами происходят через VFS
 	// полный путь к файлу
 	thisFilePath := path + sep + handler.Filename
+	// вычитываем файл из хранилища (чтобы проверить если уже есть такой, чтобы не затереть старый)
+	data, _, _ := h.vfs.Read(h.ctx, thisFilePath)
+	if len(data) != 0 {
+		thisFilePath = path + sep + ksuid.New().String() + "_" + handler.Filename
+	}
 	objResp.Status.Description = thisFilePath
 
-	res := make([]byte, handler.Size)
-	_, err = io.ReadFull(file, res)
+	if objuid != "" {
+		obj, err := h.api.ObjGet(r.Context(), objuid)
+		if err != nil {
+			objResp.Status.Error = err
+			return
+		}
 
-	if err != nil {
-		logger.Error(h.ctx, "fileload readfull err", zap.Error(err))
-		objResp.Status.Error = err
-		return
-	}
+		if len(obj.Data) == 0 {
+			objResp.Status.Error = errors.New("error object not found")
+		}
 
-	err = h.vfs.Write(h.ctx, thisFilePath, res)
-	if err != nil {
-		logger.Error(h.ctx, "fileload write err", zap.Error(err))
-		objResp.Status.Error = err
-		return
+		for _, v := range obj.Data {
+			source := v.Source
+
+			elements, err := h.api.Element(h.ctx, "elements", source)
+			if err != nil {
+				objResp.Status.Error = errors.New("error getting elements")
+				return
+			}
+
+			for _, el := range elements.Data {
+				id := el.Id
+				if id == getField {
+					maxSizeString, f := el.Attr("max_size", "value")
+					if !f {
+						//Не нашелся аттрибут max_size значит не задали макс размер, значит по умолчанию пропускаем все размеры
+						break
+					}
+					maxSize, err := strconv.ParseFloat(maxSizeString, 64)
+					if err != nil {
+						//Аттрибут max_size нашелся, но его стерли поэтому не может запарсить, пропускаем как размер по умолчанию
+						break
+					}
+					if (contentLength != 0.0) && (contentLength > maxSize*1000000) {
+						objResp.Status.Error = errors.New("error too big file")
+						return
+					}
+				}
+			}
+		}
+
+		res := make([]byte, handler.Size)
+		_, err = io.ReadFull(file, res)
+
+		if err != nil {
+			logger.Error(h.ctx, "fileload readfull err", zap.Error(err))
+			objResp.Status.Error = err
+			return
+		}
+
+		err = h.vfs.Write(h.ctx, thisFilePath, res)
+		if err != nil {
+			logger.Error(h.ctx, "fileload write err", zap.Error(err))
+			objResp.Status.Error = err
+			return
+		}
+
+		// обновляем значение в поле данных загруженных данных объекта
+		// если multi - сохраняем как список через ,
+		// иначе подменяем значение старого пути
+		var sliceFiles = []string{}
+		if mode == "multi" {
+			if err != nil {
+				objResp.Status.Error = err
+			}
+			for _, v := range obj.Data {
+				path, found := v.Attr(getField, "value")
+				if !found {
+					objResp.Status.Error = err
+					return
+				}
+				sliceFiles = strings.Split(path, ",")
+			}
+		}
+
+		sliceFiles = append(sliceFiles, thisFilePath)
+		thisFilePath = strings.Join(sliceFiles, ",")
+
+		_, err = h.api.ObjAttrUpdate(h.ctx, objuid, getField, thisFilePath, "", "")
+		if err != nil {
+			objResp.Status.Error = err
+		}
+	} else {
+
+		//Если нет шаблона, огран по умолчанию 10 мбайт
+		if contentLength > 10000000 {
+			objResp.Status.Error = errors.New("error too big file")
+			return
+		}
+
+		res := make([]byte, handler.Size)
+		_, err = io.ReadFull(file, res)
+
+		if err != nil {
+			logger.Error(h.ctx, "fileload readfull err", zap.Error(err))
+			objResp.Status.Error = err
+			return
+		}
+
+		err = h.vfs.Write(h.ctx, thisFilePath, res)
+		if err != nil {
+			logger.Error(h.ctx, "fileload write err", zap.Error(err))
+			objResp.Status.Error = err
+			return
+		}
 	}
 
 	// ответ для CKEditor-a
@@ -217,41 +281,15 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 		num := r.FormValue("CKEditorFuncNum")
 		path = h.app.ConfigGet("ClientPath") + "/upload" + thisFilePath
 		outScript := `
- 			<script type="text/javascript">
-				window.parent.CKEDITOR.tools.callFunction('` + num + `', '` + path + `','');
-			</script>
-		`
+				 <script type="text/javascript">
+					window.parent.CKEDITOR.tools.callFunction('` + num + `', '` + path + `','');
+				</script>
+			`
 		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 		w.Write([]byte(path))
 		w.Write([]byte(outScript))
 
 		return
-	}
-
-	// обновляем значение в поле данных загруженных данных объекта
-	// если multi - сохраняем как список через ,
-	// иначе подменяем значение старого пути
-	var sliceFiles = []string{}
-	if mode == "multi" {
-		if err != nil {
-			objResp.Status.Error = err
-		}
-		for _, v := range obj.Data {
-			path, found := v.Attr(getField, "value")
-			if !found {
-				objResp.Status.Error = err
-				return
-			}
-			sliceFiles = strings.Split(path, ",")
-		}
-	}
-
-	sliceFiles = append(sliceFiles, thisFilePath)
-	thisFilePath = strings.Join(sliceFiles, ",")
-
-	_, err = h.api.ObjAttrUpdate(h.ctx, objuid, getField, thisFilePath, "", "")
-	if err != nil {
-		objResp.Status.Error = err
 	}
 
 	return
