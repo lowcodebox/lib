@@ -264,6 +264,7 @@ func NewFuncMap(vfs Vfs, api Api, cfg *model.Config, projectKey string, analytic
 		"analyticssetasync": Funcs.analyticsSetAsync,
 		"analyticssearch":   Funcs.analyticsSearch,
 		"analytycsquery":    Funcs.analyticsQuery,
+		"recursivechildren": Funcs.RecursiveChildren,
 
 		"extension": Funcs.extension,
 
