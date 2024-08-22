@@ -15,7 +15,7 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func BodyToResponse(w http.ResponseWriter, objResp models.Response, flagCKEditor bool) {
+func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEditor bool) {
 	fmt.Println("BodyToResponse func called")
 
 	// NO TESTED
@@ -127,7 +127,6 @@ func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file 
 }
 
 func (h *handlers) noObjLoad(file io.Reader, handler *multipart.FileHeader, contentLength int64, thisFilePath *string, objResp *models.Response) error {
-	fmt.Println("noObjLoad func called")
 
 	if contentLength > 10000000 {
 		return errors.New("error too big file")
@@ -145,7 +144,6 @@ func (h *handlers) noObjLoad(file io.Reader, handler *multipart.FileHeader, cont
 	}
 
 	objResp.Status.Description = *thisFilePath
-	fmt.Printf("thisfilepath: %s, from objResp: %s\n", *thisFilePath, objResp.Status.Description)
 	return nil
 }
 
@@ -155,7 +153,7 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	var objResp models.Response
 
 	objResp.Status.Status = 200
-	defer BodyToResponse(w, objResp, r.FormValue("CKEditor") != "")
+	defer BodyToResponse(w, &objResp, r.FormValue("CKEditor") != "")
 
 	fileField, getPath, getField, mode, objuid, contentLength, err := parseForm(r)
 	if err != nil {
@@ -170,11 +168,7 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	path := ""
-	urlPath := strings.Split(getPath, "/")
-	for _, v := range urlPath {
-		path = filepath.Join(path, v)
-	}
+	path := filepath.Join(strings.Split(getPath, "/")...)
 
 	thisFilePath := path + sep + handler.Filename
 	data, _, _ := h.vfs.Read(h.ctx, thisFilePath)
@@ -200,6 +194,4 @@ func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
 		CKEditorHandler(w, r, thisFilePath)
 		return
 	}
-
-	objResp.Status.Description = thisFilePath
 }
