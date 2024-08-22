@@ -121,10 +121,10 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (sr ScormRes)
 }
 
 func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, recursiveLevel int) (result models.ResponseData) {
-
 	var findChildren func(parent models.Data, relationField string, recursiveCalls int) error
+
 	findChildren = func(parent models.Data, relationField string, recursiveCalls int) error {
-		if recursiveCalls > recursiveLevel {
+		if (recursiveCalls > recursiveLevel) && (recursiveLevel != 0) {
 			return nil
 		}
 
@@ -132,10 +132,12 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 		searchParams := map[string]string{
 			"tpls":         parent.Source,
 			"limit":        "100",
-			"filter_src":   parentUid,
+			"filter_src":   parent.Uid,
 			"filter_field": relationField,
 			"short":        "false",
 		}
+
+		//fmt.Printf("searchParams: %+v\n", searchParams)
 
 		p, err := json.Marshal(searchParams)
 		if err != nil {
@@ -167,9 +169,11 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 			result.Data = append(result.Data, child)
 
 			//Ищем потомков потомка
-			if err := findChildren(child, relationField, recursiveCalls+1); err != nil {
+			err := findChildren(child, relationField, recursiveCalls+1)
+			if err != nil {
 				return err
 			}
+
 		}
 
 		return nil
