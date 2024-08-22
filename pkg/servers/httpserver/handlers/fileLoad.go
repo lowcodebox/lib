@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt" // Для вывода логов
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -16,7 +15,7 @@ import (
 )
 
 func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEditor bool) {
-	fmt.Println("BodyToResponse func called")
+	//fmt.Println("BodyToResponse func called")
 
 	// NO TESTED
 	if flagCKEditor { // для CKEditor уже отправили ответ в другом формате
@@ -32,13 +31,13 @@ func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEdito
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Accept", "application/json")
 	w.WriteHeader(objResp.Status.Status)
-	fmt.Printf("objResp: %s\n", out)
+	//fmt.Printf("objResp: %s\n", out)
 	w.Write(out)
-	fmt.Println("_______________")
+	//fmt.Println("_______________")
 }
 
 func parseForm(r *http.Request) (string, string, string, string, string, int64, error) {
-	fmt.Println("parseForm func called")
+	//fmt.Println("parseForm func called")
 	fileField := "uploadfile"
 	if r.FormValue("CKEditor") != "" {
 		fileField = "upload"
@@ -53,7 +52,7 @@ func parseForm(r *http.Request) (string, string, string, string, string, int64, 
 }
 
 func CKEditorHandler(w http.ResponseWriter, r *http.Request, thisFilePath string) {
-	fmt.Println("CKEditorHandler func called")
+	//fmt.Println("CKEditorHandler func called")
 
 	num := r.FormValue("CKEditorFuncNum")
 	path := "/upload" + thisFilePath
@@ -68,7 +67,7 @@ func CKEditorHandler(w http.ResponseWriter, r *http.Request, thisFilePath string
 }
 
 func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file io.Reader, handler *multipart.FileHeader, contentLength int64, thisFilePath *string, objResp *models.Response) error {
-	fmt.Println("objLoad func called")
+	//fmt.Println("objLoad func called")
 
 	var sliceFiles []string
 
@@ -148,7 +147,7 @@ func (h *handlers) noObjLoad(file io.Reader, handler *multipart.FileHeader, cont
 }
 
 func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("FileLoad func called")
+	//fmt.Println("FileLoad func called")
 
 	var objResp models.Response
 
