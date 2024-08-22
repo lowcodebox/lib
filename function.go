@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -68,7 +69,6 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 	}
 
 	//WriteFile("./dump.json", out)
-
 	w.WriteHeader(errMessage.Status)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(out)
@@ -311,4 +311,53 @@ func TimeParse(str string, toUTC bool) (res time.Time, err error) {
 	}
 
 	return res, nil
+}
+
+// Принимает на вход объект, текущую роль пользака и режим ("read", "write", "delete", "admin")
+func CheckRoles(obj models.Data, role string, mode string) (bool, error) {
+	access_read, foundRead := obj.Attr("access_read", "src")
+	access_write, foundWrite := obj.Attr("access_write", "src")
+	access_delete, foundDelete := obj.Attr("access_delete", "src")
+	access_admin, foundAdmin := obj.Attr("access_admin", "src")
+
+	if access_read == "" && access_write == "" && access_delete == "" && access_admin == "" {
+		return true, nil
+	} else {
+		switch mode {
+		case "read":
+			if !foundRead {
+				return false, errors.New("error not found access_read attr")
+			} else if strings.Contains(access_read, role) {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		case "write":
+			if !foundWrite {
+				return false, errors.New("error not found access_write attr")
+			} else if strings.Contains(access_write, role) {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		case "delete":
+			if !foundDelete {
+				return false, errors.New("error not found access_delete attr")
+			} else if strings.Contains(access_delete, role) {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		case "admin":
+			if !foundAdmin {
+				return false, errors.New("error not found access_admin attr")
+			} else if strings.Contains(access_admin, role) {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		default:
+			return false, errors.New("error unknown mode")
+		}
+	}
 }
