@@ -104,7 +104,6 @@ func (h *httpserver) NewRouter(checkHttpsOnly bool) (*mux.Router, error) {
 		Route{"pprofIndex", "GET", "/debug/pprof/trace", pprof.Trace},
 		Route{"pprofIndex", "GET", "/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP},
 		Route{"pprofIndex", "GET", "/debug/pprof/heap", pprof.Handler("heap").ServeHTTP},
-		Route{"CToolsLoadfile", "POST", "/load", handler.FileLoad},
 	}
 
 	for _, route := range routes {
