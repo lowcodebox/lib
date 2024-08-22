@@ -120,64 +120,14 @@ func (t *FuncImpl) parsescorm(zipFilename string, destPath string) (sr ScormRes)
 	return
 }
 
-/*
-func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, recursiveLevel int) (result models.ResponseData) {
-	findChildren := func(parent models.Data, relationField string) {
-		searchParams := map[string]string{
-			"tpls":         parent.Source,
-			"limit":        "100",
-			"filter_src":   parentUid,
-			"filter_field": relationField,
-			"short":        "false",
-		}
-		p, err := json.Marshal(searchParams)
-		if err != nil {
-			result.Status.Error = err
-			return
-		}
-
-		childrenStr, err := t.api.Search(context.Background(), "apiSearch", http.MethodPost, string(p))
-		if err != nil {
-			result.Status.Error = err
-			return
-		}
-
-		var children models.ResponseData
-		err = json.Unmarshal([]byte(childrenStr), &children)
-		if err != nil {
-			result.Status.Error = err
-		}
-
-		if len(children.Data) == 0 {
-			result.Data = append(result.Data, parent)
-			return
-		}
-		for _, child := range children.Data {
-			childSource := child.Source
-			if childSource != parent.Source {
-				result.Data = append(result.Data, child)
-				return
-			}
-
-			findChildren(child, relationField)
-		}
-	}
-
-	var rd models.ResponseData
-	parentRD, err := t.api.ObjGet(context.Background(), parentUid)
-	if err != nil {
-		rd.Status.Error = err
-		return
-	}
-	findChildren(parentRD.Data[0], relationField)
-	return
-}
-*/
-
 func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, recursiveLevel int) (result models.ResponseData) {
 
 	var findChildren func(parent models.Data, relationField string, recursiveCalls int) error
 	findChildren = func(parent models.Data, relationField string, recursiveCalls int) error {
+		if recursiveCalls > recursiveLevel {
+			return nil
+		}
+
 		searchParams := map[string]string{
 			"tpls":         parent.Source,
 			"limit":        "100",
@@ -203,20 +153,14 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 		}
 
 		if len(children.Data) == 0 {
-			result.Data = append(result.Data, parent)
 			return nil
 		}
 
 		for _, child := range children.Data {
 			if child.Source != parent.Source {
-				result.Data = append(result.Data, child)
 				continue
 			}
-
-			if recursiveCalls >= recursiveLevel {
-				result.Data = append(result.Data, child)
-				continue
-			}
+			result.Data = append(result.Data, child)
 
 			if err := findChildren(child, relationField, recursiveCalls+1); err != nil {
 				return err
@@ -228,6 +172,11 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 
 	parentRD, err := t.api.ObjGet(context.Background(), parentUid)
 	if err != nil {
+		result.Status.Error = err
+		return
+	}
+
+	if len(parentRD.Data) == 0 {
 		result.Status.Error = err
 		return
 	}
