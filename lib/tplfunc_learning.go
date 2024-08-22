@@ -128,6 +128,7 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 			return nil
 		}
 
+		//Делаем тело запроса на получение потомков родителя
 		searchParams := map[string]string{
 			"tpls":         parent.Source,
 			"limit":        "100",
@@ -152,16 +153,20 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 			return err
 		}
 
+		//Если нет детей, то дошли до низа рекурсии, можем идти наверх
 		if len(children.Data) == 0 {
 			return nil
 		}
 
 		for _, child := range children.Data {
+			//Если потомок не такого же шаблона то не добавляем его
 			if child.Source != parent.Source {
 				continue
 			}
+			//Добавляем потомка
 			result.Data = append(result.Data, child)
 
+			//Ищем потомков потомка
 			if err := findChildren(child, relationField, recursiveCalls+1); err != nil {
 				return err
 			}
@@ -170,6 +175,7 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 		return nil
 	}
 
+	//Ищем объект главного предка
 	parentRD, err := t.api.ObjGet(context.Background(), parentUid)
 	if err != nil {
 		result.Status.Error = err
@@ -181,6 +187,7 @@ func (t *FuncImpl) RecursiveChildren(parentUid string, relationField string, rec
 		return
 	}
 
+	//Ищем потомков родителя
 	if err := findChildren(parentRD.Data[0], relationField, 1); err != nil {
 		result.Status.Error = err
 		return
