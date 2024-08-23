@@ -15,16 +15,15 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEditor bool) {
-	//fmt.Println("BodyToResponse func called")
+const MByte = 1000000
 
+func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEditor bool) {
 	// NO TESTED
 	if flagCKEditor { // для CKEditor уже отправили ответ в другом формате
 		return
 	}
 
 	// формируем ответ
-	//
 	out, err := json.Marshal(*objResp)
 	if err != nil {
 		objResp.Status.Error = err
@@ -33,18 +32,11 @@ func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEdito
 	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	//w.Header().Set("Accept", "application/json")
 	w.WriteHeader(objResp.Status.Status)
-	//fmt.Printf("objResp: %+v\n", *objResp)
-	_, err = fmt.Fprintln(w, string(out))
-	/*
-		if err != nil {
-			fmt.Printf("error writing! %s\n", err.Error())
-		}
-	*/
-	//fmt.Println("_______________")
+	fmt.Fprintln(w, string(out))
+
 }
 
 func parseForm(r *http.Request) (string, string, string, string, string, int64, error) {
-	//fmt.Println("parseForm func called")
 	fileField := "uploadfile"
 	if r.FormValue("CKEditor") != "" {
 		fileField = "upload"
@@ -59,8 +51,6 @@ func parseForm(r *http.Request) (string, string, string, string, string, int64, 
 }
 
 func CKEditorHandler(w http.ResponseWriter, r *http.Request, thisFilePath string) {
-	//fmt.Println("CKEditorHandler func called")
-
 	num := r.FormValue("CKEditorFuncNum")
 	path := "/upload" + thisFilePath
 	outScript := `
@@ -74,8 +64,6 @@ func CKEditorHandler(w http.ResponseWriter, r *http.Request, thisFilePath string
 }
 
 func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file io.Reader, handler *multipart.FileHeader, contentLength int64, thisFilePath *string, objResp *models.Response) error {
-	//fmt.Println("objLoad func called")
-
 	var sliceFiles []string
 
 	obj, err := h.api.ObjGet(r.Context(), objuid)
@@ -90,17 +78,23 @@ func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file 
 			return errors.New("error getting elements")
 		}
 
+		foundFileField := false
 		for _, el := range elements.Data {
 			id := el.Id
 			if id == getField {
+				foundFileField = true
 				maxSizeString, f := el.Attr("max_size", "value")
 				if f {
 					maxSize, err := strconv.ParseFloat(maxSizeString, 64)
-					if err == nil && contentLength > int64(maxSize*1000000) {
+					if err == nil && contentLength > int64(maxSize*MByte) {
 						return errors.New("error too big file")
 					}
 				}
+				break
 			}
+		}
+		if !(foundFileField) && (contentLength > 50*MByte) {
+			return errors.New("error too big file")
 		}
 	}
 
@@ -132,15 +126,13 @@ func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file 
 	if err != nil {
 		return err
 	}
-	//fmt.Printf("attrUpdateRes: %+v\n", attrUpdateRes)
 
 	objResp.Status.Description = *thisFilePath
 	return nil
 }
 
 func (h *handlers) noObjLoad(file io.Reader, handler *multipart.FileHeader, contentLength int64, thisFilePath *string, objResp *models.Response) error {
-
-	if contentLength > 10000000 {
+	if contentLength > 10*MByte {
 		return errors.New("error too big file")
 	}
 
@@ -160,8 +152,6 @@ func (h *handlers) noObjLoad(file io.Reader, handler *multipart.FileHeader, cont
 }
 
 func (h *handlers) FileLoad(w http.ResponseWriter, r *http.Request) {
-	//fmt.Println("FileLoad func called")
-
 	var objResp models.Response
 
 	objResp.Status.Status = 200
