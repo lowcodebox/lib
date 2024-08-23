@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -23,16 +24,22 @@ func BodyToResponse(w http.ResponseWriter, objResp *models.Response, flagCKEdito
 	}
 
 	// формируем ответ
-	out, err := json.Marshal(objResp)
+	//
+	out, err := json.Marshal(*objResp)
 	if err != nil {
 		objResp.Status.Error = err
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Accept", "application/json")
+	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	//w.Header().Set("Accept", "application/json")
 	w.WriteHeader(objResp.Status.Status)
-	//fmt.Printf("objResp: %s\n", out)
-	w.Write(out)
+	//fmt.Printf("objResp: %+v\n", *objResp)
+	_, err = fmt.Fprintln(w, string(out))
+	/*
+		if err != nil {
+			fmt.Printf("error writing! %s\n", err.Error())
+		}
+	*/
 	//fmt.Println("_______________")
 }
 
@@ -120,6 +127,12 @@ func (h *handlers) objLoad(r *http.Request, objuid, getField, mode string, file 
 	if err != nil {
 		return err
 	}
+
+	_, err = h.api.ObjAttrUpdate(h.ctx, objuid, getField, *thisFilePath, "", "")
+	if err != nil {
+		return err
+	}
+	//fmt.Printf("attrUpdateRes: %+v\n", attrUpdateRes)
 
 	objResp.Status.Description = *thisFilePath
 	return nil
