@@ -57,14 +57,20 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					Usage: "Файл, собранный для какого окружения будет загружен",
 					Value: "dev",
 				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Usage: "Ключ проекта (опционально)",
+					Value: "",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				service := c.String("service")
 				version := c.String("version")
 				arch := c.String("arch")
 				env := c.String("env")
+				key := c.String("key")
 
-				err = funcCLI(ctx, "", "", "", "", service, arch, env, "", "", "update", version)
+				err = funcCLI(ctx, "", "", "", "", service, arch, env, key, "", "update", version)
 				return err
 			},
 		},
