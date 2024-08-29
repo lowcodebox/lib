@@ -68,9 +68,9 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 				version := c.String("version")
 				arch := c.String("arch")
 				env := c.String("env")
-				key := c.String("key")
+				projectKey := c.String("key")
 
-				err = funcCLI(ctx, "", "", "", "", service, arch, env, key, "", "update", version)
+				err = funcCLI(ctx, "", "", "", "", service, arch, env, projectKey, "", "update", version)
 				return err
 			},
 		},
@@ -125,6 +125,11 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 					Usage: "Запуск сервиса (для запуска нескольких сервисов укажите их через запятую)",
 					Value: "systems",
 				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Usage: "Ключ проекта (опционально)",
+					Value: "",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				configfile := c.String("config")
@@ -132,14 +137,14 @@ func RunServiceFuncCLI(ctx context.Context, funcCLI func(ctx context.Context, co
 				dir := c.String("dir")
 				dc := c.String("dc")
 				mode := c.String("mode")
-
 				service := c.String("service")
+				projectKey := c.String("key")
 
 				if dir == "default" {
 					dir, err = RootDir()
 				}
 
-				err = funcCLI(ctx, configfile, dir, port, mode, service, dc, "", "", "", "start", "")
+				err = funcCLI(ctx, configfile, dir, port, mode, service, dc, projectKey, "", "", "start", "")
 				return err
 			},
 		},
