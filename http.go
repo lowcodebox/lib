@@ -23,16 +23,16 @@ var reCrLf = regexp.MustCompile(`[\r\n]+`)
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
-func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, err error) {
-	r, _, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
-	return r, err
+func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, status int, err error) {
+	r, _, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	return r, status, err
 }
 
-func CurlCookies(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, err error) {
+func CurlCookies(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, status int, err error) {
 	return curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
 }
 
-func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, err error) {
+func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, status int, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -83,7 +83,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	case "JSONTOGET": // преобразуем параметры в json в строку запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -97,7 +97,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	case "JSONTOPOST": // преобразуем параметры в json в тело запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -109,6 +109,10 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 
 	default:
 		req, err = http.NewRequest(method, urlc, strings.NewReader(bodyJSON))
+	}
+
+	if err != nil {
+		return nil, nil, status, fmt.Errorf("error NewRequest in lib.Curl, method: %s, url: %s, bodyJSON: %s, err: %s", method, urlc, bodyJSON, err)
 	}
 
 	// дополняем переданными заголовками
@@ -124,14 +128,14 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	resp, err := client.Do(req)
 	if err != nil {
 		//fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
-		return "", nil, err
+		return "", nil, resp.StatusCode, err
 	} else {
 		defer resp.Body.Close()
 	}
 
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", nil, err
+		return "", nil, resp.StatusCode, err
 	}
 	responseString := string(responseData)
 
@@ -141,13 +145,15 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 		json.Unmarshal([]byte(responseString), &response)
 	}
 
-	// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
-	//json.Unmarshal([]byte(responseString), &result)
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.Status, method, req, responseString)
-	}
+	//// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
+	////json.Unmarshal([]byte(responseString), &result)
+	//if resp.StatusCode != 200 {
+	//	err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.Status, method, req, responseString)
+	//}
+	//
+	status = resp.StatusCode
 
-	return responseString, resp.Cookies(), err
+	return responseString, resp.Cookies(), status, err
 }
 
 func AddressProxy(addressProxy, interval string) (port string, err error) {
@@ -165,7 +171,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
 
-		res, err = Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		res, _, err = Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
 		if err != nil {
 			return "", err
 		}
