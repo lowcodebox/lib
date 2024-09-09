@@ -294,3 +294,12 @@ func ExtractNameVersionString(target, defaultName, defaultVersion string) (name,
 	target = "/" + strings.Join(tmp[2:], "/")
 	return name, version, host, nil
 }
+
+func CheckIntranet(req *http.Request) bool {
+	ip := ReadUserIP(req)
+	if strings.HasPrefix(ip, "10.") || strings.HasPrefix(ip, "127.") || strings.HasPrefix(ip, "192.") {
+		return true
+	}
+
+	return false
+}
