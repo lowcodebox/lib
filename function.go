@@ -80,6 +80,7 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	if config == "" {
 		return 0, fmt.Errorf("%s", "Configuration file is not found")
@@ -119,29 +120,29 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 		return 0, err
 	}
 
+	go cmd.Process.Wait()
+
 	pid = cmd.Process.Pid
 
 	// в течение заданного интервала ожидаем завершающий статус запуска
-	// или выходим если -1 (в процессе)
-	for {
+	// или выходим если -1 (в процессе или прибит сигналом)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for range ticker.C {
 		exitCode := cmd.ProcessState.ExitCode()
-		timer := time.NewTimer(100 * time.Millisecond)
-		// успешный запуск
-		if exitCode == 0 {
-			timer.Stop()
+
+		// завершился
+		if exitCode >= 0 {
 			return
-		}
-		// финальный неуспех
-		if exitCode > 0 {
-			cancel()
 		}
 
 		select {
-		case <-timer.C:
-			timer.Stop()
-		case <-ctx.Done(): // ожидание завершилось, если -1 - то работает
-			timer.Stop()
+		case <-ctx.Done():
 			return
+
+		default:
+			// -1 — работает или прибит сигналом
 		}
 	}
 
