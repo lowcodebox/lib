@@ -128,7 +128,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	resp, err := client.Do(req)
 	if err != nil {
 		//fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
-		return "", nil, resp.StatusCode, err
+		return "", nil, http.StatusBadRequest, err
 	} else {
 		defer resp.Body.Close()
 	}
