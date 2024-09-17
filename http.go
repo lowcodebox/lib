@@ -112,7 +112,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	}
 
 	if err != nil {
-		return nil, nil, status, fmt.Errorf("error NewRequest in lib.Curl, method: %s, url: %s, bodyJSON: %s, err: %s", method, urlc, bodyJSON, err)
+		return nil, nil, status, fmt.Errorf("error NewRequest in lib.Curl, err: %w", err)
 	}
 
 	// дополняем переданными заголовками
