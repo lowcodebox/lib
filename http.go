@@ -19,7 +19,10 @@ import (
 
 const clientHttpTimeout = 60 * time.Second
 
-var reCrLf = regexp.MustCompile(`[\r\n]+`)
+var (
+	reCrLf = regexp.MustCompile(`[\r\n]+`)
+	rePort = regexp.MustCompile(`:\d+$`)
+)
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
@@ -243,6 +246,12 @@ func ReadUserIP(r *http.Request) string {
 	if IPAddress == "" {
 		IPAddress = r.RemoteAddr
 	}
+
+	if strings.Contains(IPAddress, ":") {
+		// заменяем так, потому что в IPv6 присутствует «:»
+		return rePort.ReplaceAllString(IPAddress, "")
+	}
+
 	return IPAddress
 }
 
