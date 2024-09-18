@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/go-kit/kit/metrics"
@@ -57,6 +59,8 @@ var (
 	service_port_metrics metrics.Gauge = kitprometheus.NewGaugeFrom(prometheus.GaugeOpts{
 		Name: "service_port_metrics",
 	}, []string{"value"})
+
+	buildInfo *prometheus.GaugeVec
 )
 
 func SendServiceParamsToMetric(uid, name, version, status, pid, replicas, portHTTP, portGRPC, portMetrics, portHTTPS, dead_time, follower string) {
@@ -108,4 +112,23 @@ func ValidateNameVersion(project, types, domain string) (name, version string) {
 	}
 
 	return name, version
+}
+
+func NewBuildInfo(service string) *prometheus.GaugeVec {
+	buildInfo = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: service,
+		Name:      "build_info",
+		Help: fmt.Sprintf(
+			"A metric with a constant '1' value labeled by version, revision, branch, and goversion from which %s was built.",
+			service,
+		),
+	}, []string{"version", "revision", "branch", "goversion"})
+
+	return buildInfo
+}
+
+func SetBuildInfo(version, revision, branch string) {
+	buildInfo.WithLabelValues(
+		version, revision, branch, runtime.Version(),
+	).Set(1)
 }
