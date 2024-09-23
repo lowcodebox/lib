@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"errors"
 
 	"github.com/graymeta/stow"
 	"github.com/graymeta/stow/azure"
@@ -341,6 +342,12 @@ func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser
 }
 
 func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
+	user, _ := ctx.Value("UserUid").(string)
+
+	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) {
+	    return nil, errors.New("private directory")
+	}
+
 	item, err := v.getItem(file, bucket)
 	if err != nil {
 		return nil, err
