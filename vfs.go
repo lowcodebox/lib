@@ -5,6 +5,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,11 @@ import (
 	_ "github.com/graymeta/stow/s3"
 	// support oracle storage
 	_ "github.com/graymeta/stow/oracle"
+)
+
+const (
+	privateDirectory = "private directory"
+	userUid          = "UserUid"
 )
 
 type vfs struct {
@@ -341,6 +347,12 @@ func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser
 }
 
 func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
+	user, _ := ctx.Value(userUid).(string)
+
+	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) {
+		return nil, errors.New(privateDirectory)
+	}
+
 	item, err := v.getItem(file, bucket)
 	if err != nil {
 		return nil, err
