@@ -34,7 +34,7 @@ import (
 
 const (
 	privateDirectory = "private directory"
-	userUid          = "UserUid"
+	userUid          = "user_uid"
 )
 
 type vfs struct {
