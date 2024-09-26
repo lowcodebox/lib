@@ -35,7 +35,11 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
+	user, _ := req.Context().Value(userUid).(string)
 
+	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
+		return nil, errors.New(privateDirectory)
+	}
 	if t.Username != "" {
 		switch t.Kind {
 		case "s3":
