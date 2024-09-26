@@ -225,7 +225,7 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 	select {
 	case d := <-chResult:
 		if d.Err != nil {
-			return nil, "", err
+			return nil, "", d.Err
 		}
 
 		defer func() {
