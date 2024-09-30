@@ -145,7 +145,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	// возвращаем объект ответа, если передано - в какой объект класть результат
 	// НА ОШИБКУ НЕ ПРОВЕРЯТЬ!!!!!!
 	if response != nil {
-		json.Unmarshal([]byte(responseString), &response)
+		json.Unmarshal(responseData, &response)
 	}
 
 	//// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
