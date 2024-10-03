@@ -12,6 +12,13 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws/request"
+	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
 var ErrPath = errors.New("invalid path")
@@ -43,39 +50,46 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if t.Username != "" {
 		switch t.Kind {
 		case "s3":
-			// todo make sign for s3
-			//signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
-			//_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
-			//if err != nil {
-			//	return nil, err
-			//}
-			//
-			//fmt.Println(req.Header)
+			//todo make sign for s3
+			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
+			_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
+			if err != nil {
+				return nil, err
+			}
 
-			//awsReq := request.Request{
-			//	Config: aws.Config{
-			//		CredentialsChainVerboseErrors: nil,
-			//		Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
-			//		Endpoint:                      aws.String(t.URL),
-			//		Region:                        aws.String(t.Region),
-			//		DisableSSL:                    aws.Bool(t.DisableSSL),
-			//		S3ForcePathStyle:              aws.Bool(true),
-			//	},
-			//	Time:        time.Now(),
-			//	HTTPRequest: req,
-			//}
-			//
-			//s3.Sign(&awsReq)
-			//fmt.Println(awsReq.HTTPRequest.Header)
+			fmt.Println(req.Header)
+
+			awsReq := request.Request{
+				Config: aws.Config{
+					CredentialsChainVerboseErrors: nil,
+					Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
+					Endpoint:                      aws.String(t.URL),
+					Region:                        aws.String(t.Region),
+					DisableSSL:                    aws.Bool(t.DisableSSL),
+					S3ForcePathStyle:              aws.Bool(true),
+				},
+				Time:        time.Now(),
+				HTTPRequest: req,
+			}
+
+			s3.Sign(&awsReq)
+			fmt.Println(awsReq.HTTPRequest.Header)
 
 		default:
+			fmt.Println("default Authorization")
 			req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
 				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
 					t.Username, t.Password)))))
 		}
 	}
-
-	return t.Transport.RoundTrip(req)
+	resp, err := t.Transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp != nil {
+		resp.Header.Set("Content-Type", "text/plain")
+	}
+	return resp, nil
 }
 
 func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
