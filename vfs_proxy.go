@@ -50,7 +50,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 			//todo make sign for s3
 			fmt.Println("s3 Authorization")
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
-			req.Header.Add("If-Modified-Since", "LastModified")
+			//req.Header.Add("If-Modified-Since", "LastModified")
 			headers, err := signer.Sign(req, nil, "s3", t.Region, time.Now().UTC())
 			fmt.Printf("headers: %+v\n", headers)
 			if err != nil {
@@ -83,14 +83,8 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 	}
 	fmt.Printf("req: %+v\n", req)
-	resp, err := t.Transport.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-	// if resp != nil {
-	// 	resp.Header.Set("Content-Type", "text/plain")
-	// }
-	return resp, nil
+
+	return t.Transport.RoundTrip(req)
 }
 
 func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
