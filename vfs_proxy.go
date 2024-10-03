@@ -94,6 +94,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	trimPrefix = url.QueryEscape(trimPrefix)
 	newPrefix = url.QueryEscape(newPrefix)
+	fmt.Printf("trimprefix: %s, newPrefix: %s\n", trimPrefix, newPrefix)
 	parsedUrl, err := url.Parse(v.endpoint)
 	if err != nil {
 		return nil, err
