@@ -81,13 +81,14 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 					t.Username, t.Password)))))
 		}
 	}
+	fmt.Printf("req: %+v\n", req)
 	resp, err := t.Transport.RoundTrip(req)
 	if err != nil {
 		return nil, err
 	}
-	// if resp != nil {
-	// 	resp.Header.Set("Content-Type", "text/plain")
-	// }
+	if resp != nil {
+		resp.Header.Set("Content-Type", "text/plain")
+	}
 	return resp, nil
 }
 
