@@ -14,10 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
@@ -51,29 +48,30 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 		switch t.Kind {
 		case "s3":
 			//todo make sign for s3
+			fmt.Println("s3 Authorization")
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
 			_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
 			if err != nil {
 				return nil, err
 			}
 
-			fmt.Println(req.Header)
+			// fmt.Println(req.Header)
 
-			awsReq := request.Request{
-				Config: aws.Config{
-					CredentialsChainVerboseErrors: nil,
-					Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
-					Endpoint:                      aws.String(t.URL),
-					Region:                        aws.String(t.Region),
-					DisableSSL:                    aws.Bool(t.DisableSSL),
-					S3ForcePathStyle:              aws.Bool(true),
-				},
-				Time:        time.Now(),
-				HTTPRequest: req,
-			}
+			// awsReq := request.Request{
+			// 	Config: aws.Config{
+			// 		CredentialsChainVerboseErrors: nil,
+			// 		Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
+			// 		Endpoint:                      aws.String(t.URL),
+			// 		Region:                        aws.String(t.Region),
+			// 		DisableSSL:                    aws.Bool(t.DisableSSL),
+			// 		S3ForcePathStyle:              aws.Bool(true),
+			// 	},
+			// 	Time:        time.Now(),
+			// 	HTTPRequest: req,
+			// }
 
-			s3.Sign(&awsReq)
-			fmt.Println(awsReq.HTTPRequest.Header)
+			// // Create a new SigV4 signer
+			// signer := v4.NewSigner()
 
 		default:
 			fmt.Println("default Authorization")
