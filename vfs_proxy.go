@@ -52,6 +52,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 			fmt.Println("s3 Authorization")
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
 			//req.Header.Add("If-Modified-Since", "LastModified")
+			req.Header.Add("Content-Type", "text/plain;charset=UTF-8")
 			headers, err := signer.Sign(req, nil, "s3", t.Region, time.Now().UTC())
 			h, _ := json.Marshal(headers)
 			fmt.Printf("signed headers: %s\n", string(h))
