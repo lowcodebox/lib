@@ -50,7 +50,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 			//todo make sign for s3
 			fmt.Println("s3 Authorization")
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
-			_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
+			_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now().UTC())
 			if err != nil {
 				return nil, err
 			}
