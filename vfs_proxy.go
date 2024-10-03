@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +53,8 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
 			//req.Header.Add("If-Modified-Since", "LastModified")
 			headers, err := signer.Sign(req, nil, "s3", t.Region, time.Now().UTC())
-			fmt.Printf("headers: %+v\n", headers)
+			h, _ := json.Marshal(headers)
+			fmt.Printf("signed headers: %s\n", string(h))
 			if err != nil {
 				return nil, err
 			}
@@ -82,7 +84,8 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 					t.Username, t.Password)))))
 		}
 	}
-	fmt.Printf("req: %+v\n", req)
+	h, _ := json.Marshal(req.Header)
+	fmt.Printf("after headers: %s\n", string(h))
 
 	return t.Transport.RoundTrip(req)
 }
