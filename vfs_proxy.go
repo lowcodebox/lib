@@ -74,19 +74,19 @@ func EscapeCyrillicURL(u *url.URL) (*url.URL, error) {
 }
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	escapedUrl, err := EscapeCyrillicURL(req.URL)
-	if err != nil {
-		return nil, err
-	}
-	req.URL = escapedUrl
-	fmt.Printf("escaped path: %+v", req.URL)
-
 	if strings.Contains(req.URL.Path, "../") {
 		return nil, ErrPath
 	}
 
 	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
 	user, _ := req.Context().Value(userUid).(string)
+
+	escapedUrl, err := EscapeCyrillicURL(req.URL)
+	if err != nil {
+		return nil, err
+	}
+	req.URL = escapedUrl
+	fmt.Printf("escaped path: %+v", req.URL)
 
 	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
 		return nil, errors.New(privateDirectory)
