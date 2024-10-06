@@ -36,6 +36,7 @@ type BasicAuthTransport struct {
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.URL.Path = url.QueryEscape(req.URL.Path)
+	fmt.Printf("escaped path: %s", req.URL.Path)
 
 	if strings.Contains(req.URL.Path, "../") {
 		return nil, ErrPath
