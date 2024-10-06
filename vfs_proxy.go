@@ -105,6 +105,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 			if err != nil {
 				return nil, err
 			}
+			req.RequestURI = ""
 
 			// fmt.Println(req.Header)
 
