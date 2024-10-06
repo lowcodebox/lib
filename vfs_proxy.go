@@ -34,9 +34,52 @@ type BasicAuthTransport struct {
 	http.Transport
 }
 
+func escapeNonASCII(s string) string {
+	var buf strings.Builder
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c > 127 {
+			buf.WriteString(fmt.Sprintf("%%%02X", c))
+		} else {
+			buf.WriteByte(c)
+		}
+	}
+	return buf.String()
+}
+
+func EscapeCyrillicURL(u *url.URL) (*url.URL, error) {
+	escapedURL := *u // Make a copy to avoid modifying the original
+
+	// Escape the Path
+	escapedURL.Path = escapeNonASCII(escapedURL.Path)
+
+	// Escape the RawQuery
+	if escapedURL.RawQuery != "" {
+		values, err := url.ParseQuery(escapedURL.RawQuery)
+		if err != nil {
+			return nil, err
+		}
+		escapedValues := url.Values{}
+		for key, vals := range values {
+			escapedKey := escapeNonASCII(key)
+			for _, val := range vals {
+				escapedVal := escapeNonASCII(val)
+				escapedValues.Add(escapedKey, escapedVal)
+			}
+		}
+		escapedURL.RawQuery = escapedValues.Encode()
+	}
+
+	return &escapedURL, nil
+}
+
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.URL.Path = url.QueryEscape(req.URL.Path)
-	fmt.Printf("escaped path: %s", req.URL.Path)
+	escapedUrl, err := EscapeCyrillicURL(req.URL)
+	if err != nil {
+		return nil, err
+	}
+	req.URL = escapedUrl
+	fmt.Printf("escaped path: %+v", req.URL)
 
 	if strings.Contains(req.URL.Path, "../") {
 		return nil, ErrPath
