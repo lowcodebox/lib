@@ -47,84 +47,32 @@ func escapeNonASCII(s string) string {
 	return buf.String()
 }
 
-func EscapeCyrillicURL(u *url.URL) (*url.URL, error) {
-	escapedURL := *u // Make a copy to avoid modifying the original
-
-	// Escape the Path
-	escapedURL.Path = escapeNonASCII(escapedURL.Path)
-
-	// Escape the RawQuery
-	if escapedURL.RawQuery != "" {
-		values, err := url.ParseQuery(escapedURL.RawQuery)
-		if err != nil {
-			return nil, err
-		}
-		escapedValues := url.Values{}
-		for key, vals := range values {
-			escapedKey := escapeNonASCII(key)
-			for _, val := range vals {
-				escapedVal := escapeNonASCII(val)
-				escapedValues.Add(escapedKey, escapedVal)
-			}
-		}
-		escapedURL.RawQuery = escapedValues.Encode()
-	}
-
-	return &escapedURL, nil
-}
-
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if strings.Contains(req.URL.Path, "../") {
 		return nil, ErrPath
 	}
 
-	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
-	user, _ := req.Context().Value(userUid).(string)
+	// Modify and encode the path
+	modifiedPath := t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
+	escapedPath := url.PathEscape(modifiedPath)
+	req.URL.Path = modifiedPath
+	req.URL.RawPath = escapedPath
 
-	escapedUrl, err := EscapeCyrillicURL(req.URL)
-	if err != nil {
-		return nil, err
-	}
-	req.URL = escapedUrl
-	fmt.Printf("escaped path: %+v", req.URL)
+	user, _ := req.Context().Value(userUid).(string)
 
 	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
 		return nil, errors.New(privateDirectory)
 	}
+
 	if t.Username != "" {
 		switch t.Kind {
 		case "s3":
-			//todo make sign for s3
 			fmt.Println("s3 Authorization")
 			signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
-			//req.Header.Add("If-Modified-Since", "LastModified")
-			req.Header.Add("Content-Type", "text/plain;charset=UTF-8")
-			headers, err := signer.Sign(req, nil, "s3", t.Region, time.Now().UTC())
-			h, _ := json.Marshal(headers)
-			fmt.Printf("signed headers: %s\n", string(h))
+			_, err := signer.Sign(req, nil, "s3", t.Region, time.Now().UTC())
 			if err != nil {
 				return nil, err
 			}
-			req.RequestURI = ""
-
-			// fmt.Println(req.Header)
-
-			// awsReq := request.Request{
-			// 	Config: aws.Config{
-			// 		CredentialsChainVerboseErrors: nil,
-			// 		Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
-			// 		Endpoint:                      aws.String(t.URL),
-			// 		Region:                        aws.String(t.Region),
-			// 		DisableSSL:                    aws.Bool(t.DisableSSL),
-			// 		S3ForcePathStyle:              aws.Bool(true),
-			// 	},
-			// 	Time:        time.Now(),
-			// 	HTTPRequest: req,
-			// }
-
-			// // Create a new SigV4 signer
-			// signer := v4.NewSigner()
-
 		default:
 			fmt.Println("default Authorization")
 			req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
@@ -132,6 +80,7 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 					t.Username, t.Password)))))
 		}
 	}
+
 	h, _ := json.Marshal(req.Header)
 	fmt.Printf("after headers: %s\n", string(h))
 
