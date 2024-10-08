@@ -17,6 +17,18 @@ import (
 	"github.com/labstack/gommon/color"
 )
 
+// ResponseWrapper Обертка над ResponseWriter для сбора статус кодов
+type ResponseWrapper struct {
+	http.ResponseWriter
+
+	code int
+}
+
+func (r *ResponseWrapper) WriteHeader(statusCode int) {
+	r.code = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
 const clientHttpTimeout = 60 * time.Second
 
 var (
