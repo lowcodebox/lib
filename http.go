@@ -21,11 +21,11 @@ import (
 type ResponseWrapper struct {
 	http.ResponseWriter
 
-	code int
+	Code int
 }
 
 func (r *ResponseWrapper) WriteHeader(statusCode int) {
-	r.code = statusCode
+	r.Code = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
 
