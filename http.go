@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -34,6 +35,9 @@ const clientHttpTimeout = 60 * time.Second
 var (
 	reCrLf = regexp.MustCompile(`[\r\n]+`)
 	rePort = regexp.MustCompile(`:\d+$`)
+
+	errUnauthorized = errors.New("unauthorized")
+	errTokenInvalid = errors.New("token is not valid")
 )
 
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
@@ -329,4 +333,44 @@ func CheckIntranet(req *http.Request) bool {
 	}
 
 	return false
+}
+
+func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var serviceKey string
+			var err error
+
+			ctx := r.Context()
+
+			defer func() {
+				if err != nil {
+					_ = ResponseJSON(w, nil, "Unauthorized", err, nil)
+					return
+				}
+				next.ServeHTTP(w, r.WithContext(ctx))
+			}()
+
+			// он приватный - проверяем на валидность токена
+			serviceKeyHeader := r.Header.Get(models.HeaderXServiceKey)
+			if serviceKeyHeader != "" {
+				serviceKey = serviceKeyHeader
+			} else {
+				serviceKeyCookie, err := r.Cookie(models.HeaderXServiceKey)
+				if err == nil {
+					serviceKey = serviceKeyCookie.Value
+				}
+			}
+
+			if serviceKey == "" {
+				err = errUnauthorized
+				return
+			}
+
+			valid, _ := CheckXServiceKey(name+"/"+version, []byte(projectKey), serviceKey)
+			if !valid {
+				err = errTokenInvalid
+			}
+		})
+	}
 }
