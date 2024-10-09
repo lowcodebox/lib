@@ -24,9 +24,9 @@ type Attribute struct {
 }
 
 type Response struct {
-	Data    interface{} `json:"data"`
-	Status  RestStatus  `json:"status"`
-	Metrics Metrics     `json:"metrics"`
+	Data    interface{} `json:"data,omitempty"`
+	Status  RestStatus  `json:"status,omitempty"`
+	Metrics Metrics     `json:"metrics,omitempty"`
 }
 
 type ResponseData struct {
@@ -37,19 +37,19 @@ type ResponseData struct {
 }
 
 type Metrics struct {
-	ResultSize    int    `json:"result_size"`
-	ResultCount   int    `json:"result_count"`
-	ResultOffset  int    `json:"result_offset"`
-	ResultLimit   int    `json:"result_limit"`
-	ResultPage    int    `json:"result_page"`
-	TimeExecution string `json:"time_execution"`
-	TimeQuery     string `json:"time_query"`
+	ResultSize    int    `json:"result_size,omitempty"`
+	ResultCount   int    `json:"result_count,omitempty"`
+	ResultOffset  int    `json:"result_offset,omitempty"`
+	ResultLimit   int    `json:"result_limit,omitempty"`
+	ResultPage    int    `json:"result_page,omitempty"`
+	TimeExecution string `json:"time_execution,omitempty"`
+	TimeQuery     string `json:"time_query,omitempty"`
 
-	PageLast    int   `json:"page_last"`
-	PageCurrent int   `json:"page_current"`
-	PageList    []int `json:"page_list"`
-	PageFrom    int   `json:"page_from"`
-	PageTo      int   `json:"page_to"`
+	PageLast    int   `json:"page_last,omitempty"`
+	PageCurrent int   `json:"page_current,omitempty"`
+	PageList    []int `json:"page_list,omitempty"`
+	PageFrom    int   `json:"page_from,omitempty"`
+	PageTo      int   `json:"page_to,omitempty"`
 }
 
 // Attr возвращаем необходимый значение атрибута для объекта если он есть, инае пусто

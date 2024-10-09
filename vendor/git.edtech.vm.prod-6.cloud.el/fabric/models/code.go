@@ -45,13 +45,13 @@ var StatusCode = RStatus{
 type RStatus map[string]RestStatus
 type RestStatus struct {
 	Source      string `json:"source,omitempty"`
-	Description string `json:"description"`
-	Status      int    `json:"status"`
-	Code        string `json:"code"`
-	Error       error  `json:"error"`
+	Description string `json:"description,omitempty"`
+	Status      int    `json:"status,omitempty"`
+	Code        string `json:"code,omitempty"`
+	Error       error  `json:"error,omitempty"`
 }
 
-func (r RestStatus) MarshalJSON() ([]byte, error) {
+func (r *RestStatus) MarshalJSON() ([]byte, error) {
 	type RestStatusJson struct {
 		Source      string `json:"source,omitempty"`
 		Description string `json:"description"`
@@ -74,7 +74,7 @@ func (r RestStatus) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (r RestStatus) UnmarshalJSON(b []byte) error {
+func (r *RestStatus) UnmarshalJSON(b []byte) error {
 	type RestStatusJson struct {
 		Source      string `json:"source"`
 		Description string `json:"description"`
