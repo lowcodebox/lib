@@ -122,13 +122,13 @@ func NewBuildInfo(service string) *prometheus.GaugeVec {
 			"A metric with a constant '1' value labeled by version, revision, branch, and goversion from which %s was built.",
 			service,
 		),
-	}, []string{"version", "revision", "branch", "goversion"})
+	}, []string{"version", "revision", "dc", "goversion"})
 
 	return buildInfo
 }
 
-func SetBuildInfo(version, revision, branch string) {
+func SetBuildInfo(version, revision, dc string) {
 	buildInfo.WithLabelValues(
-		version, revision, branch, runtime.Version(),
+		version, revision, dc, runtime.Version(),
 	).Set(1)
 }
