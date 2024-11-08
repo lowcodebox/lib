@@ -47,6 +47,7 @@ type vfs struct {
 }
 
 type Vfs interface {
+	Item(ctx context.Context, path string) (file Item, err error)
 	List(ctx context.Context, prefix string, pageSize int) (files []Item, err error)
 	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
 	ReadFromBucket(ctx context.Context, file, bucket string) (data []byte, mimeType string, err error)
@@ -139,6 +140,11 @@ func (v *vfs) Close() (err error) {
 	err = v.location.Close()
 
 	return err
+}
+
+// Item получает метаданные объекта
+func (v *vfs) Item(ctx context.Context, path string) (file Item, err error) {
+	return v.getItem(path, v.bucket)
 }
 
 // Read чтение по указанному пути из бакета проекта
