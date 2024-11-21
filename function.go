@@ -83,7 +83,7 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 	defer cancel()
 
 	if config == "" {
-		return 0, fmt.Errorf("%s", "Configuration file is not found")
+		return 0, errors.New("config file not specified")
 	}
 	if command == "" {
 		command = "start"
@@ -100,13 +100,13 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 		dirPath := "debug" + sep + srv
 		err = CreateDir(dirPath, 0777)
 		if err != nil {
-			return 0, fmt.Errorf("error create directory for debug-file. path: %s, err: %s", dirPath, err)
+			return 0, fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
 		}
 
 		filePath := "debug" + sep + srv + sep + fmt.Sprint(t) + "_" + UUID()[:6] + ".log"
 		f, err := os.Create(filePath)
 		if err != nil {
-			return 0, fmt.Errorf("error create debug-file. path: %s, err: %s", filePath, err)
+			return 0, fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
 		}
 		cmd.Stdout = f
 		cmd.Stderr = f
@@ -115,9 +115,8 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err = cmd.Start()
 	if err != nil {
-		err = fmt.Errorf("status: %d, config: %s", cmd.ProcessState.ExitCode(), config)
-
-		return 0, err
+		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, dc: %s, err: %w",
+			cmd.ProcessState.ExitCode(), config, path, command, mode, dc, err)
 	}
 
 	go cmd.Process.Wait()
