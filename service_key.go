@@ -66,6 +66,11 @@ func (b *XServiceKeyBuilder) WithRequestID(requestID string) *XServiceKeyBuilder
 	return b
 }
 
+func (b *XServiceKeyBuilder) WithInterval(interval time.Duration) *XServiceKeyBuilder {
+	b.tokenInterval = interval
+	return b
+}
+
 func (b *XServiceKeyBuilder) Build(projectKey []byte) (token string, err error) {
 	b.key.Expired = time.Now().Add(b.tokenInterval).Unix()
 	return encodeServiceKey(b.key, projectKey)
