@@ -51,6 +51,9 @@ type ProfileData struct {
 	UserId     string `json:"user_id,omitempty"`
 	OfficeId   string `json:"office_id,omitempty"`
 	ShardId    string `json:"shard_id,omitempty"`
+
+	// IAM будет искать по этим RoleIDs роли, у которых сходится атрибут role_id, и создавать профили с этими ролями
+	RoleIDs string `json:"role_ids"`
 }
 
 type Items struct {

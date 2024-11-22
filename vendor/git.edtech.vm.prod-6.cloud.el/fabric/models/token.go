@@ -20,9 +20,14 @@ type Roles struct {
 }
 
 type XServiceKey struct {
-	Domain    string
-	Client    string
-	Expired   int64
-	CheckCert bool
-	WhiteURI  string
+	Domain     string
+	Client     string
+	Expired    int64
+	CheckCert  bool
+	WhiteURI   string
+	Role       string
+	Profile    string
+	Groups     string
+	ServiceUID string
+	RequestID  string
 }
