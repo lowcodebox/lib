@@ -7,6 +7,7 @@ const (
 	ClientField    = "client"
 	ServiceIDField = "service-id"
 	ConfigIDField  = "config-id"
+	DCField        = "dc"
 
 	HeaderXRequestID      = "X-Request-ID"
 	HeaderXServiceKey     = "X-Service-Key"
@@ -16,6 +17,7 @@ const (
 	HeaderXRequestUnit    = "X-Request-Unit"
 	HeaderXRequestService = "X-Request-Service"
 	HeaderXServiceClient  = "X-Service-Client"
+	HeaderXDC             = "X-DC"
 )
 
 var ProxiedHeaders = map[string]string{
@@ -23,4 +25,5 @@ var ProxiedHeaders = map[string]string{
 	UserIDField:    HeaderXUserID,
 	ClientField:    HeaderXServiceClient,
 	UserIPField:    HeaderXUserIP,
+	DCField:        HeaderXDC,
 }

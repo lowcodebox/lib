@@ -1,6 +1,10 @@
 package models
 
-import "strings"
+import (
+	"encoding/json"
+	"errors"
+	"strings"
+)
 
 type Data struct {
 	Uid        string               `json:"uid"`
@@ -179,4 +183,75 @@ func (p *ResponseData) FilterRole(role string) {
 	}
 
 	return
+}
+
+func (r *Response) MarshalJSON() ([]byte, error) {
+	type RestStatusJson struct {
+		Source      string `json:"source,omitempty"`
+		Description string `json:"description"`
+		Status      int    `json:"status"`
+		Code        string `json:"code"`
+		Error       string `json:"error"`
+	}
+
+	type ResponseDataJson struct {
+		Data    interface{}    `json:"data,omitempty"`
+		Status  RestStatusJson `json:"status,omitempty"`
+		Metrics Metrics        `json:"metrics,omitempty"`
+	}
+
+	errStr := ""
+	if r.Status.Error != nil {
+		errStr = r.Status.Error.Error()
+	}
+
+	return json.Marshal(ResponseDataJson{
+		Data: r.Data,
+		Status: RestStatusJson{
+			Source:      r.Status.Source,
+			Description: r.Status.Description,
+			Status:      r.Status.Status,
+			Code:        r.Status.Code,
+			Error:       errStr,
+		},
+		Metrics: r.Metrics,
+	})
+}
+
+func (r *Response) UnmarshalJSON(b []byte) error {
+	type RestStatusJson struct {
+		Source      string `json:"source"`
+		Description string `json:"description"`
+		Status      int    `json:"status"`
+		Code        string `json:"code"`
+		Error       string `json:"error"`
+	}
+
+	type ResponseDataJson struct {
+		Data    interface{}    `json:"data"`
+		Status  RestStatusJson `json:"status"`
+		Metrics Metrics        `json:"metrics"`
+	}
+
+	var data ResponseDataJson
+
+	err := json.Unmarshal(b, &data)
+	if err != nil {
+		return err
+	}
+
+	r.Data = data.Data
+
+	r.Status.Source = data.Status.Source
+	r.Status.Description = data.Status.Description
+	r.Status.Status = data.Status.Status
+	r.Status.Code = data.Status.Code
+
+	if data.Status.Error != "" {
+		r.Status.Error = errors.New(data.Status.Error)
+	}
+
+	r.Metrics = data.Metrics
+
+	return nil
 }
