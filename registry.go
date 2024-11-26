@@ -12,6 +12,10 @@ import (
 // В данный момент пока преобразует в формат хост:порт и перемешивает
 // instances - текущие экземпляры сервиса
 func OptimizePathMesh(instances []models.Pong) (urls []string) {
+	if len(instances) == 0 {
+		return urls
+	}
+
 	urls = make([]string, len(instances))
 	for i := range instances {
 		// Сервис можно работать по http или grpc
