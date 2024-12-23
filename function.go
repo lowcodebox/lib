@@ -76,6 +76,22 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 	return
 }
 
+// RunProcess стартуем сразу все реплики сервиса из конфига
+// использовать на первичном развёртывании проекта
+func RunProcessReplicas(path, config, command, mode, dc string, replicas int) (pids []int, err error) {
+	pids = make([]int, 0, replicas)
+
+	for i := 0; i < replicas; i++ {
+		pid, err := RunProcess(path, config, command, mode, dc)
+		if err != nil {
+			return pids, fmt.Errorf("failed to start replica %d: %w", i, err)
+		}
+		pids = append(pids, pid)
+	}
+
+	return pids, nil
+}
+
 // RunProcess стартуем сервис из конфига
 func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 	var cmd *exec.Cmd
