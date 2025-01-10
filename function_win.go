@@ -30,7 +30,6 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 
 	cmd = exec.Command(path, command, "--config", config, "--mode", mode, "--dc", dc)
 	if mode == "debug" {
-		t := time.Now().Format("2006.01.02-15-04-05")
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]
 
@@ -40,7 +39,7 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 			return 0, fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
 		}
 
-		filePath := "debug" + sep + srv + sep + fmt.Sprint(t) + "_" + UUID()[:6] + ".log"
+		filePath := "debug" + sep + srv + sep + UUID() + ".log"
 		f, err := os.Create(filePath)
 		if err != nil {
 			return 0, fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
