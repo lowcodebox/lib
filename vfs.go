@@ -49,10 +49,10 @@ type vfs struct {
 type Vfs interface {
 	Item(ctx context.Context, path string) (file Item, err error)
 	List(ctx context.Context, prefix string, pageSize int) (files []Item, err error)
-	Read(ctx context.Context, file string) (data []byte, mimeType string, err error)
-	ReadFromBucket(ctx context.Context, file, bucket string) (data []byte, mimeType string, err error)
-	ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error)
-	ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error)
+	Read(ctx context.Context, file string, private_access bool) (data []byte, mimeType string, err error)
+	ReadFromBucket(ctx context.Context, file, bucket string, private_access bool) (data []byte, mimeType string, err error)
+	ReadCloser(ctx context.Context, file string, private_access bool) (reader io.ReadCloser, err error)
+	ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error)
 	Write(ctx context.Context, file string, data []byte) (err error)
 	Delete(ctx context.Context, file string) (err error)
 	Connect() (err error)
@@ -148,7 +148,8 @@ func (v *vfs) Item(ctx context.Context, path string) (file Item, err error) {
 }
 
 // Read чтение по указанному пути из бакета проекта
-func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType string, err error) {
+// private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
+func (v *vfs) Read(ctx context.Context, file string, private_access bool) (data []byte, mimeType string, err error) {
 	type result struct {
 		Data     []byte
 		MimeType string
@@ -157,7 +158,7 @@ func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType stri
 
 	chResult := make(chan result)
 	exec := func(ctx context.Context, file string) (r result) {
-		r.Data, r.MimeType, r.Err = v.ReadFromBucket(ctx, file, v.bucket)
+		r.Data, r.MimeType, r.Err = v.ReadFromBucket(ctx, file, v.bucket, private_access)
 		return r
 	}
 
@@ -180,7 +181,8 @@ func (v *vfs) Read(ctx context.Context, file string) (data []byte, mimeType stri
 }
 
 // ReadFromBucket чтение по указанному пути из указанного бакета
-func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []byte, mimeType string, err error) {
+// private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
+func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string, private_access bool) (data []byte, mimeType string, err error) {
 	type result struct {
 		Reader io.ReadCloser
 		Err    error
@@ -194,7 +196,7 @@ func (v *vfs) ReadFromBucket(ctx context.Context, file, bucket string) (data []b
 
 	chResult := make(chan result)
 	exec := func(ctx context.Context, file string) (r result) {
-		r.Reader, r.Err = v.ReadCloserFromBucket(ctx, file, bucket)
+		r.Reader, r.Err = v.ReadCloserFromBucket(ctx, file, bucket, private_access)
 		if r.Err != nil {
 			r.Err = fmt.Errorf("error ReadCloserFromBucket. err: %s", r.Err)
 
@@ -348,14 +350,16 @@ func (v *vfs) List(ctx context.Context, prefix string, pageSize int) (files []It
 	return files, err
 }
 
-func (v *vfs) ReadCloser(ctx context.Context, file string) (reader io.ReadCloser, err error) {
-	return v.ReadCloserFromBucket(ctx, file, v.bucket)
+// private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
+func (v *vfs) ReadCloser(ctx context.Context, file string, private_access bool) (reader io.ReadCloser, err error) {
+	return v.ReadCloserFromBucket(ctx, file, v.bucket, private_access)
 }
 
-func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string) (reader io.ReadCloser, err error) {
+// private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
+func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error) {
 	user, _ := ctx.Value(userUid).(string)
 
-	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) {
+	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) && !private_access {
 		return nil, errors.New(privateDirectory)
 	}
 
