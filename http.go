@@ -43,15 +43,20 @@ var (
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
 func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, status int, err error) {
-	r, _, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	r, _, _, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
 	return r, status, err
 }
 
 func CurlCookies(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, status int, err error) {
-	return curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	r, _, cookies, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	return r, cookies, status, err
 }
 
-func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, status int, err error) {
+// CurlV2 - версия curl, которая возвращает заголовки и куки
+func CurlV2(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
+	return curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+}
+func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, respHeaders http.Header, resp_cookies []*http.Cookie, status int, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -102,7 +107,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	case "JSONTOGET": // преобразуем параметры в json в строку запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -116,7 +121,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	case "JSONTOPOST": // преобразуем параметры в json в тело запроса
 		err = json.Unmarshal([]byte(bodyJSON), &mapValues)
 		if err != nil {
-			return nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
+			return nil, nil, nil, status, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %s", bodyJSON, err)
 		}
 
 		for k, v := range mapValues {
@@ -131,7 +136,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	}
 
 	if err != nil {
-		return nil, nil, status, fmt.Errorf("error NewRequest in lib.Curl, err: %w", err)
+		return nil, nil, nil, status, fmt.Errorf("error NewRequest in lib.Curl, err: %w", err)
 	}
 
 	// дополняем переданными заголовками
@@ -147,14 +152,14 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	resp, err := client.Do(req)
 	if err != nil {
 		//fmt.Println("Error request: method:", method, ", url:", urlc, ", bodyJSON:", bodyJSON, "err:", err)
-		return "", nil, http.StatusBadRequest, err
+		return "", nil, nil, http.StatusBadRequest, err
 	} else {
 		defer resp.Body.Close()
 	}
 
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", nil, resp.StatusCode, err
+		return "", nil, nil, resp.StatusCode, err
 	}
 	responseString := string(responseData)
 
@@ -172,7 +177,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	//
 	status = resp.StatusCode
 
-	return responseString, resp.Cookies(), status, err
+	return responseString, resp.Header, resp.Cookies(), status, err
 }
 
 func AddressProxy(addressProxy, interval string) (port string, err error) {

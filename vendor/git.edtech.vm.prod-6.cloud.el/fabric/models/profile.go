@@ -63,6 +63,7 @@ type Items struct {
 	Source       string   `json:"source,omitempty"`
 	Icon         string   `json:"icon,omitempty"`
 	Leader       string   `json:"leader,omitempty"`
+	LeaderValue  string   `json:"leader_value,omitempty"`
 	Order        string   `json:"order,omitempty"`
 	Type         string   `json:"type,omitempty"`
 	Preview      string   `json:"preview,omitempty"`
