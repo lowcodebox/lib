@@ -381,9 +381,9 @@ func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Hand
 	}
 }
 
-// MiddlewareValidUri проверяет токен на доступ к пути
+// MiddlewareValidateUri проверяет токен на доступ к пути
 // Инвертирует логику WhiteUri = "". IsValidURI по умолчанию пропускает. Эта не будет пропускать
-func MiddlewareValidUri(projectKey string) func(next http.Handler) http.Handler {
+func MiddlewareValidateUri(projectKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Получить ключ

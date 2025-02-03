@@ -34,7 +34,7 @@ func TestWhiteUri(t *testing.T) {
 		Code  int
 	}
 
-	handler := lib.MiddlewareValidUri(key)(http.HandlerFunc(okHandler))
+	handler := lib.MiddlewareValidateUri(key)(http.HandlerFunc(okHandler))
 	token, err := lib.NewServiceKey().WithWhiteURI("/metrics").Build([]byte(key))
 	if err != nil {
 		t.Fatal("Error generate service key", err)
