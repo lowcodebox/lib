@@ -340,10 +340,20 @@ func CheckIntranet(req *http.Request) bool {
 	return false
 }
 
+func getServiceKey(r *http.Request) string {
+	serviceKey := r.Header.Get(models.HeaderXServiceKey)
+	if serviceKey == "" {
+		serviceKeyCookie, err := r.Cookie(models.HeaderXServiceKey)
+		if err == nil {
+			serviceKey = serviceKeyCookie.Value
+		}
+	}
+	return serviceKey
+}
+
 func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var serviceKey string
 			var err error
 
 			ctx := r.Context()
@@ -356,16 +366,7 @@ func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Hand
 				next.ServeHTTP(w, r.WithContext(ctx))
 			}()
 
-			// он приватный - проверяем на валидность токена
-			serviceKeyHeader := r.Header.Get(models.HeaderXServiceKey)
-			if serviceKeyHeader != "" {
-				serviceKey = serviceKeyHeader
-			} else {
-				serviceKeyCookie, err := r.Cookie(models.HeaderXServiceKey)
-				if err == nil {
-					serviceKey = serviceKeyCookie.Value
-				}
-			}
+			serviceKey := getServiceKey(r)
 
 			if serviceKey == "" {
 				err = errUnauthorized
@@ -376,6 +377,36 @@ func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Hand
 			if !valid {
 				err = errTokenInvalid
 			}
+		})
+	}
+}
+
+// MiddlewareValidateUri проверяет токен на доступ к пути
+// Инвертирует логику WhiteUri = "". IsValidURI по умолчанию пропускает. Эта не будет пропускать
+func MiddlewareValidateUri(projectKey string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Получить ключ
+			xsKey, err := decodeServiceKey([]byte(projectKey), getServiceKey(r))
+			if err != nil {
+				_ = ResponseJSON(w, nil, "Unauthorized", errTokenInvalid, nil)
+				return
+			}
+
+			// Получить список доступа
+			if xsKey.WhiteURI == "" {
+				_ = ResponseJSON(w, nil, "Unauthorized", errUnauthorized, nil)
+				return
+			}
+
+			// Проверить список доступа
+			valid := isValidUri(xsKey, r.URL.Path)
+			if !valid {
+				_ = ResponseJSON(w, nil, "Unauthorized", errUnauthorized, nil)
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		})
 	}
 }

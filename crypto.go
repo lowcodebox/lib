@@ -185,6 +185,10 @@ func IsValidURI(checkUri string, projectKey []byte, xServiceKey string) (isValid
 		return true, nil
 	}
 
+	return isValidUri(xsKey, checkUri), nil
+}
+
+func isValidUri(xsKey models.XServiceKey, checkUri string) bool {
 	uris := strings.Split(xsKey.WhiteURI, ",")
 	for _, uri := range uris {
 		// Не в префиксе - нет доступа
@@ -194,18 +198,18 @@ func IsValidURI(checkUri string, projectKey []byte, xServiceKey string) (isValid
 		lUri := len(uri)
 		// Полное вхождение. Разрешен
 		if lUri == len(checkUri) {
-			return true, nil
+			return true
 		}
 		// Если следующий символ / или ? - тоже разрешено
 		switch checkUri[lUri] {
 		case '/':
-			return true, nil
+			return true
 		case '?':
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 type paramsArgon2 struct {
