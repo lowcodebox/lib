@@ -33,3 +33,28 @@ func OptimizePathMesh(instances []models.Pong) (urls []string) {
 
 	return urls
 }
+
+// OptimizePathMeshDC получает ссылки на сервисы по их экземплярам
+// Преобразует в формат хост:порт и кладет в первый массив тех, кто соответсвует заданному dc, во второй - остальных
+func OptimizePathMeshDC(instances []models.Pong, dc string) (urlsPriority, urlsFallback []string) {
+	if len(instances) == 0 {
+		return nil, nil
+	}
+
+	urlsPriority = make([]string, 0, len(instances))
+	urlsFallback = make([]string, 0, len(instances))
+	var url string
+	for i := range instances {
+		port := instances[i].PortHTTP
+		url = instances[i].Host + ":" + strconv.Itoa(port)
+
+		if instances[i].DC == dc {
+			urlsPriority = append(urlsPriority, url)
+			continue
+		}
+
+		urlsFallback = append(urlsFallback, url)
+	}
+
+	return
+}
