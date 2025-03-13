@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -30,6 +30,24 @@ func (r *ResponseWrapper) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 }
 
+type curlParam struct {
+	method         string
+	url            string
+	body           string
+	response       interface{}
+	headers        map[string]string
+	cookies        []*http.Cookie
+	enableRedirect bool
+	timeout        time.Duration
+}
+
+type curlResp struct {
+	result     interface{}
+	headers    http.Header
+	cookies    []*http.Cookie
+	statusCode int
+}
+
 const clientHttpTimeout = 60 * time.Second
 
 var (
@@ -43,20 +61,175 @@ var (
 // Curl всегде возвращает результат в интерфейс + ошибка (полезно для внешних запросов с неизвестной структурой)
 // сериализуем в объект, при передаче ссылки на переменную типа
 func Curl(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, status int, err error) {
-	r, _, _, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	r, _, _, status, err := curlEngine(ctx, method, urlc, bodyJSON, response, headers, cookies)
 	return r, status, err
 }
 
 func CurlCookies(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, resp_cookies []*http.Cookie, status int, err error) {
-	r, _, cookies, status, err := curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+	r, _, cookies, status, err := curlEngine(ctx, method, urlc, bodyJSON, response, headers, cookies)
 	return r, cookies, status, err
 }
 
 // CurlV2 - версия curl, которая возвращает заголовки и куки
-func CurlV2(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
-	return curl_engine(ctx, method, urlc, bodyJSON, response, headers, cookies)
+func CurlV2(
+	ctx context.Context,
+	method, urlc, bodyJSON string,
+	response interface{},
+	headers map[string]string,
+	cookies []*http.Cookie,
+	timeout time.Duration,
+	enableRedirect bool) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
+	in := curlParam{
+		method:         method,
+		url:            urlc,
+		body:           bodyJSON,
+		response:       response,
+		headers:        headers,
+		cookies:        cookies,
+		enableRedirect: enableRedirect,
+		timeout:        timeout,
+	}
+
+	resp, err := curlEngineV2(ctx, in)
+	return resp.result, resp.headers, resp.cookies, resp.statusCode, err
 }
-func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, respHeaders http.Header, resp_cookies []*http.Cookie, status int, err error) {
+
+// curlEngineV2 - версия curl, которая возвращает заголовки, куки и не следует redirect
+// Также в req *http.Request пробрасывается ctx
+func curlEngineV2(ctx context.Context, args curlParam) (result curlResp, err error) {
+	result.result = ""
+	var mapValues map[string]string
+	var req *http.Request
+	var checkRedirect func(r *http.Request, via []*http.Request) error
+
+	if args.timeout == 0 {
+		args.timeout = clientHttpTimeout
+	}
+
+	if args.enableRedirect {
+		checkRedirect = func(r *http.Request, via []*http.Request) error {
+			// Возвращаем ошибку, чтобы остановить следование редиректу
+			return http.ErrUseLastResponse
+		}
+	}
+
+	client := &http.Client{
+		Timeout:       args.timeout,
+		CheckRedirect: checkRedirect,
+	}
+
+	dialer := net.Dialer{
+		Timeout: args.timeout,
+	}
+
+	//nolint:gosec
+	tlsConfig := tls.Config{
+		InsecureSkipVerify: true, // ignore/skip expired SSL certificates
+	}
+
+	transCfg := &http.Transport{
+		DialContext:         dialer.DialContext,
+		TLSHandshakeTimeout: args.timeout / 5,
+		TLSClientConfig:     &tlsConfig,
+	}
+
+	client.Transport = transCfg
+
+	if args.method == "" {
+		args.method = http.MethodPost
+	}
+
+	args.method = strings.TrimSpace(args.method)
+	values := url.Values{}
+	actionType := ""
+
+	// если в гете мы передали еще и json (его добавляем в строку запроса)
+	// только если в запросе не указаны передаваемые параметры
+	clearUrl := strings.Contains(args.url, "?")
+
+	args.body = reCrLf.ReplaceAllString(args.body, "")
+
+	if args.method == "JSONTOGET" && args.body != "" && clearUrl {
+		actionType = "JSONTOGET"
+	}
+	if args.method == "JSONTOPOST" && args.body != "" {
+		actionType = "JSONTOPOST"
+	}
+
+	switch actionType {
+	case "JSONTOGET": // преобразуем параметры в json в строку запроса
+		err = json.Unmarshal([]byte(args.body), &mapValues)
+		if err != nil {
+			return result, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %w", args.body, err)
+		}
+
+		for k, v := range mapValues {
+			values.Set(k, v)
+		}
+		uri, _ := url.Parse(args.url)
+		uri.RawQuery = values.Encode()
+		args.url = uri.String()
+		req, err = http.NewRequestWithContext(ctx, "GET", args.url, strings.NewReader(args.body))
+
+	case "JSONTOPOST": // преобразуем параметры в json в тело запроса
+		err = json.Unmarshal([]byte(args.body), &mapValues)
+		if err != nil {
+			return result, fmt.Errorf("error Unmarshal in Curl, bodyJSON: %s, err: %w", args.body, err)
+		}
+
+		for k, v := range mapValues {
+			values.Set(k, v)
+		}
+		req, err = http.NewRequestWithContext(ctx, "POST", args.url, strings.NewReader(values.Encode()))
+		req.PostForm = values
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	default:
+		req, err = http.NewRequestWithContext(ctx, args.method, args.url, strings.NewReader(args.body))
+	}
+
+	if err != nil {
+		return result, fmt.Errorf("error NewRequest in lib.Curl, err: %w", err)
+	}
+
+	// дополняем переданными заголовками
+	httpClientHeaders(ctx, req, args.headers)
+
+	// дополянем куками назначенными для данного запроса
+	if args.cookies != nil {
+		for _, v := range args.cookies {
+			req.AddCookie(v)
+		}
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		result.statusCode = http.StatusBadRequest
+		return
+	}
+	defer resp.Body.Close()
+
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		result.statusCode = resp.StatusCode
+		return
+	}
+
+	// возвращаем объект ответа, если передано - в какой объект класть результат
+	// НА ОШИБКУ НЕ ПРОВЕРЯТЬ!!!!!!
+	if args.response != nil {
+		_ = json.Unmarshal(responseData, &args.response)
+	}
+
+	result.result = string(responseData)
+	result.headers = resp.Header
+	result.cookies = resp.Cookies()
+	result.statusCode = resp.StatusCode
+
+	return
+}
+
+func curlEngine(ctx context.Context, method, urlc, bodyJSON string, response interface{}, headers map[string]string, cookies []*http.Cookie) (result interface{}, respHeaders http.Header, resp_cookies []*http.Cookie, status int, err error) {
 	var mapValues map[string]string
 	var req *http.Request
 	var skipTLSVerify = true
@@ -157,7 +330,7 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 		defer resp.Body.Close()
 	}
 
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", nil, nil, resp.StatusCode, err
 	}
@@ -166,13 +339,13 @@ func curl_engine(ctx context.Context, method, urlc, bodyJSON string, response in
 	// возвращаем объект ответа, если передано - в какой объект класть результат
 	// НА ОШИБКУ НЕ ПРОВЕРЯТЬ!!!!!!
 	if response != nil {
-		json.Unmarshal([]byte(responseString), &response)
+		_ = json.Unmarshal([]byte(responseString), &response)
 	}
 
 	//// всегда отдаем в интерфейсе результат (полезно, когда внешние запросы или сериализация на клиенте)
 	////json.Unmarshal([]byte(responseString), &result)
-	//if resp.StatusCode != 200 {
-	//	err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.Status, method, req, responseString)
+	//if resp.statusCode != 200 {
+	//	err = fmt.Errorf("request is not success. request: %s, status: %s, method: %s, req: %+v, response: %s", urlc, resp.statusCode, method, req, responseString)
 	//}
 	//
 	status = resp.StatusCode
