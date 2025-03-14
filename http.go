@@ -78,7 +78,7 @@ func CurlV2(
 	headers map[string]string,
 	cookies []*http.Cookie,
 	timeout time.Duration,
-	enableRedirect bool) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
+	disableRedirect bool) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
 	in := curlParam{
 		method:          method,
 		url:             urlc,
@@ -86,7 +86,7 @@ func CurlV2(
 		response:        response,
 		headers:         headers,
 		cookies:         cookies,
-		disableRedirect: enableRedirect,
+		disableRedirect: disableRedirect,
 		timeout:         timeout,
 	}
 
