@@ -31,14 +31,14 @@ func (r *ResponseWrapper) WriteHeader(statusCode int) {
 }
 
 type curlParam struct {
-	method         string
-	url            string
-	body           string
-	response       interface{}
-	headers        map[string]string
-	cookies        []*http.Cookie
-	enableRedirect bool
-	timeout        time.Duration
+	method          string
+	url             string
+	body            string
+	response        interface{}
+	headers         map[string]string
+	cookies         []*http.Cookie
+	disableRedirect bool
+	timeout         time.Duration
 }
 
 type curlResp struct {
@@ -80,14 +80,14 @@ func CurlV2(
 	timeout time.Duration,
 	enableRedirect bool) (result interface{}, respHeaders http.Header, respCookies []*http.Cookie, status int, err error) {
 	in := curlParam{
-		method:         method,
-		url:            urlc,
-		body:           bodyJSON,
-		response:       response,
-		headers:        headers,
-		cookies:        cookies,
-		enableRedirect: enableRedirect,
-		timeout:        timeout,
+		method:          method,
+		url:             urlc,
+		body:            bodyJSON,
+		response:        response,
+		headers:         headers,
+		cookies:         cookies,
+		disableRedirect: enableRedirect,
+		timeout:         timeout,
 	}
 
 	resp, err := curlEngineV2(ctx, in)
@@ -106,7 +106,7 @@ func curlEngineV2(ctx context.Context, args curlParam) (result curlResp, err err
 		args.timeout = clientHttpTimeout
 	}
 
-	if args.enableRedirect {
+	if args.disableRedirect {
 		checkRedirect = func(r *http.Request, via []*http.Request) error {
 			// Возвращаем ошибку, чтобы остановить следование редиректу
 			return http.ErrUseLastResponse
@@ -136,7 +136,7 @@ func curlEngineV2(ctx context.Context, args curlParam) (result curlResp, err err
 	client.Transport = transCfg
 
 	if args.method == "" {
-		args.method = http.MethodPost
+		args.method = http.MethodGet
 	}
 
 	args.method = strings.TrimSpace(args.method)
