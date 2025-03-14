@@ -100,7 +100,7 @@ func TestCurlV2(t *testing.T) {
 		response       interface{}
 		headers        map[string]string
 		cookies        []*http.Cookie
-		enableRedirect bool
+		diableRedirect bool
 		timeout        time.Duration
 		expStatusCode  int
 	}{
@@ -108,14 +108,14 @@ func TestCurlV2(t *testing.T) {
 			name:           "not redirect",
 			method:         http.MethodGet,
 			url:            ts.URL + "/redirect",
-			enableRedirect: true,
+			diableRedirect: true,
 			expStatusCode:  http.StatusFound,
 		},
 		{
 			name:           "after redirect",
 			method:         http.MethodGet,
 			url:            ts.URL + "/redirect",
-			enableRedirect: false,
+			diableRedirect: false,
 			expStatusCode:  http.StatusOK,
 		},
 	}
@@ -132,7 +132,7 @@ func TestCurlV2(t *testing.T) {
 				tt.headers,
 				tt.cookies,
 				tt.timeout,
-				tt.enableRedirect,
+				tt.diableRedirect,
 			)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
