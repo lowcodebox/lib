@@ -61,7 +61,6 @@ type PongObj struct {
 	PortHTTP     int       `json:"portHTTP,omitempty"`
 	PortHTTPS    int       `json:"portHTTPS,omitempty"`
 	PortGrpc     int       `json:"portGrpc,omitempty"`
-	EnableHttps  bool      `json:"enableHttps"`
 	Follower     string    `json:"follower"`
 	Environment  string    `json:"environment"`
 	Cluster      string    `json:"cluster"`
