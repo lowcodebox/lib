@@ -20,7 +20,7 @@ var (
 
 func Ping() models.PongObj {
 	if pongObj.ReplicaID == "" {
-		if pingConfOld.Domain != "" && !strings.Contains(pingConfOld.Domain, "/") {
+		if pingConfOld.Domain != "" && strings.Contains(pingConfOld.Domain, "/") {
 			elements := strings.Split(pingConfOld.Domain, "/")
 			pingConf.Project, pingConf.Name = elements[0], elements[1]
 		}
