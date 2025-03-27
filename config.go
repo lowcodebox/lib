@@ -62,6 +62,9 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 	pingConf.HashCommit = hashCommit
 	configName = strings.Split(config, ".")[0]
 
+	// проведем инициализацию понга
+	Ping()
+
 	return payload, err
 }
 
