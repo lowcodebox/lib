@@ -38,7 +38,7 @@ func Ping() models.PongObj {
 			ReplicaID:    ksuid.New().String(),
 			ProjectUid:   pingConf.Projectuid,
 			Project:      FirstVal(pingConf.Project, pingConf.ProjectPointsrc),
-			Name:         pingConf.Name,
+			Name:         FirstVal(pingConf.Name, pingConf.Service, pingConfOld.ServiceType),
 			Service:      FirstVal(pingConf.Service, pingConfOld.ServiceType),
 			Version:      pingConf.Version,
 			HashCommit:   pingConf.HashCommit,
