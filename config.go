@@ -60,6 +60,7 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 	_ = DecodeConfig(payload, &pingConfOld)
 	pingConf.Version = serviceVersion
 	pingConf.HashCommit = hashCommit
+	configName = strings.Split(config, ".")[0]
 
 	return payload, err
 }

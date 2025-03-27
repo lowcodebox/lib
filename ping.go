@@ -14,6 +14,7 @@ var (
 	pongObj     models.PongObj
 	pingConf    models.PingConfig
 	pingConfOld models.PingConfigOld
+	configName  string
 	startTime   = time.Now()
 )
 
@@ -33,7 +34,7 @@ func Ping() models.PongObj {
 		}
 
 		pongObj = models.PongObj{
-			Uid:          FirstVal(pingConf.Uid, pingConfOld.DataUid),
+			Uid:          FirstVal(pingConf.Uid, pingConfOld.DataUid, configName),
 			ReplicaID:    ksuid.New().String(),
 			ProjectUid:   pingConf.Projectuid,
 			Project:      FirstVal(pingConf.Project, pingConf.ProjectPointsrc),
