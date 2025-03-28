@@ -2,32 +2,21 @@ package models
 
 import (
 	"strconv"
+	"strings"
 	"time"
 )
 
 // Bool custom duration for toml configs
-type Bool struct {
-	bool
-	Value bool
-}
+type Bool bool
 
 // Float custom duration for toml configs
-type Float struct {
-	float64
-	Value float64
-}
+type Float float64
 
 // Duration custom duration for toml configs
-type Duration struct {
-	time.Duration
-	Value time.Duration
-}
+type Duration time.Duration
 
 // Int custom duration for toml configs
-type Int struct {
-	int
-	Value int
-}
+type Int int
 
 type PingConfig struct {
 	Uid                 string `envconfig:"UID" default:""`
@@ -75,25 +64,30 @@ type PingConfigOld struct {
 
 // UnmarshalText method satisfying toml unmarshal interface
 func (b *Bool) UnmarshalText(text []byte) error {
-	b.Value = false
-	if string(text) == "true" {
-		b.Value = true
-	}
+	*b = strings.ToLower(string(text)) == "true"
 
 	return nil
+}
+
+func (b Bool) V() bool {
+	return bool(b)
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
 func (f *Float) UnmarshalText(text []byte) error {
 	var err error
 	i, err := strconv.ParseFloat(string(text), 10)
-	f.Value = i
+	*f = Float(i)
+
 	return err
+}
+
+func (f Float) V() float64 {
+	return float64(f)
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
 func (d *Duration) UnmarshalText(text []byte) error {
-	var err error
 	t := string(text)
 	// если получили только цифру - добавляем секунды (по-умолчанию)
 	if len(t) != 0 {
@@ -102,19 +96,32 @@ func (d *Duration) UnmarshalText(text []byte) error {
 			t = t + "m"
 		}
 	}
-	d.Value, err = time.ParseDuration(t)
+
+	parsed, err := time.ParseDuration(t)
+	*d = Duration(parsed)
+
 	return err
+}
+
+func (d Duration) V() time.Duration {
+	return time.Duration(d)
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
 func (i *Int) UnmarshalText(text []byte) error {
-	var err error
 	tt := string(text)
 	if tt == "" {
-		i.Value = 0
+		*i = 0
+
 		return nil
 	}
+
 	v, err := strconv.Atoi(tt)
-	i.Value = v
+	*i = Int(v)
+
 	return err
+}
+
+func (i Int) V() int {
+	return int(i)
 }

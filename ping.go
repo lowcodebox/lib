@@ -30,11 +30,11 @@ func Ping() models.PongObj {
 		pingConf.Project, pingConf.Name = elements[0], elements[1]
 	}
 
-	if pingConf.PortHttp.Value == 0 && !pingConf.HttpsOnly.Value {
+	if pingConf.PortHttp == 0 && !pingConf.HttpsOnly.V() {
 		pingConf.PortHttp = pingConf.Port
 	}
 
-	if pingConf.PortHttps.Value == 0 && pingConf.HttpsOnly.Value {
+	if pingConf.PortHttps.V() == 0 && pingConf.HttpsOnly.V() {
 		pingConf.PortHttps = pingConf.Port
 	}
 
@@ -49,10 +49,10 @@ func Ping() models.PongObj {
 		HashCommit:   pingConf.HashCommit,
 		Status:       "run",
 		Pid:          os.Getpid(),
-		Replicas:     FirstVal(pingConf.Replicas.Value, pingConfOld.ReplicasService.Value),
-		PortHTTP:     pingConf.PortHttp.Value,
-		PortHTTPS:    pingConf.PortHttps.Value,
-		PortGrpc:     pingConf.PortGrpc.Value,
+		Replicas:     FirstVal(pingConf.Replicas.V(), pingConfOld.ReplicasService.V()),
+		PortHTTP:     pingConf.PortHttp.V(),
+		PortHTTPS:    pingConf.PortHttps.V(),
+		PortGrpc:     pingConf.PortGrpc.V(),
 		Follower:     FirstVal(pingConf.Follower, pingConfOld.ServicePreloadPointsrc),
 		Environment:  FirstVal(pingConf.Environment, pingConf.EnvironmentPointsrc),
 		Cluster:      pingConf.Cluster,
@@ -60,7 +60,7 @@ func Ping() models.PongObj {
 		Uptime:       time.Since(startTime).String(),
 		DC:           pingConf.DC,
 		Mask:         pingConf.Mask,
-		AccessPublic: pingConf.AccessPublic.Value,
+		AccessPublic: pingConf.AccessPublic.V(),
 
 		OS:   runtime.GOOS,
 		Arch: runtime.GOARCH,
