@@ -63,7 +63,6 @@ type PingConfigOld struct {
 	EnvironmentPointsrc    string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
 	Cluster                string `envconfig:"CLUSTER" default:"alpha"`
 	ClusterPointsrc        string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
-	DC                     string `envconfig:"DC" default:"el"`
 	DataUid                string `envconfig:"DATA_UID" default:""`
 	Domain                 string `envconfig:"DOMAIN" default:""`
 	Port                   string `envconfig:"PORT" default:""`
