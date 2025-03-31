@@ -35,3 +35,14 @@ func HideExceptFirstAndLast(str string, opt ...int) string {
 	}
 	return builder.String()
 }
+
+func FirstVal[T comparable](vals ...T) T {
+	var null T
+	for _, val := range vals {
+		if val != null {
+			return val
+		}
+	}
+
+	return null
+}
