@@ -1,6 +1,9 @@
 package lib
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // HideExceptFirstAndLast экранирует в строке символы между указанным количеством
 // opt0 - сколько символов оставить сначала строки (по-умолчанию 3)
@@ -46,4 +49,22 @@ func FirstVal[T comparable](vals ...T) T {
 	}
 
 	return null
+}
+
+func ParseInt(s string) (i int, ok bool) {
+	n, err := strconv.Atoi(s)
+
+	return n, err == nil
+}
+
+func ParseInt64(s string) (i int64, ok bool) {
+	n, err := strconv.ParseInt(s, 10, 64)
+
+	return n, err == nil
+}
+
+func ParseFloat(s string) (i float64, ok bool) {
+	n, err := strconv.ParseFloat(strings.ReplaceAll(s, ",", "."), 64)
+
+	return n, err == nil
 }
