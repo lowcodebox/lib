@@ -14,7 +14,7 @@ import (
 )
 
 // RunProcess стартуем сервис из конфига
-func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
+func RunProcess(path, config, command, mode, dc, port string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -28,7 +28,20 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 
 	path = strings.Replace(path, "//", "/", -1)
 
-	cmd = exec.Command(path, command, "--config", config, "--mode", mode, "--dc", dc)
+	args := []string{command, "--config", config}
+
+	if mode != "" {
+		args = append(args, "--mode", mode)
+	}
+	if dc != "" {
+		args = append(args, "--dc", dc)
+	}
+	if port != "" {
+		args = append(args, "--port", port)
+	}
+
+	cmd = exec.Command(path, args...)
+
 	if mode == "debug" {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]

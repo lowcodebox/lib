@@ -524,7 +524,7 @@ func getServiceKey(r *http.Request) string {
 	return serviceKey
 }
 
-func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Handler) http.Handler {
+func MiddlewareXServiceKey(project, service, projectKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var err error
@@ -546,7 +546,7 @@ func MiddlewareXServiceKey(name, version, projectKey string) func(next http.Hand
 				return
 			}
 
-			valid, _ := CheckXServiceKey(name+"/"+version, []byte(projectKey), serviceKey)
+			valid, _ := CheckXServiceKey(project+"/"+service, []byte(projectKey), serviceKey)
 			if !valid {
 				err = errTokenInvalid
 			}
