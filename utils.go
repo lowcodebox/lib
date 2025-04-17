@@ -68,3 +68,7 @@ func ParseFloat(s string) (i float64, ok bool) {
 
 	return n, err == nil
 }
+
+func ArrayDelete[T any](slice []T, i int) []T {
+	return append(slice[:i], slice[i+1:]...)
+}
