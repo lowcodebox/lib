@@ -14,7 +14,7 @@ import (
 )
 
 // RunProcess стартуем сервис из конфига
-func RunProcess(path, config, command, mode, dc, port string) (pid int, err error) {
+func RunProcess(path, domain, config, command, mode, dc, port string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -43,16 +43,13 @@ func RunProcess(path, config, command, mode, dc, port string) (pid int, err erro
 	cmd = exec.Command(path, args...)
 
 	if mode == "debug" {
-		s := strings.Split(path, sep)
-		srv := s[len(s)-1]
-
-		dirPath := "debug" + sep + srv
+		dirPath := "debug" + sep + domain
 		err = CreateDir(dirPath, 0777)
 		if err != nil {
 			return 0, fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
 		}
 
-		filePath := "debug" + sep + srv + sep + UUID() + ".log"
+		filePath := "debug" + sep + domain + ".log"
 		f, err := os.Create(filePath)
 		if err != nil {
 			return 0, fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
