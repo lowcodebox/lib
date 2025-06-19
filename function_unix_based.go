@@ -1,5 +1,3 @@
-//go:build !windows
-
 package lib
 
 import (
@@ -8,88 +6,136 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 )
 
-// RunProcess стартуем сервис из конфига
-func RunProcess(path, project, service, config, command, mode, dc, port string) (pid int, err error) {
-	var cmd *exec.Cmd
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+type ProcessConfig struct {
+	Path    string
+	Project string
+	Service string
+	Config  string
+	Command string
+	Mode    string
+	DC      string
+	Port    string
+}
 
-	if config == "" {
-		return 0, errors.New("config file not specified")
+func (pc *ProcessConfig) Validate() error {
+	if pc.Config == "" {
+		return errors.New("config file not specified")
 	}
-	if command == "" {
-		command = "start"
+	if pc.Command == "" {
+		pc.Command = "start"
 	}
+	pc.Path = strings.ReplaceAll(pc.Path, "//", "/")
+	return nil
+}
 
-	path = strings.Replace(path, "//", "/", -1)
+func (pc *ProcessConfig) BuildArgs() []string {
+	args := []string{pc.Command, "--config", pc.Config}
 
-	args := []string{command, "--config", config}
-
-	if mode != "" {
-		args = append(args, "--mode", mode)
+	if pc.Mode != "" {
+		args = append(args, "--mode", pc.Mode)
 	}
-	if dc != "" {
-		args = append(args, "--dc", dc)
+	if pc.DC != "" {
+		args = append(args, "--dc", pc.DC)
 	}
-	if port != "" {
-		args = append(args, "--port", port)
-	}
-
-	cmd = exec.Command(path, args...)
-
-	if mode == "debug" {
-		dirPath := "debug" + sep
-		err = CreateDir(dirPath, 0777)
-		if err != nil {
-			return 0, fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
-		}
-
-		filePath := "debug" + sep + project + "-" + service + ".log"
-		f, err := os.Create(filePath)
-		if err != nil {
-			return 0, fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
-		}
-		cmd.Stdout = f
-		cmd.Stderr = f
+	if pc.Port != "" {
+		args = append(args, "--port", pc.Port)
 	}
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	err = cmd.Start()
+	return args
+}
+
+func (pc *ProcessConfig) setupDebugLogging(cmd *exec.Cmd) error {
+	if pc.Mode != "debug" {
+		return nil
+	}
+
+	dirPath := filepath.Join("debug")
+	if err := CreateDir(dirPath, 0755); err != nil {
+		return fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
+	}
+
+	filePath := filepath.Join("debug", fmt.Sprintf("%s-%s.log", pc.Project, pc.Service))
+	f, err := os.Create(filePath)
 	if err != nil {
-		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, dc: %s, err: %w",
-			cmd.ProcessState.ExitCode(), config, path, command, mode, dc, err)
+		return fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
 	}
 
-	go cmd.Process.Wait()
+	// Файл будет закрыт когда процесс завершится
+	cmd.Stdout = f
+	cmd.Stderr = f
 
-	pid = cmd.Process.Pid
+	return nil
+}
 
-	// в течение заданного интервала ожидаем завершающий статус запуска
-	// или выходим если -1 (в процессе или прибит сигналом)
+func waitForProcessStart(ctx context.Context, cmd *exec.Cmd) error {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		exitCode := cmd.ProcessState.ExitCode()
-
-		// завершился
-		if exitCode >= 0 {
-			return
-		}
-
+	for {
 		select {
 		case <-ctx.Done():
-			return
-
-		default:
-			// -1 — работает или прибит сигналом
+			return ctx.Err()
+		case <-ticker.C:
+			if cmd.ProcessState != nil {
+				exitCode := cmd.ProcessState.ExitCode()
+				if exitCode >= 0 {
+					return fmt.Errorf("process exited unexpectedly with code: %d", exitCode)
+				}
+			}
+			// Если ProcessState == nil, процесс все еще работает
+			return nil
 		}
 	}
+}
 
-	return
+func RunProcess(path, project, service, config, command, mode, dc, port string) (pid int, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	pc := &ProcessConfig{
+		Path:    path,
+		Project: project,
+		Service: service,
+		Config:  config,
+		Command: command,
+		Mode:    mode,
+		DC:      dc,
+		Port:    port,
+	}
+
+	if err := pc.Validate(); err != nil {
+		return 0, err
+	}
+
+	cmd := exec.CommandContext(ctx, pc.Path, pc.BuildArgs()...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	if err := pc.setupDebugLogging(cmd); err != nil {
+		return 0, err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return 0, fmt.Errorf("unable start process, config: %s, path: %s, command: %s, mode: %s, dc: %s, err: %w",
+			config, path, command, mode, dc, err)
+	}
+
+	pid = cmd.Process.Pid
+
+	// Запускаем горутину для ожидания завершения процесса
+	go func() {
+		cmd.Wait()
+	}()
+
+	// Ждем немного чтобы убедиться что процесс запустился успешно
+	if err := waitForProcessStart(ctx, cmd); err != nil {
+		return pid, err
+	}
+
+	return pid, nil
 }
