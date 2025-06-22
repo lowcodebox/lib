@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
+
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 type ProcessConfig struct {
@@ -60,15 +61,15 @@ func (pc *ProcessConfig) setupDebugLogging(cmd *exec.Cmd) error {
 		return fmt.Errorf("unable create directory for debug file, path: %s, err: %w", dirPath, err)
 	}
 
-	filePath := filepath.Join("debug", fmt.Sprintf("%s-%s.log", pc.Project, pc.Service))
-	f, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("unable create debug file, path: %s, err: %w", filePath, err)
+	logWriter := &lumberjack.Logger{
+		Filename: filepath.Join("debug", fmt.Sprintf("%s-%s.log", pc.Project, pc.Service)),
+		MaxSize:  10, // мегабайты
+		Compress: false,
 	}
 
 	// Файл будет закрыт когда процесс завершится
-	cmd.Stdout = f
-	cmd.Stderr = f
+	cmd.Stdout = logWriter
+	cmd.Stderr = logWriter
 
 	return nil
 }

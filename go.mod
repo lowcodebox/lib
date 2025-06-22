@@ -20,6 +20,7 @@ require (
 	github.com/urfave/cli v1.22.10
 	github.com/xhit/go-str2duration v1.2.0
 	golang.org/x/crypto v0.21.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
