@@ -4,15 +4,17 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // ProcessStartupError содержит детальную информацию об ошибке запуска
@@ -36,12 +38,22 @@ type ProcessMonitor struct {
 	exitCode    int
 	mutex       sync.RWMutex
 	done        chan struct{}
+	logger      *lumberjack.Logger
 }
 
 func NewProcessMonitor(logPath string) *ProcessMonitor {
+	logger := &lumberjack.Logger{
+		Filename:   logPath,
+		MaxSize:    1, // 1 MB
+		MaxBackups: 3,
+		MaxAge:     7, // days
+		Compress:   true,
+	}
+
 	return &ProcessMonitor{
 		logPath: logPath,
 		done:    make(chan struct{}),
+		logger:  logger,
 	}
 }
 
@@ -75,8 +87,17 @@ func (pm *ProcessMonitor) SetExitCode(code int) {
 	pm.mutex.Unlock()
 }
 
+func (pm *ProcessMonitor) WriteLog(message string) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	logEntry := fmt.Sprintf("[%s] %s\n", timestamp, message)
+	pm.logger.Write([]byte(logEntry))
+}
+
 func (pm *ProcessMonitor) Close() {
 	close(pm.done)
+	if pm.logger != nil {
+		pm.logger.Close()
+	}
 }
 
 // Безопасная валидация
@@ -150,11 +171,6 @@ func validateName(name, nameType string) error {
 	return nil
 }
 
-func shellEscape(s string) string {
-	escaped := strings.ReplaceAll(s, "'", "'\"'\"'")
-	return "'" + escaped + "'"
-}
-
 func createSecureLogPath(project, service string) (string, error) {
 	logFileName := fmt.Sprintf("%s-%s.log", project, service)
 	logPath := filepath.Join("debug", logFileName)
@@ -176,7 +192,7 @@ func createSecureLogPath(project, service string) (string, error) {
 // Основная функция запуска процесса
 func RunProcess(path, project, service, config, command, mode, dc, port string) (pid int, err error) {
 	// Создаем контекст с таймаутом для проверки запуска
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	// Создаем конфигурацию процесса
@@ -214,26 +230,46 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 		return 0, fmt.Errorf("failed to create secure log path: %w", err)
 	}
 
-	pidFile := logPath + ".pid"
-
 	// Создаем монитор процесса
 	monitor := NewProcessMonitor(logPath)
 	defer monitor.Close()
 
 	// Записываем аудит лог
 	auditPath := filepath.Join("debug", "audit.log")
+	auditLogger := &lumberjack.Logger{
+		Filename:   auditPath,
+		MaxSize:    1, // 1 MB
+		MaxBackups: 5,
+		MaxAge:     30, // days
+		Compress:   true,
+	}
+	defer auditLogger.Close()
+
 	auditLog := fmt.Sprintf("[%s] [AUDIT] Process start attempt: path=%s, project=%s, service=%s, args=%v\n",
 		time.Now().Format("2006-01-02 15:04:05"), path, project, service, args)
-	appendToFile(auditPath, auditLog)
+	auditLogger.Write([]byte(auditLog))
 
-	// Создаем команду с безопасным bash wrapper
-	cmd, err := createSecureCommand(ctx, path, args, logPath)
-	if err != nil {
-		return 0, fmt.Errorf("failed to create secure command: %w", err)
-	}
+	// Создаем команду напрямую без bash-обертки
+	cmd := exec.CommandContext(ctx, path, args...)
 
 	// Настраиваем процесс
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+	}
+
+	// Создаем pipe для захвата вывода
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return 0, fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return 0, fmt.Errorf("failed to create stderr pipe: %w", err)
+	}
+
+	// Логируем начало запуска
+	monitor.WriteLog(fmt.Sprintf("[INIT] Starting process: %s %s", path, strings.Join(args, " ")))
 
 	// Запускаем процесс
 	if err := cmd.Start(); err != nil {
@@ -241,17 +277,19 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 			config, path, command, mode, dc, err)
 	}
 
-	pid, err = readServicePIDFromFile(pidFile)
-	if err != nil {
-		return 0, err
-	}
-
+	// Получаем PID реального процесса
+	pid = cmd.Process.Pid
 	monitor.SetProcess(cmd.Process)
 
 	// Логируем успешный запуск
+	monitor.WriteLog(fmt.Sprintf("[START] Process started with PID: %d", pid))
 	successLog := fmt.Sprintf("[%s] [AUDIT] Process started successfully: PID=%d\n",
 		time.Now().Format("2006-01-02 15:04:05"), pid)
-	appendToFile(auditPath, successLog)
+	auditLogger.Write([]byte(successLog))
+
+	// Запускаем горутины для чтения вывода
+	go captureOutput(stdout, monitor, "STDOUT")
+	go captureOutput(stderr, monitor, "STDERR")
 
 	// Запускаем мониторинг процесса
 	processExited := make(chan *ProcessStartupError, 1)
@@ -259,32 +297,37 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 
 	// Ждем либо успешного запуска, либо ошибки, либо таймаута
 	select {
-	case <-ctx.Done():
-		// Таймаут - процесс запустился успешно
+	case <-time.After(2 * time.Second):
+		// Процесс работает уже 2 секунды - считаем запуск успешным
+		monitor.WriteLog("[SUCCESS] Process startup completed successfully")
 		return pid, nil
 
 	case startupErr := <-processExited:
-		// Процесс завершился с ошибкой в течение 5 секунд
+		// Процесс завершился с ошибкой в течение 2 секунд
+		monitor.WriteLog(fmt.Sprintf("[ERROR] Process failed during startup: exit_code=%d", startupErr.ExitCode))
 		endLog := fmt.Sprintf("[%s] [AUDIT] Process failed during startup: PID=%d, exit_code=%d\n",
 			time.Now().Format("2006-01-02 15:04:05"), pid, startupErr.ExitCode)
-		appendToFile(auditPath, endLog)
+		auditLogger.Write([]byte(endLog))
 
 		return pid, startupErr
+
+	case <-ctx.Done():
+		// Таймаут контекста
+		monitor.WriteLog("[TIMEOUT] Process startup timeout")
+		return pid, fmt.Errorf("process startup timeout")
 	}
 }
 
-func readServicePIDFromFile(pidFilePath string) (int, error) {
-	// Ждем появления файла с PID (максимум 1 секунду)
-	for i := 0; i < 10; i++ {
-		if data, err := os.ReadFile(pidFilePath); err == nil {
-			pidStr := strings.TrimSpace(string(data))
-			if pid, err := strconv.Atoi(pidStr); err == nil {
-				return pid, nil
-			}
+// Захват вывода процесса
+func captureOutput(reader io.Reader, monitor *ProcessMonitor, outputType string) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) != "" {
+			monitor.WriteLog(fmt.Sprintf("[%s] %s", outputType, line))
+			monitor.UpdateLastLogLine(line)
 		}
-		time.Sleep(100 * time.Millisecond)
 	}
-	return 0, fmt.Errorf("failed to read service PID from file")
 }
 
 // Мониторинг процесса
@@ -303,16 +346,13 @@ func monitorProcess(cmd *exec.Cmd, monitor *ProcessMonitor, errorChan chan<- *Pr
 	}
 
 	monitor.SetExitCode(exitCode)
-
-	// Читаем последнюю строку из лога
-	lastLine := readLastLogLine(monitor.logPath)
-	monitor.UpdateLastLogLine(lastLine)
+	monitor.WriteLog(fmt.Sprintf("[END] Process finished with exit code: %d", exitCode))
 
 	// Если процесс завершился с ошибкой, отправляем информацию об ошибке
 	if exitCode != 0 {
 		startupErr := &ProcessStartupError{
 			ExitCode:    exitCode,
-			LastLogLine: lastLine,
+			LastLogLine: monitor.GetLastLogLine(),
 			FullError:   fmt.Sprintf("process exited with code %d", exitCode),
 			ProcessPID:  cmd.Process.Pid,
 		}
@@ -322,85 +362,4 @@ func monitorProcess(cmd *exec.Cmd, monitor *ProcessMonitor, errorChan chan<- *Pr
 		default:
 		}
 	}
-}
-
-// Чтение последней строки из лога
-func readLastLogLine(logPath string) string {
-	file, err := os.Open(logPath)
-	if err != nil {
-		return fmt.Sprintf("failed to read log: %v", err)
-	}
-	defer file.Close()
-
-	var lastLine string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line != "" {
-			lastLine = line
-		}
-	}
-
-	if lastLine == "" {
-		return "no log output found"
-	}
-
-	return lastLine
-}
-
-// Вспомогательная функция для добавления в файл
-func appendToFile(path, content string) {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	file.WriteString(content)
-}
-
-// Создание безопасной команды с bash wrapper
-func createSecureCommand(ctx context.Context, path string, args []string, logPath string) (*exec.Cmd, error) {
-	pidFile := logPath + ".pid"
-	// Экранируем все параметры
-	escapedPath := shellEscape(path)
-	escapedLogPath := shellEscape(logPath)
-	escapedArgs := make([]string, len(args))
-	for i, arg := range args {
-		escapedArgs[i] = shellEscape(arg)
-	}
-
-	// Создаем безопасный bash скрипт
-	bashScript := fmt.Sprintf(`
-set -euo pipefail
-LOG_PATH=%s
-PID_FILE=%s
-echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [INIT] Starting process: %s %s" >> "$LOG_PATH"
-
-# Запускаем процесс в фоне и получаем его PID
-%s %s >> "$LOG_PATH" 2>&1 &
-CHILD_PID=$!
-echo "$CHILD_PID" > "$PID_FILE"
-echo "CHILD_PID:$CHILD_PID" >> "$LOG_PATH"
-
-# Ждем завершения дочернего процесса
-wait $CHILD_PID
-EXIT_CODE=$?
-
-echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [END] Process finished with exit code: $EXIT_CODE" >> "$LOG_PATH"
-rm -f "$PID_FILE"
-exit $EXIT_CODE
-`, escapedLogPath, shellEscape(pidFile), escapedPath, strings.Join(escapedArgs, " "), escapedPath, strings.Join(escapedArgs, " "))
-
-	// Создаем команду
-	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", bashScript)
-
-	// Устанавливаем безопасные переменные окружения
-	cmd.Env = append(os.Environ(),
-		"PATH=/usr/local/bin:/usr/bin:/bin",
-		"IFS=' \t\n'",
-		"BASH_ENV=",
-		"ENV=",
-	)
-
-	return cmd, nil
 }

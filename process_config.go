@@ -143,14 +143,3 @@ func (pc *ProcessConfig) GetCommandLine() string {
 	args := pc.BuildArgs()
 	return fmt.Sprintf("%s %s", pc.Path, strings.Join(args, " "))
 }
-
-// GetSecureCommandLine возвращает безопасную командную строку с экранированием
-func (pc *ProcessConfig) GetSecureCommandLine() string {
-	escapedPath := shellEscape(pc.Path)
-	args := pc.BuildArgs()
-	escapedArgs := make([]string, len(args))
-	for i, arg := range args {
-		escapedArgs[i] = shellEscape(arg)
-	}
-	return fmt.Sprintf("%s %s", escapedPath, strings.Join(escapedArgs, " "))
-}
