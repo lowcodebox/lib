@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -213,6 +214,8 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 		return 0, fmt.Errorf("failed to create secure log path: %w", err)
 	}
 
+	pidFile := logPath + ".pid"
+
 	// Создаем монитор процесса
 	monitor := NewProcessMonitor(logPath)
 	defer monitor.Close()
@@ -238,7 +241,11 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 			config, path, command, mode, dc, err)
 	}
 
-	pid = cmd.Process.Pid
+	pid, err = readServicePIDFromFile(pidFile)
+	if err != nil {
+		return 0, err
+	}
+
 	monitor.SetProcess(cmd.Process)
 
 	// Логируем успешный запуск
@@ -264,6 +271,20 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 
 		return pid, startupErr
 	}
+}
+
+func readServicePIDFromFile(pidFilePath string) (int, error) {
+	// Ждем появления файла с PID (максимум 1 секунду)
+	for i := 0; i < 10; i++ {
+		if data, err := os.ReadFile(pidFilePath); err == nil {
+			pidStr := strings.TrimSpace(string(data))
+			if pid, err := strconv.Atoi(pidStr); err == nil {
+				return pid, nil
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return 0, fmt.Errorf("failed to read service PID from file")
 }
 
 // Мониторинг процесса
@@ -339,6 +360,7 @@ func appendToFile(path, content string) {
 
 // Создание безопасной команды с bash wrapper
 func createSecureCommand(ctx context.Context, path string, args []string, logPath string) (*exec.Cmd, error) {
+	pidFile := logPath + ".pid"
 	// Экранируем все параметры
 	escapedPath := shellEscape(path)
 	escapedLogPath := shellEscape(logPath)
@@ -351,12 +373,13 @@ func createSecureCommand(ctx context.Context, path string, args []string, logPat
 	bashScript := fmt.Sprintf(`
 set -euo pipefail
 LOG_PATH=%s
+PID_FILE=%s
 echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [INIT] Starting process: %s %s" >> "$LOG_PATH"
-echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [START] Process starting" >> "$LOG_PATH"
 
 # Запускаем процесс в фоне и получаем его PID
 %s %s >> "$LOG_PATH" 2>&1 &
 CHILD_PID=$!
+echo "$CHILD_PID" > "$PID_FILE"
 echo "CHILD_PID:$CHILD_PID" >> "$LOG_PATH"
 
 # Ждем завершения дочернего процесса
@@ -364,8 +387,9 @@ wait $CHILD_PID
 EXIT_CODE=$?
 
 echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [END] Process finished with exit code: $EXIT_CODE" >> "$LOG_PATH"
+rm -f "$PID_FILE"
 exit $EXIT_CODE
-`, escapedLogPath, escapedPath, strings.Join(escapedArgs, " "), escapedPath, strings.Join(escapedArgs, " "))
+`, escapedLogPath, shellEscape(pidFile), escapedPath, strings.Join(escapedArgs, " "), escapedPath, strings.Join(escapedArgs, " "))
 
 	// Создаем команду
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", bashScript)
