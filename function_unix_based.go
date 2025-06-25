@@ -44,10 +44,10 @@ type ProcessMonitor struct {
 func NewProcessMonitor(logPath string) *ProcessMonitor {
 	logger := &lumberjack.Logger{
 		Filename:   logPath,
-		MaxSize:    1, // 1 MB
-		MaxBackups: 3,
+		MaxSize:    2, // 1 MB
+		MaxBackups: 1,
 		MaxAge:     7, // days
-		Compress:   true,
+		Compress:   false,
 	}
 
 	return &ProcessMonitor{
@@ -190,10 +190,11 @@ func createSecureLogPath(project, service string) (string, error) {
 }
 
 // Основная функция запуска процесса
+// Основная функция запуска процесса
 func RunProcess(path, project, service, config, command, mode, dc, port string) (pid int, err error) {
-	// Создаем контекст с таймаутом для проверки запуска
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	// Создаем контекст только для проверки запуска (не для выполнения процесса)
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer startupCancel()
 
 	// Создаем конфигурацию процесса
 	pc := &ProcessConfig{
@@ -239,9 +240,9 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 	auditLogger := &lumberjack.Logger{
 		Filename:   auditPath,
 		MaxSize:    1, // 1 MB
-		MaxBackups: 5,
+		MaxBackups: 1,
 		MaxAge:     30, // days
-		Compress:   true,
+		Compress:   false,
 	}
 	defer auditLogger.Close()
 
@@ -249,8 +250,8 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 		time.Now().Format("2006-01-02 15:04:05"), path, project, service, args)
 	auditLogger.Write([]byte(auditLog))
 
-	// Создаем команду напрямую без bash-обертки
-	cmd := exec.CommandContext(ctx, path, args...)
+	// Создаем команду БЕЗ контекста для долгосрочного выполнения
+	cmd := exec.Command(path, args...)
 
 	// Настраиваем процесс
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -291,47 +292,47 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 	go captureOutput(stdout, monitor, "STDOUT")
 	go captureOutput(stderr, monitor, "STDERR")
 
-	// Запускаем мониторинг процесса
-	processExited := make(chan *ProcessStartupError, 1)
-	go monitorProcess(cmd, monitor, processExited)
+	// Запускаем мониторинг процесса в фоне (не блокирующий)
+	go monitorProcessBackground(cmd, monitor, auditLogger)
 
-	// Ждем либо успешного запуска, либо ошибки, либо таймаута
+	// Ждем только успешного запуска (не завершения процесса)
 	select {
-	case <-time.After(2 * time.Second):
-		// Процесс работает уже 2 секунды - считаем запуск успешным
-		monitor.WriteLog("[SUCCESS] Process startup completed successfully")
-		return pid, nil
+	case <-time.After(3 * time.Second):
+		// Проверяем, что процесс еще работает
+		if isProcessRunning(pid) {
+			monitor.WriteLog("[SUCCESS] Process startup completed successfully")
+			return pid, nil
+		} else {
+			monitor.WriteLog("[ERROR] Process died shortly after startup")
+			return pid, fmt.Errorf("process died shortly after startup")
+		}
 
-	case startupErr := <-processExited:
-		// Процесс завершился с ошибкой в течение 2 секунд
-		monitor.WriteLog(fmt.Sprintf("[ERROR] Process failed during startup: exit_code=%d", startupErr.ExitCode))
-		endLog := fmt.Sprintf("[%s] [AUDIT] Process failed during startup: PID=%d, exit_code=%d\n",
-			time.Now().Format("2006-01-02 15:04:05"), pid, startupErr.ExitCode)
-		auditLogger.Write([]byte(endLog))
-
-		return pid, startupErr
-
-	case <-ctx.Done():
-		// Таймаут контекста
-		monitor.WriteLog("[TIMEOUT] Process startup timeout")
-		return pid, fmt.Errorf("process startup timeout")
-	}
-}
-
-// Захват вывода процесса
-func captureOutput(reader io.Reader, monitor *ProcessMonitor, outputType string) {
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.TrimSpace(line) != "" {
-			monitor.WriteLog(fmt.Sprintf("[%s] %s", outputType, line))
-			monitor.UpdateLastLogLine(line)
+	case <-startupCtx.Done():
+		// Таймаут контекста запуска
+		if isProcessRunning(pid) {
+			monitor.WriteLog("[SUCCESS] Process startup completed (timeout reached, but process is running)")
+			return pid, nil
+		} else {
+			monitor.WriteLog("[TIMEOUT] Process startup timeout")
+			return pid, fmt.Errorf("process startup timeout")
 		}
 	}
 }
 
-// Мониторинг процесса
-func monitorProcess(cmd *exec.Cmd, monitor *ProcessMonitor, errorChan chan<- *ProcessStartupError) {
+// Проверка, работает ли процесс
+func isProcessRunning(pid int) bool {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+
+	// На Unix системах проверяем отправкой сигнала 0
+	err = process.Signal(syscall.Signal(0))
+	return err == nil
+}
+
+// Фоновый мониторинг процесса (не блокирует возврат из RunProcess)
+func monitorProcessBackground(cmd *exec.Cmd, monitor *ProcessMonitor, auditLogger *lumberjack.Logger) {
 	// Ждем завершения процесса
 	err := cmd.Wait()
 
@@ -348,18 +349,20 @@ func monitorProcess(cmd *exec.Cmd, monitor *ProcessMonitor, errorChan chan<- *Pr
 	monitor.SetExitCode(exitCode)
 	monitor.WriteLog(fmt.Sprintf("[END] Process finished with exit code: %d", exitCode))
 
-	// Если процесс завершился с ошибкой, отправляем информацию об ошибке
-	if exitCode != 0 {
-		startupErr := &ProcessStartupError{
-			ExitCode:    exitCode,
-			LastLogLine: monitor.GetLastLogLine(),
-			FullError:   fmt.Sprintf("process exited with code %d", exitCode),
-			ProcessPID:  cmd.Process.Pid,
-		}
+	// Логируем завершение в аудит
+	endLog := fmt.Sprintf("[%s] [AUDIT] Process finished: PID=%d, exit_code=%d\n",
+		time.Now().Format("2006-01-02 15:04:05"), cmd.Process.Pid, exitCode)
+	auditLogger.Write([]byte(endLog))
+}
 
-		select {
-		case errorChan <- startupErr:
-		default:
+// Захват вывода процесса
+func captureOutput(reader io.Reader, monitor *ProcessMonitor, outputType string) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) != "" {
+			monitor.WriteLog(fmt.Sprintf("[%s] %s", outputType, line))
+			monitor.UpdateLastLogLine(line)
 		}
 	}
 }
