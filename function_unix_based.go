@@ -354,8 +354,13 @@ LOG_PATH=%s
 echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [INIT] Starting process: %s %s" >> "$LOG_PATH"
 echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [START] Process starting" >> "$LOG_PATH"
 
-# Запускаем процесс и перенаправляем вывод
-%s %s >> "$LOG_PATH" 2>&1
+# Запускаем процесс в фоне и получаем его PID
+%s %s >> "$LOG_PATH" 2>&1 &
+CHILD_PID=$!
+echo "CHILD_PID:$CHILD_PID" >> "$LOG_PATH"
+
+# Ждем завершения дочернего процесса
+wait $CHILD_PID
 EXIT_CODE=$?
 
 echo "[$(date '+%%Y-%%m-%%d %%H:%%M:%%S')] [END] Process finished with exit code: $EXIT_CODE" >> "$LOG_PATH"
