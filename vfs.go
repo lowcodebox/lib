@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/graymeta/stow"
 	"github.com/graymeta/stow/azure"
@@ -94,8 +95,9 @@ func (v *vfs) Connect() (err error) {
 		}
 	}
 
-	// подсключаемся к хранилищу
-	v.location, err = stow.Dial(v.kind, config)
+	// подключаемся к хранилищу
+	v.location, err = dialWithTimeout(v.kind, config, 5*time.Second) // TODO можно добавить передачу контекста, убрав context.TODO
+
 	if err != nil {
 		return fmt.Errorf("error create container from config. err: %s", err)
 	}
@@ -133,6 +135,30 @@ func (v *vfs) Connect() (err error) {
 	}
 
 	return err
+}
+
+func dialWithTimeout(kind string, config stow.Config, timeout time.Duration) (stow.Location, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+	defer cancel()
+
+	type result struct {
+		loc stow.Location
+		err error
+	}
+
+	resultChan := make(chan result, 1)
+
+	go func() {
+		loc, err := stow.Dial(kind, config)
+		resultChan <- result{loc, err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("stow.Dial timeout or canceled: %w", ctx.Err())
+	case res := <-resultChan:
+		return res.loc, res.err
+	}
 }
 
 // Close закрываем соединение
