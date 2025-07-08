@@ -90,5 +90,6 @@ func (b *ClientMinioBuilder) setCACert(caPEM string) IClientS3Builder[*minio.Cli
 			RootCAs: pool,
 		},
 	}
+	b.options.Transport = b.httpTransport
 	return b
 }

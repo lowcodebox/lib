@@ -13,7 +13,7 @@ var ctx = context.Background()
 func TestConfigS3Builder(t *testing.T) {
 	tests := []struct {
 		name            string
-		initial         map[string]string
+		initial         map[s3.ConfigField]string
 		wantErr         bool
 		wantAuthType    s3.AuthType
 		wantAccessKeyID string
@@ -22,11 +22,11 @@ func TestConfigS3Builder(t *testing.T) {
 	}{
 		{
 			name: "accesskey minimal",
-			initial: map[string]string{
-				"auth_type":     "accesskey",
-				"access_key_id": "AKID123",
-				"secret_key":    "SECRETXYZ",
-				"region":        "eu-west-1",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:    "accesskey",
+				s3.ConfigFieldAccessKeyID: "AKID123",
+				s3.ConfigFieldSecretKey:   "SECRETXYZ",
+				s3.ConfigFieldRegion:      "eu-west-1",
 			},
 			wantErr:         false,
 			wantAuthType:    s3.AuthTypeAccessKey,
@@ -36,11 +36,11 @@ func TestConfigS3Builder(t *testing.T) {
 		},
 		{
 			name: "iam no keys",
-			initial: map[string]string{
-				"auth_type":     "iam",
-				"access_key_id": "",
-				"secret_key":    "",
-				"region":        "",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:    "iam",
+				s3.ConfigFieldAccessKeyID: "",
+				s3.ConfigFieldSecretKey:   "",
+				s3.ConfigFieldRegion:      "",
 			},
 			wantErr:         false,
 			wantAuthType:    s3.AuthTypeIAM,
@@ -50,41 +50,41 @@ func TestConfigS3Builder(t *testing.T) {
 		},
 		{
 			name: "missing key id",
-			initial: map[string]string{
-				"auth_type":  "accesskey",
-				"secret_key": "SEC",
-				"region":     "eu-central-1",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:  "accesskey",
+				s3.ConfigFieldSecretKey: "SEC",
+				s3.ConfigFieldRegion:    "eu-central-1",
 				// access_key_id отсутствует
 			},
 			wantErr: true,
 		},
 		{
 			name: "unsupported auth type",
-			initial: map[string]string{
-				"auth_type":     "google_auth",
-				"access_key_id": "A",
-				"secret_key":    "B",
-				"region":        "eu-west-2",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:    "google_auth",
+				s3.ConfigFieldAccessKeyID: "A",
+				s3.ConfigFieldSecretKey:   "B",
+				s3.ConfigFieldRegion:      "eu-west-2",
 			},
 			wantErr: true,
 		},
 		{
 			name: "accesskey empty key id",
-			initial: map[string]string{
-				"auth_type":     "accesskey",
-				"access_key_id": "",
-				"secret_key":    "B",
-				"region":        "",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:    "accesskey",
+				s3.ConfigFieldAccessKeyID: "",
+				s3.ConfigFieldSecretKey:   "B",
+				s3.ConfigFieldRegion:      "",
 			},
 			wantErr: true,
 		},
 		{
 			name: "accesskey empty secret key",
-			initial: map[string]string{
-				"auth_type":     "accesskey",
-				"access_key_id": "A",
-				"secret_key":    "",
-				"region":        "",
+			initial: map[s3.ConfigField]string{
+				s3.ConfigFieldAuthType:    "accesskey",
+				s3.ConfigFieldAccessKeyID: "A",
+				s3.ConfigFieldSecretKey:   "",
+				s3.ConfigFieldRegion:      "",
 			},
 			wantErr: true,
 		},

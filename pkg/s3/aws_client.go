@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 type ClientAWSBuilder struct {
 	config                *ConfigS3
 	httpClient            *http.Client
-	awsConfig             *aws.Config
 	sessionNClientCreator SessionClientCreator[*s3.S3, *aws.Config]
 }
 
@@ -23,7 +23,6 @@ func NewClientAWSBuilder() IClientS3Builder[*s3.S3, *aws.Config] {
 	return &ClientAWSBuilder{
 		config:     nil,
 		httpClient: http.DefaultClient,
-		awsConfig:  aws.NewConfig(),
 		sessionNClientCreator: func(awsConfig *aws.Config) (s3Client *s3.S3, err error) {
 			sess, err := session.NewSession(awsConfig)
 			if err != nil {
@@ -49,24 +48,38 @@ func (c *ClientAWSBuilder) SetSessionNClientCreator(creator SessionClientCreator
 }
 
 func (c *ClientAWSBuilder) Build(ctx context.Context) (res *ClientS3Result[*s3.S3], err error) {
-	c.awsConfig.WithHTTPClient(c.httpClient).
+	// Если передан CA-сертификат, сначала настраиваем transport в httpClient
+	if c.config.CACertPEM != "" {
+		c.setCACert(c.config.CACertPEM)
+	}
+
+	// Собираем новый aws.Config, присваивая результат всех With… в awsCfg
+	awsCfg := aws.NewConfig().
+		WithHTTPClient(c.httpClient).
 		WithMaxRetries(aws.UseServiceDefaultRetries).
 		WithLogger(aws.NewDefaultLogger()).
 		WithLogLevel(aws.LogOff).
 		WithSleepDelay(time.Sleep).
 		WithRegion(c.config.Region).
 		WithEndpoint(c.config.Endpoint).
-		WithS3ForcePathStyle(true).
-		WithDisableSSL(c.config.DisableSSL)
+		WithS3ForcePathStyle(true)
 
-	if c.config.CACertPEM != "" {
-		c.setCACert(c.config.CACertPEM)
+	if c.config.AuthType == AuthTypeAccessKey {
+		awsCfg = awsCfg.WithCredentials(
+			credentials.NewStaticCredentials(
+				c.config.AccessKeyID,
+				c.config.SecretKey,
+				"",
+			),
+		)
 	}
 
-	s3Client, err := c.sessionNClientCreator(c.awsConfig)
+	// Создаём S3-клиент с этим именно awsCfg
+	s3Client, err := c.sessionNClientCreator(awsCfg)
 	if err != nil {
 		return nil, err
 	}
+
 	return &ClientS3Result[*s3.S3]{
 		Client:   s3Client,
 		Endpoint: c.config.Endpoint,

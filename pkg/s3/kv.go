@@ -51,9 +51,9 @@ func NewLocalKVStore() KVStore {
 	}
 }
 
-func InitializeWithMap(ctx context.Context, store KVStore, initial map[string]string) (err error) {
+func InitializeWithMap(ctx context.Context, store KVStore, initial map[ConfigField]string) (err error) {
 	for k, v := range initial {
-		err = store.Put(ctx, k, v)
+		err = store.Put(ctx, string(k), v)
 		if err != nil {
 			return err
 		}

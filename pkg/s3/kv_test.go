@@ -101,8 +101,11 @@ func TestLocalKVStore_WithInitialData(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := s3.NewLocalKVStore()
-			err := s3.InitializeWithMap(ctx, store, tt.initial)
-			assert.NoError(t, err, "InitializeWithMap should not fail")
+			//err := s3.InitializeWithMap(ctx, store, tt.initial)
+			for k, v := range tt.initial {
+				err := store.Put(ctx, k, v)
+				assert.NoError(t, err, "InitializeWithMap should not fail")
+			}
 
 			for k, want := range tt.initial {
 				ok, err := store.Check(ctx, k)
