@@ -1,13 +1,18 @@
 package models
 
 const (
-	RequestIDField = "request-id"
-	UserIDField    = "user-id"
-	UserIPField    = "user-ip"
-	ClientField    = "client"
-	ServiceIDField = "service-id"
-	ConfigIDField  = "config-id"
-	DCField        = "dc"
+	RequestIDField      = "request-id"
+	RequestURLField     = "request-url"
+	RequestMethodField  = "request-method"
+	RequestBodyField    = "request-body"
+	RequestHeadersField = "request-headers"
+	UserIDField         = "user-id"
+	UserIPField         = "user-ip"
+	ClientField         = "client"
+	ServiceIDField      = "service-id"
+	ConfigIDField       = "config-id"
+	DCField             = "dc"
+	ExportLogField      = "export-log"
 
 	HeaderXRequestID      = "X-Request-ID"
 	HeaderXServiceKey     = "X-Service-Key"

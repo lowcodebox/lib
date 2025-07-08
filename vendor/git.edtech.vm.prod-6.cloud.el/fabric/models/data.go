@@ -16,6 +16,7 @@ type Data struct {
 	Rev        string               `json:"rev"`
 	Copies     string               `json:"copies"`
 	Attributes map[string]Attribute `json:"attributes"`
+	Branch     string               `json:"branch"`
 }
 
 type Attribute struct {
@@ -153,7 +154,7 @@ func (p *ResponseData) RemoveData(i int) bool {
 	if i < len(p.Data) {
 		p.Data = append(p.Data[:i], p.Data[i+1:]...)
 	} else {
-		//log.Warning("Error! Position invalid (", i, ")")
+		// log.Warning("Error! Position invalid (", i, ")")
 		return false
 	}
 

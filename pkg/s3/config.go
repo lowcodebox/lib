@@ -1,203 +1,179 @@
 package s3
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"net/http"
-	"net/url"
-	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/graymeta/stow"
-	"github.com/pkg/errors"
+	"context"
+	"fmt"
 )
 
-// Kind represents the name of the location/storage type.
-const Kind = "s3"
-
-var (
-	authTypeAccessKey = "accesskey"
-	authTypeIAM       = "iam"
-)
+type AuthType string
 
 const (
-	// ConfigAuthType is an optional argument that defines whether to use an IAM role or access key based auth
-	ConfigAuthType = "auth_type"
-
-	// ConfigAccessKeyID is one key of a pair of AWS credentials.
-	ConfigAccessKeyID = "access_key_id"
-
-	// ConfigSecretKey is one key of a pair of AWS credentials.
-	ConfigSecretKey = "secret_key"
-
-	// ConfigToken is an optional argument which is required when providing
-	// credentials with temporary access.
-	// ConfigToken = "token"
-
-	// ConfigRegion represents the region/availability zone of the session.
-	ConfigRegion = "region"
-
-	// ConfigEndpoint is optional config value for changing s3 endpoint
-	// used for e.g. minio.io
-	ConfigEndpoint = "endpoint"
-
-	// ConfigDisableSSL is optional config value for disabling SSL support on custom endpoints
-	// Its default value is "false", to disable SSL set it to "true".
-	ConfigDisableSSL = "disable_ssl"
-
-	// ConfigV2Signing is an optional config value for signing requests with the v2 signature.
-	// Its default value is "false", to enable set to "true".
-	// This feature is useful for s3-compatible blob stores -- ie minio.
-	ConfigV2Signing = "v2_signing"
-
-	ConfigCaCert = "ca_cert"
+	AuthTypeAccessKey AuthType = "accesskey"
+	AuthTypeIAM       AuthType = "iam"
 )
 
-func init() {
-	validatefn := func(config stow.Config) error {
-		authType, ok := config.Config(ConfigAuthType)
-		if !ok || authType == "" {
-			authType = authTypeAccessKey
-		}
+type ConfigField string
 
-		if !(authType == authTypeAccessKey || authType == authTypeIAM) {
-			return errors.New("invalid auth_type")
-		}
+const (
+	ConfigFieldAuthType    ConfigField = "auth_type"
+	ConfigFieldAccessKeyID ConfigField = "access_key_id"
+	ConfigFieldSecretKey   ConfigField = "secret_key"
+	ConfigFieldRegion      ConfigField = "region"
+	ConfigFieldEndpoint    ConfigField = "endpoint"
+	ConfigFieldDisableSSL  ConfigField = "disable_ssl"
+	ConfigFieldV2Signing   ConfigField = "v2_signing"
+	ConfigFieldCACert      ConfigField = "ca_cert"
+)
 
-		if authType == authTypeAccessKey {
-			_, ok := config.Config(ConfigAccessKeyID)
-			if !ok {
-				return errors.New("missing Access Key ID")
-			}
-
-			_, ok = config.Config(ConfigSecretKey)
-			if !ok {
-				return errors.New("missing Secret Key")
-			}
-		}
-		return nil
+var (
+	allowedConfigFields = map[ConfigField]struct{}{
+		ConfigFieldAuthType:    {},
+		ConfigFieldAccessKeyID: {},
+		ConfigFieldSecretKey:   {},
+		ConfigFieldRegion:      {},
+		ConfigFieldEndpoint:    {},
+		ConfigFieldDisableSSL:  {},
+		ConfigFieldV2Signing:   {},
+		ConfigFieldCACert:      {},
 	}
-	makefn := func(config stow.Config) (stow.Location, error) {
+)
 
-		authType, ok := config.Config(ConfigAuthType)
-		if !ok || authType == "" {
-			authType = authTypeAccessKey
+type IConfigS3Builder interface {
+	SetKV(store KVStore) IConfigS3Builder
+	SetFieldsToUse(fields []ConfigField) IConfigS3Builder
+	Refill(key, val string) IConfigS3Builder
+	Build(ctx context.Context) (config *ConfigS3, err error)
+}
+
+type ConfigS3Builder struct {
+	fields       []ConfigField
+	kvStore      KVStore
+	localKVStore LocalKVStore
+}
+
+func (c *ConfigS3Builder) SetKV(store KVStore) IConfigS3Builder {
+	c.kvStore = store
+	return c
+}
+
+func (c *ConfigS3Builder) SetFieldsToUse(fields []ConfigField) IConfigS3Builder {
+	c.fields = fields
+	return c
+}
+
+func (c *ConfigS3Builder) Refill(key, val string) IConfigS3Builder {
+	_ = c.localKVStore.Put(context.TODO(), key, val)
+	return c
+}
+func (c *ConfigS3Builder) Build(ctx context.Context) (*ConfigS3, error) {
+	// Валидация: только разрешённые поля
+	for _, field := range c.fields {
+		if _, ok := allowedConfigFields[field]; !ok {
+			return nil, fmt.Errorf("field [%s] not allowed", field)
 		}
+	}
 
-		if !(authType == authTypeAccessKey || authType == authTypeIAM) {
-			return nil, errors.New("invalid auth_type")
-		}
+	localVals := make(map[ConfigField]string)
 
-		if authType == authTypeAccessKey {
-			_, ok := config.Config(ConfigAccessKeyID)
-			if !ok {
-				return nil, errors.New("missing Access Key ID")
-			}
-
-			_, ok = config.Config(ConfigSecretKey)
-			if !ok {
-				return nil, errors.New("missing Secret Key")
-			}
-		}
-
-		// Create a new client (s3 session)
-		client, endpoint, err := newS3Client(config, "")
+	// Сначала берём из localKVStore
+	for _, field := range c.fields {
+		ok, err := c.localKVStore.Check(ctx, string(field))
 		if err != nil {
 			return nil, err
 		}
-
-		// Create a location with given config and client (s3 session).
-		loc := &location{
-			config:         config,
-			client:         client,
-			customEndpoint: endpoint,
+		if ok {
+			val, err := c.localKVStore.Get(ctx, string(field))
+			if err != nil {
+				return nil, err
+			}
+			localVals[field] = val
 		}
-
-		return loc, nil
 	}
 
-	kindfn := func(u *url.URL) bool {
-		return u.Scheme == Kind
+	// Потом добираем из внешнего KVStore, если не найдено локально
+	for _, field := range c.fields {
+		if _, found := localVals[field]; found {
+			continue
+		}
+		val, err := c.kvStore.Get(ctx, string(field))
+		if err != nil {
+			return nil, err
+		}
+		localVals[field] = val
 	}
 
-	stow.Register(Kind, makefn, kindfn, validatefn)
+	// Собираем финальный ConfigS3
+	cfg := &ConfigS3{
+		AuthType:     AuthType(localVals["auth_type"]),
+		AccessKeyID:  localVals["access_key_id"],
+		SecretKey:    localVals["secret_key"],
+		Region:       localVals["region"],
+		Endpoint:     localVals["endpoint"],
+		CACertPEM:    localVals["ca_cert"],
+		DisableSSL:   localVals["disable_ssl"] == "true",
+		UseV2Signing: localVals["v2_signing"] == "true",
+	}
+
+	// Валидация обязательных полей
+	if cfg.AuthType == "" {
+		cfg.AuthType = AuthTypeAccessKey
+	}
+	if cfg.AuthType != AuthTypeAccessKey && cfg.AuthType != AuthTypeIAM {
+		return nil, fmt.Errorf("unsupported auth_type: %s", cfg.AuthType)
+	}
+	if cfg.AuthType == AuthTypeAccessKey {
+		if cfg.AccessKeyID == "" {
+			return nil, fmt.Errorf("missing required field: access_key_id")
+		}
+		if cfg.SecretKey == "" {
+			return nil, fmt.Errorf("missing required field: secret_key")
+		}
+	}
+	if cfg.Region == "" {
+		cfg.Region = "us-east-1"
+	}
+
+	return cfg, nil
 }
 
-// Attempts to create a session based on the information given.
-func newS3Client(config stow.Config, region string) (client *s3.S3, endpoint string, err error) {
-	authType, _ := config.Config(ConfigAuthType)
-	accessKeyID, _ := config.Config(ConfigAccessKeyID)
-	secretKey, _ := config.Config(ConfigSecretKey)
-	//	token, _ := config.Config(ConfigToken)
-	caCert, _ := config.Config(ConfigCaCert)
+func NewConfigS3Builder() IConfigS3Builder {
+	return &ConfigS3Builder{}
+}
 
-	if authType == "" {
-		authType = authTypeAccessKey
+type ConfigS3 struct {
+	AuthType     AuthType
+	AccessKeyID  string
+	SecretKey    string
+	Region       string
+	Endpoint     string
+	DisableSSL   bool
+	UseV2Signing bool
+	CACertPEM    string
+}
+
+type ConfigDirector interface {
+	BuildS3Config(ctx context.Context) (*ConfigS3, error)
+}
+type DefaultConfigDirector struct {
+	builder IConfigS3Builder
+	store   KVStore
+}
+
+func NewDefaultConfigDirector(configBuilder IConfigS3Builder, store KVStore) ConfigDirector {
+	return &DefaultConfigDirector{
+		builder: configBuilder,
+		store:   store,
 	}
+}
 
-	httpClient := http.DefaultClient
-
-	if caCert != "" {
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM([]byte(caCert))
-
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
-			},
-		}
-
-		httpClient.Transport = transport
-	}
-
-	awsConfig := aws.NewConfig().
-		WithHTTPClient(httpClient).
-		WithMaxRetries(aws.UseServiceDefaultRetries).
-		WithLogger(aws.NewDefaultLogger()).
-		WithLogLevel(aws.LogOff).
-		WithSleepDelay(time.Sleep)
-
-	if region == "" {
-		region, _ = config.Config(ConfigRegion)
-	}
-	if region != "" {
-		awsConfig.WithRegion(region)
-	} else {
-		awsConfig.WithRegion("us-east-1")
-	}
-
-	if authType == authTypeAccessKey {
-		awsConfig.WithCredentials(credentials.NewStaticCredentials(accessKeyID, secretKey, ""))
-	}
-
-	endpoint, ok := config.Config(ConfigEndpoint)
-	if ok {
-		awsConfig.WithEndpoint(endpoint).
-			WithS3ForcePathStyle(true)
-	}
-
-	disableSSL, ok := config.Config(ConfigDisableSSL)
-	if ok && disableSSL == "true" {
-		awsConfig.WithDisableSSL(true)
-	}
-
-	sess, err := session.NewSession(awsConfig)
-	if err != nil {
-		return nil, "", err
-	}
-	if sess == nil {
-		return nil, "", errors.New("creating the S3 session")
-	}
-
-	s3Client := s3.New(sess)
-
-	usev2, ok := config.Config(ConfigV2Signing)
-	if ok && usev2 == "true" {
-		setv2Handlers(s3Client)
-	}
-
-	return s3Client, endpoint, nil
+func (d *DefaultConfigDirector) BuildS3Config(ctx context.Context) (*ConfigS3, error) {
+	return d.builder.
+		SetKV(d.store).
+		SetFieldsToUse([]ConfigField{
+			ConfigFieldAuthType,
+			ConfigFieldAccessKeyID,
+			ConfigFieldSecretKey,
+			ConfigFieldRegion,
+		}).
+		Build(ctx)
 }

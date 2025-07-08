@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -29,34 +30,16 @@ type Service struct {
 	StartedAt    int64  `json:"started_at"`
 	Error        string `json:"error"`
 
+	OS   string `json:"os"`
+	Arch string `json:"arch"`
+
 	LastPing time.Time `json:"last_ping"`
 
 	Instances []Pong `json:"services"`
 }
 
-type ServiceReplica struct {
-	ServiceUid   string         `json:"service_uid"`
-	Pid          int64          `json:"pid"`
-	AgentHost    string         `json:"agent_host"`
-	Project      string         `json:"project"`
-	Service      string         `json:"service"`
-	Path         string         `json:"path"`
-	Name         string         `json:"name"`
-	Version      string         `json:"version"`
-	Status       string         `json:"status"`
-	PortHTTP     int            `json:"portHTTP"`
-	PortGrpc     int            `json:"portGrpc"`
-	PortHTTPS    int            `json:"portHTTPS"`
-	EnableHTTPS  bool           `json:"enable_https,enableHttps"`
-	Enviroment   string         `json:"environment"`
-	AccessPublic bool           `json:"access_public"`
-	DC           string         `json:"dc"`
-	Healthy      bool           `json:"healthy"`
-	Uptime       string         `json:"uptime"`
-	Mask         string         `json:"mask"`
-	StartedAt    int64          `json:"started_at"`
-	Error        string         `json:"error"`
-	Metrics      ServiceMetrics `json:"metrics"`
+func (s Service) Domain() string {
+	return fmt.Sprintf("%s/%s", s.Project, s.Name)
 }
 
 type SyncServiceMap struct {
@@ -84,8 +67,7 @@ func (s *SyncServiceMap) Set(m map[string]Service) {
 			continue
 		}
 
-		path := v.Path
-		mapDomainServices[path] = instances
+		mapDomainServices[v.Path] = instances
 	}
 
 	s.mx.Lock()
