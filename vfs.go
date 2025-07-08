@@ -56,7 +56,7 @@ type Vfs interface {
 	ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error)
 	Write(ctx context.Context, file string, data []byte) (err error)
 	Delete(ctx context.Context, file string) (err error)
-	Connect() (err error)
+	Connect(ctx context.Context) (err error)
 	Close() (err error)
 	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
@@ -66,7 +66,7 @@ type Item interface {
 }
 
 // Connect инициируем подключение к хранилищу, в зависимости от типа соединения
-func (v *vfs) Connect() (err error) {
+func (v *vfs) Connect(ctx context.Context) (err error) {
 	var config = stow.ConfigMap{}
 	var flagBucketExist bool
 
@@ -96,7 +96,11 @@ func (v *vfs) Connect() (err error) {
 	}
 
 	// подключаемся к хранилищу
-	v.location, err = dialWithTimeout(v.kind, config, 5*time.Second) // TODO можно добавить передачу контекста, убрав context.TODO
+	v.location, err = v.dialWithTimeout(ctx, DialWithTimeoutConfig{
+		kind:    v.kind,
+		config:  config,
+		timeout: 5 * time.Second,
+	})
 
 	if err != nil {
 		return fmt.Errorf("error create container from config. err: %s", err)
@@ -137,8 +141,14 @@ func (v *vfs) Connect() (err error) {
 	return err
 }
 
-func dialWithTimeout(kind string, config stow.Config, timeout time.Duration) (stow.Location, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+type DialWithTimeoutConfig struct {
+	kind    string
+	config  stow.Config
+	timeout time.Duration
+}
+
+func (v *vfs) dialWithTimeout(ctx context.Context, cfg DialWithTimeoutConfig) (stow.Location, error) {
+	ctx, cancel := context.WithTimeout(ctx, cfg.timeout)
 	defer cancel()
 
 	type result struct {
@@ -149,7 +159,7 @@ func dialWithTimeout(kind string, config stow.Config, timeout time.Duration) (st
 	resultChan := make(chan result, 1)
 
 	go func() {
-		loc, err := stow.Dial(kind, config)
+		loc, err := stow.Dial(cfg.kind, cfg.config)
 		resultChan <- result{loc, err}
 	}()
 
