@@ -2,19 +2,18 @@ package lib
 
 import (
 	"bytes"
+	"context"
+	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
-	"errors"
+	"encoding/hex"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"io"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strings"
+	"time"
 )
-
-var ErrPath = errors.New("invalid path")
 
 type BasicAuthTransport struct {
 	Kind       string
@@ -26,109 +25,58 @@ type BasicAuthTransport struct {
 	Region     string
 	DisableSSL bool
 
-	http.Transport
+	TLSClientConfig *tls.Config
 }
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if strings.Contains(req.URL.Path, "../") {
-		return nil, ErrPath
-	}
-
-	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
-	user, _ := req.Context().Value(userUid).(string)
-
-	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
-		return nil, errors.New(privateDirectory)
-	}
-	if t.Username != "" {
-		switch t.Kind {
-		case "s3":
-			// todo make sign for s3
-			//signer := v4.NewSigner(credentials.NewStaticCredentials(t.Username, t.Password, ""))
-			//_, err := signer.Sign(req, nil, t.URL, t.Region, time.Now())
-			//if err != nil {
-			//	return nil, err
-			//}
-			//
-			//fmt.Println(req.Header)
-
-			//awsReq := request.Request{
-			//	Config: aws.Config{
-			//		CredentialsChainVerboseErrors: nil,
-			//		Credentials:                   credentials.NewStaticCredentials(t.Username, t.Password, ""),
-			//		Endpoint:                      aws.String(t.URL),
-			//		Region:                        aws.String(t.Region),
-			//		DisableSSL:                    aws.Bool(t.DisableSSL),
-			//		S3ForcePathStyle:              aws.Bool(true),
-			//	},
-			//	Time:        time.Now(),
-			//	HTTPRequest: req,
-			//}
-			//
-			//s3.Sign(&awsReq)
-			//fmt.Println(awsReq.HTTPRequest.Header)
-
-		default:
-			req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
-				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
-					t.Username, t.Password)))))
-		}
-	}
-
-	return t.Transport.RoundTrip(req)
-}
-
-func (v *vfs) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
-	parsedUrl, err := url.Parse(v.endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	proxy := httputil.ReverseProxy{
-		Rewrite: func(r *httputil.ProxyRequest) {
-			r.SetXForwarded()
-			r.SetURL(parsedUrl)
-		},
-		ModifyResponse: func(resp *http.Response) error {
-			resp.Header.Del("Server")
-			for k := range resp.Header {
-				if strings.HasPrefix(k, "X-Amz-") {
-					resp.Header.Del(k)
-				}
+	// SigV4-ветка
+	if t.Kind == "s3" {
+		// читаем тело
+		var body []byte
+		if req.Body != nil {
+			b, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
 			}
-
-			if resp.StatusCode == http.StatusNotFound {
-				resp.Body = io.NopCloser(bytes.NewReader(nil))
-				resp.Header.Del("Content-Type")
-				resp.Header.Set("Content-Length", "0")
-				resp.ContentLength = 0
-			}
-
-			return nil
-		},
-	}
-
-	transport := BasicAuthTransport{
-		Kind:       v.kind,
-		Username:   v.accessKeyID,
-		Password:   v.secretKey,
-		TrimPrefix: trimPrefix,
-		NewPrefix:  newPrefix,
-		URL:        v.endpoint,
-		Region:     v.region,
-		DisableSSL: v.cacert == "",
-	}
-
-	if v.cacert != "" {
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM([]byte(v.cacert))
-
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: caCertPool,
+			body = b
+			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
+
+		// готовим хэш
+		payloadHash := "UNSIGNED-PAYLOAD"
+		if len(body) > 0 {
+			sum := sha256.Sum256(body)
+			payloadHash = hex.EncodeToString(sum[:])
+		}
+
+		// подписываем
+		signer := v4.NewSigner()
+		creds := aws.Credentials{
+			AccessKeyID:     t.Username,
+			SecretAccessKey: t.Password,
+		}
+		if err := signer.SignHTTP(
+			context.Background(),
+			creds,
+			req,
+			payloadHash,
+			"s3",
+			t.Region,
+			time.Now(),
+		); err != nil {
+			return nil, fmt.Errorf("sigv4 signing failed: %w", err)
+		}
+
+		// восстанавливаем Body для отправки
+		req.Body = io.NopCloser(bytes.NewReader(body))
+
+	} else if t.Username != "" {
+		// Basic-авторизация (на всякий случай)
+		req.Header.Set("Authorization", "Basic "+
+			base64.StdEncoding.EncodeToString([]byte(t.Username+":"+t.Password)))
 	}
 
-	proxy.Transport = &transport
-
-	return &proxy, nil
+	// по умолчанию — дефолтный транспорт (с нашим TLSConfig)
+	tr := &http.Transport{TLSClientConfig: t.TLSClientConfig}
+	return tr.RoundTrip(req)
 }
