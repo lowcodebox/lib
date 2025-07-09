@@ -98,7 +98,7 @@ func Decrypt(key []byte, text string) (string, error) {
 	iv := decodedMsg[:aes.BlockSize]
 	msg := decodedMsg[aes.BlockSize:]
 
-	cfb := cipher.NewCFBDecrypter(block, iv)
+	cfb := cipher.NewCFBDecrypter(block, iv) // TODO: deprecated - переделать
 	cfb.XORKeyStream(msg, msg)
 
 	unpadMsg, err := unpad(msg)
