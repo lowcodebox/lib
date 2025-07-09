@@ -4,16 +4,19 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
+
+var ErrPath = errors.New("invalid path")
 
 type BasicAuthTransport struct {
 	Kind       string
@@ -25,58 +28,78 @@ type BasicAuthTransport struct {
 	Region     string
 	DisableSSL bool
 
-	TLSClientConfig *tls.Config
+	http.Transport
 }
 
 func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// SigV4-ветка
-	if t.Kind == "s3" {
-		// читаем тело
-		var body []byte
-		if req.Body != nil {
-			b, err := io.ReadAll(req.Body)
-			if err != nil {
-				return nil, err
-			}
-			body = b
-			req.Body = io.NopCloser(bytes.NewReader(body))
-		}
-
-		// готовим хэш
-		payloadHash := "UNSIGNED-PAYLOAD"
-		if len(body) > 0 {
-			sum := sha256.Sum256(body)
-			payloadHash = hex.EncodeToString(sum[:])
-		}
-
-		// подписываем
-		signer := v4.NewSigner()
-		creds := aws.Credentials{
-			AccessKeyID:     t.Username,
-			SecretAccessKey: t.Password,
-		}
-		if err := signer.SignHTTP(
-			context.Background(),
-			creds,
-			req,
-			payloadHash,
-			"s3",
-			t.Region,
-			time.Now(),
-		); err != nil {
-			return nil, fmt.Errorf("sigv4 signing failed: %w", err)
-		}
-
-		// восстанавливаем Body для отправки
-		req.Body = io.NopCloser(bytes.NewReader(body))
-
-	} else if t.Username != "" {
-		// Basic-авторизация (на всякий случай)
-		req.Header.Set("Authorization", "Basic "+
-			base64.StdEncoding.EncodeToString([]byte(t.Username+":"+t.Password)))
+	if strings.Contains(req.URL.Path, "../") {
+		return nil, ErrPath
 	}
 
-	// по умолчанию — дефолтный транспорт (с нашим TLSConfig)
-	tr := &http.Transport{TLSClientConfig: t.TLSClientConfig}
-	return tr.RoundTrip(req)
+	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
+	user, _ := req.Context().Value(userUid).(string)
+
+	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
+		return nil, errors.New(privateDirectory)
+	}
+	if t.Username != "" {
+		switch t.Kind {
+		case "s3":
+			// Читаем тело
+			var body []byte
+			if req.Body != nil {
+				b, err := io.ReadAll(req.Body)
+				if err != nil {
+					return nil, err
+				}
+				body = b
+				req.Body = io.NopCloser(bytes.NewReader(body))
+			}
+
+			// Вычисляем хеш тела (payload hash)
+			var payloadHash string
+			//if req.Method == "GET" || req.Method == "HEAD" || req.Method == "DELETE" {
+			//	payloadHash = "UNSIGNED-PAYLOAD"
+			//} else {
+			sum := sha256.Sum256(body)
+			payloadHash = hex.EncodeToString(sum[:])
+			//}
+
+			// Устанавливаем host (важно для подписи)
+			req.Host = req.URL.Host
+
+			// Устанавливаем Content-Length вручную
+			if len(body) > 0 {
+				req.ContentLength = int64(len(body))
+			}
+
+			// Подписываем запрос через SigV4
+			signer := v4.NewSigner()
+			creds := aws.Credentials{
+				AccessKeyID:     t.Username,
+				SecretAccessKey: t.Password,
+			}
+			err := signer.SignHTTP(
+				context.Background(),
+				creds,
+				req,
+				payloadHash,
+				"s3",
+				t.Region,
+				time.Now(),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("sigv4 signing failed: %w", err)
+			}
+
+			// Восстанавливаем тело
+			req.Body = io.NopCloser(bytes.NewReader(body))
+		default:
+			req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
+				base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
+					t.Username, t.Password)))))
+		}
+	}
+
+	return t.Transport.RoundTrip(req)
 }

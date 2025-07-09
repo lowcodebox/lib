@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package s3_minio_test
 
 import (

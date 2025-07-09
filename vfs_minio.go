@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	minioVfsKind = "3"
+	minioVfsKind = "s3"
 )
 
 type vfsMinio struct {
@@ -279,33 +279,54 @@ func (v *vfsMinio) Close() (err error) {
 }
 
 func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
-	// 1. Собираем URL целевого S3-совместимого эндпоинта с учётом схемы:
+	// 1. Собираем URL целевого S3-совместимого эндпоинта с учётом схемы
 	scheme := "https"
 	if !v.config.UseSSL {
 		scheme = "http"
 	}
-	targetURL, err := url.Parse(fmt.Sprintf("%s://%s", scheme, v.config.Endpoint))
+
+	// убедимся, что endpoint без схемы, иначе double-scheme
+	endpoint := strings.TrimPrefix(v.config.Endpoint, "http://")
+	endpoint = strings.TrimPrefix(endpoint, "https://")
+
+	parsedURL, err := url.Parse(fmt.Sprintf("%s://%s", scheme, endpoint))
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Берём стандартный single-host reverse proxy…
-	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	// 2. Создаём полноценный ReverseProxy с Rewrite
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(r *httputil.ProxyRequest) {
+			r.SetXForwarded()
+			r.SetURL(parsedURL)
 
-	// 3. …и перекрываем Director, чтобы:
-	//    а) задать правильный host/scheme
-	//    б) отрезать trimPrefix и добавить newPrefix
-	baseDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		baseDirector(req)
-		// пример: /public/bucket/path → /bucket/path
-		raw := req.URL.Path
-		req.URL.Path = newPrefix + strings.TrimPrefix(raw, trimPrefix)
+			// Преобразуем путь, если задан trimPrefix
+			if trimPrefix != "" && strings.HasPrefix(r.Out.URL.Path, trimPrefix) {
+				r.Out.URL.Path = newPrefix + strings.TrimPrefix(r.Out.URL.Path, trimPrefix)
+			}
+		},
+
+		ModifyResponse: func(resp *http.Response) error {
+			resp.Header.Del("Server")
+			for k := range resp.Header {
+				if strings.HasPrefix(k, "X-Amz-") {
+					resp.Header.Del(k)
+				}
+			}
+
+			if resp.StatusCode == http.StatusNotFound {
+				resp.Body = io.NopCloser(bytes.NewReader(nil))
+				resp.Header.Del("Content-Type")
+				resp.Header.Set("Content-Length", "0")
+				resp.ContentLength = 0
+			}
+			return nil
+		},
 	}
 
-	// 4. Подставляем наш транспорт, где Kind="s3" → SigV4-подпись
+	// 3. Прокси будет использовать наш кастомный транспорт с SigV4
 	t := &BasicAuthTransport{
-		Kind:       minioVfsKind,
+		Kind:       minioVfsKind, // "s3"
 		Username:   v.config.AccessKeyID,
 		Password:   v.config.SecretKey,
 		Region:     v.config.Region,
@@ -317,23 +338,6 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		t.TLSClientConfig = &tls.Config{RootCAs: pool}
 	}
 	proxy.Transport = t
-
-	// 5. Оставляем ваш ModifyResponse
-	proxy.ModifyResponse = func(resp *http.Response) error {
-		resp.Header.Del("Server")
-		for k := range resp.Header {
-			if strings.HasPrefix(k, "X-Amz-") {
-				resp.Header.Del(k)
-			}
-		}
-		if resp.StatusCode == http.StatusNotFound {
-			resp.Body = io.NopCloser(bytes.NewReader(nil))
-			resp.Header.Del("Content-Type")
-			resp.Header.Set("Content-Length", "0")
-			resp.ContentLength = 0
-		}
-		return nil
-	}
 
 	return proxy, nil
 }

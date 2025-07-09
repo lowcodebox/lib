@@ -33,7 +33,7 @@ done
 
 echo "▶ Running Go integration tests…"
 cd "$PROJECT_ROOT"
-go test -timeout 120s -tags=integration ./pkg/s3
+go test -timeout 120s -tags=integration ./...
 TEST_EXIT_CODE=$?
 
 echo "▶ Tearing down MinIO..."

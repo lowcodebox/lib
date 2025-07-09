@@ -32,7 +32,6 @@ func TestStateHostTick_EmptyHost(t *testing.T) {
 }
 
 func TestStateHostTick_PreservesOtherFields(t *testing.T) {
-	t.Parallel()
 	// Заполняем все поля нетривиальными значениями
 	sh := &lib.StateHost{
 		PercentageCPU:  12.34,
