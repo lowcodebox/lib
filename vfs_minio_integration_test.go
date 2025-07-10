@@ -19,13 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getEnv(key string, defaultVal string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return val
-	}
-	return defaultVal
-}
-
 var (
 	testEndpoint  = utils.GetEnv("MINIO_ENDPOINT", "localhost:9000")
 	testAccessKey = utils.GetEnv("MINIO_ACCESS_KEY", "minioadmin")
