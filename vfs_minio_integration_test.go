@@ -6,6 +6,7 @@ package lib_test
 import (
 	"context"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,13 +19,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getEnv(key string, defaultVal string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return defaultVal
+}
+
+var (
+	testEndpoint  = utils.GetEnv("MINIO_ENDPOINT", "localhost:9000")
+	testAccessKey = utils.GetEnv("MINIO_ACCESS_KEY", "minioadmin")
+	testSecretKey = utils.GetEnv("MINIO_SECRET_KEY", "minioadmin")
+	testUseSSL    = utils.GetEnvBool("MINIO_USE_SSL", false)
+)
+
 func TestVfsMinio_WriteReadDelete(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &lib.VfsConfig{
-		Endpoint:    "localhost:9000",
-		AccessKeyID: "minioadmin",
-		SecretKey:   "minioadmin",
+		Endpoint:    testEndpoint,
+		AccessKeyID: testAccessKey,
+		SecretKey:   testSecretKey,
 		Region:      "",
 		Bucket:      "vfs-test-" + time.Now().Format("20060102150405"),
 		UseSSL:      false,
@@ -70,9 +85,9 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &lib.VfsConfig{
-		Endpoint:    "localhost:9000",
-		AccessKeyID: "minioadmin",
-		SecretKey:   "minioadmin",
+		Endpoint:    testEndpoint,
+		AccessKeyID: testAccessKey,
+		SecretKey:   testSecretKey,
 		Region:      "",
 		Bucket:      "item-list-test-" + time.Now().Format("20060102150405"),
 		UseSSL:      false,
@@ -130,9 +145,9 @@ func TestVfsMinio_Proxy(t *testing.T) {
 	ctx := context.Background()
 
 	originCfg := &lib.VfsConfig{
-		Endpoint:    "localhost:9000",
-		AccessKeyID: "minioadmin",
-		SecretKey:   "minioadmin",
+		Endpoint:    testEndpoint,
+		AccessKeyID: testAccessKey,
+		SecretKey:   testSecretKey,
 		Region:      "",
 		Bucket:      "proxy-test-" + time.Now().Format("20060102150405"),
 		UseSSL:      false,

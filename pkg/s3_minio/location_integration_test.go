@@ -6,6 +6,7 @@ package s3_minio_test
 import (
 	"bytes"
 	"context"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -16,11 +17,11 @@ import (
 	"time"
 )
 
-const (
-	testEndpoint  = "localhost:9000"
-	testAccessKey = "minioadmin"
-	testSecretKey = "minioadmin"
-	testUseSSL    = false
+var (
+	testEndpoint  = utils.GetEnv("MINIO_ENDPOINT", "localhost:9000")
+	testAccessKey = utils.GetEnv("MINIO_ACCESS_KEY", "minioadmin")
+	testSecretKey = utils.GetEnv("MINIO_SECRET_KEY", "minioadmin")
+	testUseSSL    = utils.GetEnvBool("MINIO_USE_SSL", false)
 )
 
 func setupMinioClient(t *testing.T) *minio.Client {

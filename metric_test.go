@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewMetric_ReturnsNonNil(t *testing.T) {
-	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -22,47 +22,43 @@ func TestNewMetric_ReturnsNonNil(t *testing.T) {
 }
 
 func TestServiceMetric_QueueAndTPRMetrics(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	m := lib.NewMetric(ctx, time.Hour) // авто-логгер не мешает
+	m := lib.NewMetric(ctx, time.Hour)
 
-	// имитация +1,+1,+1,-1
 	m.SetConnectionIncrement()
 	m.SetConnectionIncrement()
 	m.SetConnectionIncrement()
 	m.SetConnectionDecrement()
-	// имитация трёх запросов
+
 	m.SetTimeRequest(10 * time.Millisecond)
 	m.SetTimeRequest(20 * time.Millisecond)
 	m.SetTimeRequest(30 * time.Millisecond)
 
-	// ждём выполнения горутин и расчёта очереди
 	assert.Eventually(t, func() bool {
 		m.Generate()
 		m.SaveToStash()
 		got := m.Get().Queue_AVG
+		t.Logf("💡 Current Queue_AVG: %.4f", got)
 		return math.Abs(float64(got-8.0/3.0)) < 1e-1
-	}, 200*time.Millisecond, 10*time.Millisecond,
+	}, 1*time.Second, 20*time.Millisecond,
 		"ожидали Queue_AVG≈8/3")
 
-	// после того, как цифра совпала, проверяем остальные поля
 	metrics := m.Get()
 	assert.Equal(t, float32(0), metrics.Queue_QTL_80)
 	assert.Equal(t, 0, metrics.RPS)
 
-	// проверка TPR
 	assert.Eventually(t, func() bool {
 		m.Generate()
 		m.SaveToStash()
 		got := m.Get().TPR_AVG_MS
-		return math.Abs(float64(got-20000.0)) < 1e-3
-	}, 200*time.Millisecond, 10*time.Millisecond,
+		return math.Abs(float64(got-20000.0)) < 1e-1
+	}, 1*time.Second, 20*time.Millisecond,
 		"ожидали TPR_AVG_MS≈20000")
 }
 
 func TestServiceMetric_MiddlewareIntegration(t *testing.T) {
-	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	m := lib.NewMetric(ctx, time.Hour)

@@ -13,7 +13,7 @@ import (
 // Предполагаем, что SearchConfig(name, startPath)
 // ищет файл с именем name, поднимаясь вверх от startPath по дереву директорий.
 func TestSearchConfig(t *testing.T) {
-	t.Parallel()
+
 	// 1. Создаём временную "корневую" папку
 	baseDir := t.TempDir()
 
@@ -41,7 +41,7 @@ func TestSearchConfig(t *testing.T) {
 // ––– TestTimeParse –––
 // Табличный тест для разных форматов строк времени.
 func TestTimeParse(t *testing.T) {
-	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string

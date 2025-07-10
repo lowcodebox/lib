@@ -21,7 +21,7 @@ func (g *gaugeStub) Add(delta float64) { /*no-op*/ }
 func (g *gaugeStub) Set(v float64)     { g.lastSet = v }
 
 func TestSendServiceParamsToMetric(t *testing.T) {
-	t.Parallel()
+
 	// Подменяем все package-level gauges на stub-объекты
 	stubUID := &gaugeStub{}
 	stubName := &gaugeStub{}

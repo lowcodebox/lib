@@ -7,7 +7,7 @@ import (
 )
 
 func TestXServiceKey(t *testing.T) {
-	t.Parallel()
+
 	cases := []struct {
 		domain        string
 		projectKey    []byte
@@ -29,7 +29,7 @@ func TestXServiceKey(t *testing.T) {
 }
 
 func TestEncryptArgon2(t *testing.T) {
-	t.Parallel()
+
 	cases := []struct {
 		domain        string
 		projectKey    []byte
@@ -57,7 +57,7 @@ func TestEncryptArgon2(t *testing.T) {
 }
 
 func TestSetValidURI(t *testing.T) {
-	t.Parallel()
+
 	const validUris = "pro/ru,lms/ru"
 	var key = []byte("4160b6caea7ef66d")
 	testCases := []struct {

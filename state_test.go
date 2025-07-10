@@ -10,7 +10,7 @@ import (
 )
 
 func TestStateHostTick_EmptyHost(t *testing.T) {
-	t.Parallel()
+
 	sh := &lib.StateHost{}
 
 	// Перед Tick всё должно быть нулём

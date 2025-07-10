@@ -29,7 +29,7 @@ func okHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func TestWhiteUri(t *testing.T) {
-	t.Parallel()
+
 	type tcase struct {
 		Path  string
 		Token string
@@ -71,7 +71,7 @@ func TestWhiteUri(t *testing.T) {
 }
 
 func TestCurlV2(t *testing.T) {
-	t.Parallel()
+
 	// Создаем тестовый сервер с редиректом
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/redirect" {

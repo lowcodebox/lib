@@ -13,7 +13,7 @@ import (
 
 // Тестируем ValidateNameVersion
 func TestValidateNameVersion(t *testing.T) {
-	t.Parallel()
+
 	cases := []struct {
 		project, types, domain string
 		wantName, wantVer      string
@@ -35,7 +35,7 @@ func TestValidateNameVersion(t *testing.T) {
 
 // Тестируем NewBuildInfo + SetBuildInfo через собственное registry
 func TestNewAndSetBuildInfo(t *testing.T) {
-	t.Parallel()
+
 	// 1) создаём новую GaugeVec
 	gv := lib.NewBuildInfo("svcX")
 

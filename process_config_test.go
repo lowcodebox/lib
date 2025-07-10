@@ -11,7 +11,7 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	t.Parallel()
+
 	base := lib.ProcessConfig{
 		Path:    "p",
 		Project: "proj",
@@ -90,7 +90,7 @@ func TestValidate(t *testing.T) {
 }
 
 func TestBuildArgs(t *testing.T) {
-	t.Parallel()
+
 	pc := lib.ProcessConfig{
 		Command: "run",
 		Config:  "conf.toml",
@@ -103,7 +103,7 @@ func TestBuildArgs(t *testing.T) {
 }
 
 func TestString_GetLogFileName_GetAuditInfo(t *testing.T) {
-	t.Parallel()
+
 	pc := lib.ProcessConfig{
 		Path:    "/bin/app",
 		Project: "myproj",
@@ -137,7 +137,7 @@ func TestString_GetLogFileName_GetAuditInfo(t *testing.T) {
 }
 
 func TestClone(t *testing.T) {
-	t.Parallel()
+
 	orig := &lib.ProcessConfig{
 		Path:    "/a",
 		Project: "p",
@@ -160,7 +160,7 @@ func TestClone(t *testing.T) {
 }
 
 func TestValidateAndSanitize_Success(t *testing.T) {
-	t.Parallel()
+
 	tmp := t.TempDir()
 	// создаём «исполняемый» файл и конфиг
 	execPath := filepath.Join(tmp, "exe-file")
@@ -194,7 +194,7 @@ func TestValidateAndSanitize_Success(t *testing.T) {
 }
 
 func TestValidateAndSanitize_InvalidExecPath(t *testing.T) {
-	t.Parallel()
+
 	tmp := t.TempDir()
 	// только конфиг существует
 	configPath := filepath.Join(tmp, "cfg")
@@ -213,7 +213,7 @@ func TestValidateAndSanitize_InvalidExecPath(t *testing.T) {
 }
 
 func TestValidateAndSanitize_InvalidConfig(t *testing.T) {
-	t.Parallel()
+
 	tmp := t.TempDir()
 	// только exec существует
 	execPath := filepath.Join(tmp, "exe")
@@ -231,7 +231,7 @@ func TestValidateAndSanitize_InvalidConfig(t *testing.T) {
 }
 
 func TestGetCommandLine(t *testing.T) {
-	t.Parallel()
+
 	pc := lib.ProcessConfig{
 		Path:    "/bin/runme",
 		Command: "run",

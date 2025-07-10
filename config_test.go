@@ -24,7 +24,6 @@ type tableConfig struct {
 }
 
 func TestDecodeConfig_Success(t *testing.T) {
-	t.Parallel()
 	cfg := &simpleConfig{}
 	tomlStr := `a = "hello"`
 	err := lib.DecodeConfig(tomlStr, cfg)
@@ -33,7 +32,6 @@ func TestDecodeConfig_Success(t *testing.T) {
 }
 
 func TestDecodeConfig_Error(t *testing.T) {
-	t.Parallel()
 	cfg := &simpleConfig{}
 	bad := `a = ` // некорректный TOML
 	err := lib.DecodeConfig(bad, cfg)
@@ -41,7 +39,6 @@ func TestDecodeConfig_Error(t *testing.T) {
 }
 
 func TestSearchConfigDir_FoundAndNotFound(t *testing.T) {
-	t.Parallel()
 	// создаём временную структуру каталогов
 	root := t.TempDir()
 	nested := filepath.Join(root, "dir1", "dir2")
@@ -63,7 +60,6 @@ func TestSearchConfigDir_FoundAndNotFound(t *testing.T) {
 }
 
 func TestConfigLoad_EmptyConfig(t *testing.T) {
-	t.Parallel()
 	cfg := &simpleConfig{}
 	payload, err := lib.ConfigLoad("", "v1", "h1", cfg)
 	assert.Empty(t, payload)
@@ -71,7 +67,7 @@ func TestConfigLoad_EmptyConfig(t *testing.T) {
 }
 
 func TestConfigLoad_FileBranch_Success(t *testing.T) {
-	t.Parallel()
+
 	// готовим временный файл с TOML
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "cfgfile.cfg")
@@ -86,7 +82,7 @@ func TestConfigLoad_FileBranch_Success(t *testing.T) {
 }
 
 func TestConfigLoad_FileBranch_ReadError(t *testing.T) {
-	t.Parallel()
+
 	// файл не существует
 	cfg := &simpleConfig{}
 	_, err := lib.ConfigLoad("no_such_file.cfg", "v", "h", cfg)
@@ -95,7 +91,7 @@ func TestConfigLoad_FileBranch_ReadError(t *testing.T) {
 }
 
 func TestConfigLoad_Base64Branch_Success(t *testing.T) {
-	t.Parallel()
+
 	// подготавливаем TOML-документ в виде массива таблиц, чтобы повторение валидно парсилось
 	tomlStr := "[[Table]]\na = \"X\"\n"
 	enc := base64.StdEncoding.EncodeToString([]byte(tomlStr))
@@ -115,7 +111,7 @@ func TestConfigLoad_Base64Branch_Success(t *testing.T) {
 }
 
 func TestConfigLoad_Base64Branch_InvalidBase64(t *testing.T) {
-	t.Parallel()
+
 	// строка длинная, но невалидная base64
 	bad := strings.Repeat("!", 201)
 	cfg := &simpleConfig{}

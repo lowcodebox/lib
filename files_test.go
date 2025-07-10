@@ -11,7 +11,7 @@ import (
 )
 
 func TestCreateFile(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	f := filepath.Join(dir, "foo.txt")
 
@@ -31,7 +31,7 @@ func TestCreateFile(t *testing.T) {
 }
 
 func TestWriteAndReadFile(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	f := filepath.Join(dir, "bar.txt")
 	data := []byte("hello world")
@@ -45,13 +45,13 @@ func TestWriteAndReadFile(t *testing.T) {
 }
 
 func TestReadFile_NotExist(t *testing.T) {
-	t.Parallel()
+
 	_, err := lib.ReadFile("no_such_file.xyz")
 	assert.Error(t, err)
 }
 
 func TestCopyFile(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	src := filepath.Join(dir, "src.txt")
 	dst := filepath.Join(dir, "dst.txt")
@@ -66,7 +66,7 @@ func TestCopyFile(t *testing.T) {
 }
 
 func TestCopyFolder(t *testing.T) {
-	t.Parallel()
+
 	root := t.TempDir()
 	// создаём структуру
 	src := filepath.Join(root, "src")
@@ -89,7 +89,7 @@ func TestCopyFolder(t *testing.T) {
 }
 
 func TestIsExist(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	f := filepath.Join(dir, "f")
 	assert.False(t, lib.IsExist(f))
@@ -103,7 +103,7 @@ func TestIsExist(t *testing.T) {
 }
 
 func TestCreateDir(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	nested := filepath.Join(dir, "one", "two", "three")
 	assert.NoError(t, lib.CreateDir(nested, 0750))
@@ -114,7 +114,7 @@ func TestCreateDir(t *testing.T) {
 }
 
 func TestDeleteFile(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	f := filepath.Join(dir, "todel.txt")
 	assert.NoError(t, ioutil.WriteFile(f, []byte("X"), 0644))
@@ -125,7 +125,7 @@ func TestDeleteFile(t *testing.T) {
 }
 
 func TestMoveFile(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	src := filepath.Join(dir, "orig.txt")
 	dst := filepath.Join(dir, "moved.txt")
@@ -142,7 +142,7 @@ func TestMoveFile(t *testing.T) {
 }
 
 func TestZipAndUnzip(t *testing.T) {
-	t.Parallel()
+
 	root := t.TempDir()
 	src := filepath.Join(root, "zipsrc")
 	sub := filepath.Join(src, "sub")
@@ -167,7 +167,7 @@ func TestZipAndUnzip(t *testing.T) {
 }
 
 func TestChmod(t *testing.T) {
-	t.Parallel()
+
 	dir := t.TempDir()
 	f := filepath.Join(dir, "perm.txt")
 	assert.NoError(t, ioutil.WriteFile(f, []byte("x"), 0644))

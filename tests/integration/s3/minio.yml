@@ -13,11 +13,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     command:
-#      sh -c "
-#        echo \"minioadmin\" > access_key &&
-#        echo \"minioadmin\" > secret_key &&
         server /data --console-address ":9001"
-#      "
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 5s

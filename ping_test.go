@@ -20,7 +20,7 @@ func resetGlobals() {
 }
 
 func TestPingInitialFields(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 
 	// установим фиксированный старт для детерминизма в StartTime
@@ -45,7 +45,7 @@ func TestPingInitialFields(t *testing.T) {
 }
 
 func TestPingSubsequentUptimeIncreases(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 	// для удобства короткий старт
 	startTime = time.Now().Add(-100 * time.Millisecond)
@@ -65,7 +65,7 @@ func TestPingSubsequentUptimeIncreases(t *testing.T) {
 }
 
 func TestPingUsesConfigNameForUid(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 	configName = "mycfg"
 	got := Ping()
@@ -73,7 +73,7 @@ func TestPingUsesConfigNameForUid(t *testing.T) {
 }
 
 func TestPingSplitsOldDomainToProjectAndName(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 	// имитируем устаревший формат domain
 	pingConfOld.Domain = "projX/nameY"
@@ -85,7 +85,7 @@ func TestPingSplitsOldDomainToProjectAndName(t *testing.T) {
 }
 
 func TestSetPongFieldsModifiesAndCallsPingOnce(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 	// нам нужен фиксированный старт, чтобы SetPongFields внутри Ping выставил StartTime
 	t0 := time.Now().Add(-1 * time.Minute)
@@ -108,7 +108,7 @@ func TestSetPongFieldsModifiesAndCallsPingOnce(t *testing.T) {
 }
 
 func TestSetPongFieldsNilDoesNothing(t *testing.T) {
-	t.Parallel()
+
 	resetGlobals()
 	// pongObj ещё пуст
 	assert.Empty(t, pongObj.ReplicaID)
