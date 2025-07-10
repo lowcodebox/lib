@@ -23,8 +23,7 @@ func (c *MinioContainer) Name() string {
 	return c.bucketName
 }
 
-func (c *MinioContainer) Item(id string) (s3_wrappers.Item, error) {
-	ctx := context.Background()
+func (c *MinioContainer) Item(ctx context.Context, id string) (s3_wrappers.Item, error) {
 	_, err := c.client.StatObject(ctx, c.bucketName, id, minio.StatObjectOptions{})
 	if err != nil {
 		return nil, err
@@ -37,8 +36,7 @@ func (c *MinioContainer) Item(id string) (s3_wrappers.Item, error) {
 }
 
 // Items returns a paginated list of items using offset-based paging (not S3 continuation token).
-func (c *MinioContainer) Items(prefix, cursor string, count int) ([]s3_wrappers.Item, string, error) {
-	ctx := context.Background()
+func (c *MinioContainer) Items(ctx context.Context, prefix, cursor string, count int) ([]s3_wrappers.Item, string, error) {
 	start := 0
 	if cursor != "" {
 		var err error
@@ -91,13 +89,11 @@ func (c *MinioContainer) Items(prefix, cursor string, count int) ([]s3_wrappers.
 	return items, nextCursor, nil
 }
 
-func (c *MinioContainer) RemoveItem(id string) error {
-	ctx := context.Background()
+func (c *MinioContainer) RemoveItem(ctx context.Context, id string) error {
 	return c.client.RemoveObject(ctx, c.bucketName, id, minio.RemoveObjectOptions{})
 }
 
-func (c *MinioContainer) Put(name string, r io.Reader, size int64, metadata map[string]interface{}) (s3_wrappers.Item, error) {
-	ctx := context.Background()
+func (c *MinioContainer) Put(ctx context.Context, name string, r io.Reader, size int64, metadata map[string]interface{}) (s3_wrappers.Item, error) {
 
 	userMeta := make(map[string]string, len(metadata))
 	for k, v := range metadata {

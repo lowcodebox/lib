@@ -5,6 +5,7 @@ package s3_minio_test
 
 import (
 	"bytes"
+	"context"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -32,6 +33,8 @@ func setupMinioClient(t *testing.T) *minio.Client {
 }
 
 func TestMinioLocation_Integration(t *testing.T) {
+	ctx := context.Background()
+
 	client := setupMinioClient(t)
 	loc := s3_minio.NewLocation(client)
 
@@ -39,43 +42,43 @@ func TestMinioLocation_Integration(t *testing.T) {
 	bucketName := "integration-test-" + time.Now().Format("20060102150405")
 
 	// --- CreateContainer ---
-	container, err := loc.CreateContainer(bucketName)
+	container, err := loc.CreateContainer(ctx, bucketName)
 	assert.NoError(t, err)
 	assert.Equal(t, bucketName, container.ID())
 
 	// --- Container ---
-	loaded, err := loc.Container(bucketName)
+	loaded, err := loc.Container(ctx, bucketName)
 	assert.NoError(t, err)
 	assert.Equal(t, container.ID(), loaded.ID())
 
 	// --- Put item ---
 	content := []byte("hello world")
 	name := "folder/sample.txt"
-	item, err := loaded.Put(name, bytes.NewReader(content), int64(len(content)), map[string]interface{}{
+	item, err := loaded.Put(ctx, name, bytes.NewReader(content), int64(len(content)), map[string]interface{}{
 		"X-Test-Meta": "demo",
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, name, item.ID())
 
 	// --- Get item by ID ---
-	fetched, err := loaded.Item(name)
+	fetched, err := loaded.Item(ctx, name)
 	assert.NoError(t, err)
-	size, _ := fetched.Size()
+	size, _ := fetched.Size(ctx)
 	assert.Equal(t, int64(len(content)), size)
 
 	// --- List items with prefix ---
-	items, nextCursor, err := loaded.Items("folder/", "", 10)
+	items, nextCursor, err := loaded.Items(ctx, "folder/", "", 10)
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
 	assert.Equal(t, "", nextCursor)
 
 	// --- URL ---
-	u, err := item.URL()
+	u, err := item.URL(ctx)
 	assert.NoError(t, err)
 	assert.Contains(t, u.String(), "http")
 
 	// --- Metadata ---
-	meta, err := item.Metadata()
+	meta, err := item.Metadata(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "demo", meta["X-Test-Meta"])
 
@@ -86,15 +89,16 @@ func TestMinioLocation_Integration(t *testing.T) {
 	assert.Equal(t, name, itemByURL.Name())
 
 	// --- RemoveItem ---
-	err = loaded.RemoveItem(name)
+	err = loaded.RemoveItem(ctx, name)
 	assert.NoError(t, err)
 
 	// --- RemoveContainer ---
-	err = loc.RemoveContainer(bucketName)
+	err = loc.RemoveContainer(ctx, bucketName)
 	assert.NoError(t, err)
 }
 
 func TestMinioLocation_ListContainers(t *testing.T) {
+	ctx := context.Background()
 	client := setupMinioClient(t)
 	loc := s3_minio.NewLocation(client)
 
@@ -104,7 +108,7 @@ func TestMinioLocation_ListContainers(t *testing.T) {
 	var expectedIDs []string
 	for i := 1; i <= 3; i++ {
 		name := prefix + "-" + strconv.Itoa(i)
-		_, err := loc.CreateContainer(name)
+		_, err := loc.CreateContainer(ctx, name)
 		assert.NoError(t, err)
 		expectedIDs = append(expectedIDs, name)
 	}
@@ -114,7 +118,7 @@ func TestMinioLocation_ListContainers(t *testing.T) {
 	allBuckets := make([]string, 0)
 
 	for {
-		buckets, nextCursor, err := loc.Containers(prefix, cursor, 2)
+		buckets, nextCursor, err := loc.Containers(ctx, prefix, cursor, 2)
 		assert.NoError(t, err)
 
 		for _, b := range buckets {
@@ -132,7 +136,7 @@ func TestMinioLocation_ListContainers(t *testing.T) {
 
 	// --- Чистим за собой ---
 	for _, name := range expectedIDs {
-		err := loc.RemoveContainer(name)
+		err := loc.RemoveContainer(ctx, name)
 		assert.NoError(t, err)
 	}
 }

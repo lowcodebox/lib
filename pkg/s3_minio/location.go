@@ -26,8 +26,7 @@ func (l *MinioLocation) Close() error {
 }
 
 // CreateContainer creates a new bucket.
-func (l *MinioLocation) CreateContainer(name string) (s3_wrappers.Container, error) {
-	ctx := context.Background()
+func (l *MinioLocation) CreateContainer(ctx context.Context, name string) (s3_wrappers.Container, error) {
 	err := l.client.MakeBucket(ctx, name, minio.MakeBucketOptions{})
 	if err != nil {
 		// if it already exists, return it
@@ -41,8 +40,7 @@ func (l *MinioLocation) CreateContainer(name string) (s3_wrappers.Container, err
 }
 
 // Containers lists buckets with prefix, in pages of count, using cursor as an integer offset encoded as string.
-func (l *MinioLocation) Containers(prefix, cursor string, count int) ([]s3_wrappers.Container, string, error) {
-	ctx := context.Background()
+func (l *MinioLocation) Containers(ctx context.Context, prefix, cursor string, count int) ([]s3_wrappers.Container, string, error) {
 	buckets, err := l.client.ListBuckets(ctx)
 	if err != nil {
 		return nil, "", err
@@ -77,8 +75,7 @@ func (l *MinioLocation) Containers(prefix, cursor string, count int) ([]s3_wrapp
 }
 
 // Container gets an existing bucket by name.
-func (l *MinioLocation) Container(id string) (s3_wrappers.Container, error) {
-	ctx := context.Background()
+func (l *MinioLocation) Container(ctx context.Context, id string) (s3_wrappers.Container, error) {
 	exists, err := l.client.BucketExists(ctx, id)
 	if err != nil {
 		return nil, err
@@ -90,8 +87,7 @@ func (l *MinioLocation) Container(id string) (s3_wrappers.Container, error) {
 }
 
 // RemoveContainer deletes a bucket.
-func (l *MinioLocation) RemoveContainer(id string) error {
-	ctx := context.Background()
+func (l *MinioLocation) RemoveContainer(ctx context.Context, id string) error {
 	return l.client.RemoveBucket(ctx, id)
 }
 

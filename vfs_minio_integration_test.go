@@ -36,7 +36,7 @@ func TestVfsMinio_WriteReadDelete(t *testing.T) {
 	defer vfs.Close()
 
 	// Connect & Ensure bucket exists
-	err = vfs.Connect()
+	err = vfs.Connect(ctx)
 	assert.NoError(t, err)
 
 	// Создаём временный файл
@@ -82,7 +82,7 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 	assert.NoError(t, err)
 	defer vfs.Close()
 
-	err = vfs.Connect()
+	err = vfs.Connect(ctx)
 	assert.NoError(t, err)
 
 	// Записываем несколько файлов
@@ -101,7 +101,7 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 	item, err := vfs.Item(ctx, "folder1/file1.txt")
 	assert.NoError(t, err)
 	assert.Equal(t, "folder1/file1.txt", item.ID())
-	itemSize, err := item.Size()
+	itemSize, err := item.Size(ctx)
 	assert.NoError(t, err)
 	assert.EqualValues(t, len(filesToWrite["folder1/file1.txt"]), itemSize)
 
@@ -143,7 +143,7 @@ func TestVfsMinio_Proxy(t *testing.T) {
 	assert.NoError(t, err)
 	defer vfsOrigin.Close()
 
-	err = vfsOrigin.Connect()
+	err = vfsOrigin.Connect(ctx)
 	assert.NoError(t, err)
 
 	// записываем файл напрямую

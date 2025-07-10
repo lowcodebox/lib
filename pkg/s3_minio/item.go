@@ -27,16 +27,14 @@ func (i *MinioItem) Name() string {
 }
 
 // URL returns a presigned GET URL (valid for 1 hour).
-func (i *MinioItem) URL() (*url.URL, error) {
-	ctx := context.Background()
+func (i *MinioItem) URL(ctx context.Context) (*url.URL, error) {
 	// Change expiry if needed
 	expiry := time.Hour
 	return i.client.PresignedGetObject(ctx, i.bucketName, i.objectName, expiry, nil)
 }
 
 // Size returns the object size in bytes.
-func (i *MinioItem) Size() (int64, error) {
-	ctx := context.Background()
+func (i *MinioItem) Size(ctx context.Context) (int64, error) {
 	info, err := i.client.StatObject(ctx, i.bucketName, i.objectName, minio.StatObjectOptions{})
 	if err != nil {
 		return 0, err
@@ -45,14 +43,12 @@ func (i *MinioItem) Size() (int64, error) {
 }
 
 // Open returns a reader to the object.
-func (i *MinioItem) Open() (io.ReadCloser, error) {
-	ctx := context.Background()
+func (i *MinioItem) Open(ctx context.Context) (io.ReadCloser, error) {
 	return i.client.GetObject(ctx, i.bucketName, i.objectName, minio.GetObjectOptions{})
 }
 
 // ETag returns the object's ETag (often an MD5 or version marker).
-func (i *MinioItem) ETag() (string, error) {
-	ctx := context.Background()
+func (i *MinioItem) ETag(ctx context.Context) (string, error) {
 	info, err := i.client.StatObject(ctx, i.bucketName, i.objectName, minio.StatObjectOptions{})
 	if err != nil {
 		return "", err
@@ -61,8 +57,7 @@ func (i *MinioItem) ETag() (string, error) {
 }
 
 // LastMod returns the last modified timestamp.
-func (i *MinioItem) LastMod() (time.Time, error) {
-	ctx := context.Background()
+func (i *MinioItem) LastMod(ctx context.Context) (time.Time, error) {
 	info, err := i.client.StatObject(ctx, i.bucketName, i.objectName, minio.StatObjectOptions{})
 	if err != nil {
 		return time.Time{}, err
@@ -71,8 +66,7 @@ func (i *MinioItem) LastMod() (time.Time, error) {
 }
 
 // Metadata returns user-defined metadata.
-func (i *MinioItem) Metadata() (map[string]interface{}, error) {
-	ctx := context.Background()
+func (i *MinioItem) Metadata(ctx context.Context) (map[string]interface{}, error) {
 	info, err := i.client.StatObject(ctx, i.bucketName, i.objectName, minio.StatObjectOptions{})
 	if err != nil {
 		return nil, err

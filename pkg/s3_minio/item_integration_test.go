@@ -5,6 +5,7 @@ package s3_minio_test
 
 import (
 	"bytes"
+	"context"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -16,6 +17,8 @@ import (
 )
 
 func TestMinioItem_Integration(t *testing.T) {
+	ctx := context.Background()
+
 	client, err := minio.New(testEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(testAccessKey, testSecretKey, ""),
 		Secure: testUseSSL,
@@ -27,28 +30,28 @@ func TestMinioItem_Integration(t *testing.T) {
 	bucket := "item-test-" + time.Now().Format("20060102150405")
 
 	// Create bucket
-	container, err := loc.CreateContainer(bucket)
+	container, err := loc.CreateContainer(ctx, bucket)
 	assert.NoError(t, err)
 
 	// Upload object
 	content := []byte("this is the test content")
 	objKey := "test-file.txt"
-	_, err = container.Put(objKey, bytes.NewReader(content), int64(len(content)), map[string]interface{}{
+	_, err = container.Put(ctx, objKey, bytes.NewReader(content), int64(len(content)), map[string]interface{}{
 		"X-Test-Meta": "test-value",
 	})
 	assert.NoError(t, err)
 
 	// Get item
-	item, err := container.Item(objKey)
+	item, err := container.Item(ctx, objKey)
 	assert.NoError(t, err)
 
 	// --- Size ---
-	size, err := item.Size()
+	size, err := item.Size(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(len(content)), size)
 
 	// --- Open + Read ---
-	r, err := item.Open()
+	r, err := item.Open(ctx)
 	assert.NoError(t, err)
 	defer r.Close()
 	readData, err := io.ReadAll(r)
@@ -56,17 +59,17 @@ func TestMinioItem_Integration(t *testing.T) {
 	assert.Equal(t, content, readData)
 
 	// --- ETag ---
-	etag, err := item.ETag()
+	etag, err := item.ETag(ctx)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, etag)
 
 	// --- LastMod ---
-	lastMod, err := item.LastMod()
+	lastMod, err := item.LastMod(ctx)
 	assert.NoError(t, err)
 	assert.WithinDuration(t, time.Now(), lastMod, time.Minute)
 
 	// --- Metadata ---
-	meta, err := item.Metadata()
+	meta, err := item.Metadata(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "test-value", meta["X-Test-Meta"])
 	assert.Equal(t, size, meta["Size"])
@@ -74,13 +77,13 @@ func TestMinioItem_Integration(t *testing.T) {
 	assert.Contains(t, meta["Content-Type"], "application/octet-stream")
 
 	// --- URL ---
-	u, err := item.URL()
+	u, err := item.URL(ctx)
 	assert.NoError(t, err)
 	assert.Contains(t, u.String(), objKey)
 
 	// Cleanup
-	err = container.RemoveItem(objKey)
+	err = container.RemoveItem(ctx, objKey)
 	assert.NoError(t, err)
-	err = loc.RemoveContainer(bucket)
+	err = loc.RemoveContainer(ctx, bucket)
 	assert.NoError(t, err)
 }

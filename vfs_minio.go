@@ -104,7 +104,7 @@ func (v *vfsMinio) Item(ctx context.Context, path string) (file s3_wrappers.Item
 }
 
 func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files []s3_wrappers.Item, err error) {
-	err = v.Connect()
+	err = v.Connect(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s",
 			err, v.config.Comma, v.config.Endpoint, v.config.Bucket)
@@ -113,7 +113,7 @@ func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files
 
 	cursor := ""
 	for {
-		items, nextCursor, err := v.container.Items(prefix, cursor, pageSize)
+		items, nextCursor, err := v.container.Items(ctx, prefix, cursor, pageSize)
 		if err != nil {
 			return nil, fmt.Errorf("error listing items from container: %w", err)
 		}
@@ -141,7 +141,7 @@ func (v *vfsMinio) Read(ctx context.Context, file string, private_access bool) (
 }
 
 func (v *vfsMinio) ReadFromBucket(ctx context.Context, file, bucket string, privateAccess bool) ([]byte, string, error) {
-	if err := v.Connect(); err != nil {
+	if err := v.Connect(ctx); err != nil {
 		return nil, "", fmt.Errorf("connect error: %w (endpoint: %s, bucket: %s)", err, v.config.Endpoint, v.config.Bucket)
 	}
 	defer v.Close()
@@ -177,7 +177,7 @@ func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string
 		return nil, err
 	}
 
-	reader, err = item.Open()
+	reader, err = item.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 		Err error
 	}
 
-	err = v.Connect()
+	err = v.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.Endpoint, v.config.Bucket)
 	}
@@ -212,7 +212,7 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 
 	chResult := make(chan result)
 	exec := func(ctx context.Context, name string, rr io.Reader, size int64, metadata map[string]interface{}) (r result) {
-		_, err = v.container.Put(file, rr, size, nil)
+		_, err = v.container.Put(ctx, file, rr, size, nil)
 		r.Err = err
 		return r
 	}
@@ -230,7 +230,7 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 }
 
 func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
-	err = v.Connect()
+	err = v.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.Endpoint, v.config.Bucket)
 	}
@@ -241,7 +241,7 @@ func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
 		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
 	}
 
-	err = v.container.RemoveItem(item.ID())
+	err = v.container.RemoveItem(ctx, item.ID())
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
 	return err
 }
 
-func (v *vfsMinio) Connect() error {
+func (v *vfsMinio) Connect(ctx context.Context) error {
 	if v.location != nil && v.container != nil {
 		return nil // уже подключено
 	}
@@ -259,10 +259,10 @@ func (v *vfsMinio) Connect() error {
 	v.location = loc
 
 	// Проверяем, существует ли контейнер
-	container, err := loc.Container(v.config.Bucket)
+	container, err := loc.Container(ctx, v.config.Bucket)
 	if err != nil {
 		// Если бакет не найден — пробуем создать
-		container, err = loc.CreateContainer(v.config.Bucket)
+		container, err = loc.CreateContainer(ctx, v.config.Bucket)
 		if err != nil {
 			return fmt.Errorf("failed to create container %q: %w", v.config.Bucket, err)
 		}
