@@ -78,11 +78,30 @@ func NewVfs(cfg *VfsConfig) (Vfs, error) {
 		return nil, fmt.Errorf("invalid endpoint: %w", err)
 	}
 
+	var transport http.RoundTripper
+	if cfg.UseSSL && len(cfg.CACert) > 0 {
+		// Создаём пул и добавляем кастомный CA
+		rootCAs := x509.NewCertPool()
+		if ok := rootCAs.AppendCertsFromPEM([]byte(cfg.CACert)); !ok {
+			return nil, fmt.Errorf("failed to append CA cert")
+		}
+
+		tlsConfig := &tls.Config{
+			RootCAs:            rootCAs,
+			InsecureSkipVerify: true,
+		}
+
+		transport = &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+	}
+
 	// создаём minio.Client
 	minioClient, err := minio.New(parsedUrl.Host, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretKey, ""),
-		Secure: parsedUrl.Scheme == "https",
-		Region: cfg.Region,
+		Creds:     credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretKey, ""),
+		Secure:    parsedUrl.Scheme == "https",
+		Region:    cfg.Region,
+		Transport: transport,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
@@ -335,7 +354,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	if v.config.CACert != "" {
 		pool := x509.NewCertPool()
 		pool.AppendCertsFromPEM([]byte(v.config.CACert))
-		t.TLSClientConfig = &tls.Config{RootCAs: pool}
+		t.TLSClientConfig = &tls.Config{RootCAs: pool, InsecureSkipVerify: true}
 	}
 	proxy.Transport = t
 

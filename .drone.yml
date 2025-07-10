@@ -26,6 +26,10 @@ steps:
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
       MINIO_USE_SSL: "false"
+      MINIO_SECURE_ENDPOINT: "host.docker.internal:9443"
+      MINIO_SECURE_ACCESS_KEY: "minioadmin"
+      MINIO_SECURE_SECRET_KEY: "minioadmin"
+      MINIO_SECURE_USE_SSL: "true"
       TZ: Europe/Moscow
     commands:
       - apk add --no-cache tzdata

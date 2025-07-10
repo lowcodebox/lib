@@ -1,6 +1,4 @@
 version: '3.8'
-#  ENV MINIO_ACCESS_KEY_FILE=access_key MINIO_SECRET_KEY_FILE=secret_key MINIO_ROOT_USER_FILE=access_key MINIO_ROOT_PASSWORD_FILE=secret_key MINIO_KMS_SECRET_KEY_FILE=kms_master_key MINIO_UPDATE_MINISIGN_PUBKEY=RWTx5Zr1tiHQLwG9keckT0c45M3AGeHD6IvimQHpyRywVWGbP1aVSGav MINIO_CONFIG_ENV_FILE=config.env MC_CONFIG_DIR=/tmp/.mc
-
 
 services:
   minio:
@@ -16,6 +14,27 @@ services:
         server /data --console-address ":9001"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  minio-secure:
+    image: minio/minio:latest
+    container_name: minio-secure
+    ports:
+      - "9443:9000"     # HTTPS S3 API
+      - "9444:9001"     # HTTPS Web UI
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - ./certs/certs/client.crt:/root/.minio/certs/public.crt:ro
+      - ./certs/certs/client.key:/root/.minio/certs/private.key:ro
+      - ./certs/ca/ca.crt:/root/.minio/certs/CAs/ca.crt:ro
+      - ./data-secure:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-k", "-f", "https://localhost:9000/minio/health/live" ]
       interval: 5s
       timeout: 2s
       retries: 5
