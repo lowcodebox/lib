@@ -14,7 +14,7 @@ if [ ! -f "$COMPOSE_FILE" ]; then
 fi
 
 echo "▶ Starting MinIO for integration tests..."
-docker-compose -f "$COMPOSE_FILE" up -d
+docker compose -f "$COMPOSE_FILE" up -d
 
 echo "⏳ Waiting for MinIO to be healthy…"
 MAX_RETRIES=10
@@ -27,8 +27,8 @@ for i in $(seq 1 $MAX_RETRIES); do
   sleep 2
   if [ "$i" -eq "$MAX_RETRIES" ]; then
     echo "❌ MinIO did not become healthy in time"
-    docker-compose -f "$COMPOSE_FILE" logs minio
-    docker-compose -f "$COMPOSE_FILE" down
+    docker compose -f "$COMPOSE_FILE" logs minio
+    docker compose -f "$COMPOSE_FILE" down
     exit 1
   fi
 done
@@ -39,6 +39,6 @@ go test -timeout 120s -tags=integration ./...
 TEST_EXIT_CODE=$?
 
 echo "▶ Tearing down MinIO..."
-docker-compose -f "$COMPOSE_FILE" down
+docker compose -f "$COMPOSE_FILE" down
 
 exit $TEST_EXIT_CODE
