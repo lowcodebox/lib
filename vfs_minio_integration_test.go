@@ -56,7 +56,7 @@ func TestVfsMinio_WriteReadDelete(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    caTestingCert,
+			caCert:    "",
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    caTestingCert,
+			caCert:    "",
 		},
 	}
 
@@ -220,7 +220,7 @@ func TestVfsMinio_Proxy(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    caTestingCert,
+			caCert:    "",
 		},
 	}
 

@@ -79,7 +79,7 @@ func NewVfs(cfg *VfsConfig) (Vfs, error) {
 	}
 
 	var transport http.RoundTripper
-	if cfg.UseSSL && len(cfg.CACert) > 0 {
+	if cfg.UseSSL {
 		// Создаём пул и добавляем кастомный CA
 		rootCAs := x509.NewCertPool()
 		if ok := rootCAs.AppendCertsFromPEM([]byte(cfg.CACert)); !ok {
