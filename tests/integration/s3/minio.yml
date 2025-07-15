@@ -31,7 +31,6 @@ services:
       - ./certs/certs/client.crt:/root/.minio/certs/public.crt:ro
       - ./certs/certs/client.key:/root/.minio/certs/private.key:ro
       - ./certs/ca/ca.crt:/root/.minio/certs/CAs/ca.crt:ro
-      - ./data-secure:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test: [ "CMD", "curl", "-k", "-f", "https://localhost:9000/minio/health/live" ]

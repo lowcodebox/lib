@@ -36,7 +36,6 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 		return nil, ErrPath
 	}
 
-	req.URL.Path = t.NewPrefix + strings.TrimPrefix(req.URL.Path, t.TrimPrefix)
 	user, _ := req.Context().Value(userUid).(string)
 
 	if strings.Contains(req.URL.Path, "users") && (user == "" || !strings.Contains(req.URL.Path, user)) {
@@ -58,15 +57,13 @@ func (t *BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 			// Вычисляем хеш тела (payload hash)
 			var payloadHash string
-			//if req.Method == "GET" || req.Method == "HEAD" || req.Method == "DELETE" {
-			//	payloadHash = "UNSIGNED-PAYLOAD"
-			//} else {
 			sum := sha256.Sum256(body)
 			payloadHash = hex.EncodeToString(sum[:])
-			//}
 
 			// Устанавливаем host (важно для подписи)
-			req.Host = req.URL.Host
+			if req.URL.Host != "" {
+				req.Host = req.URL.Host
+			}
 
 			// Устанавливаем Content-Length вручную
 			if len(body) > 0 {

@@ -56,7 +56,7 @@ func TestVfsMinio_WriteReadDelete(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    "",
+			caCert:    caTestingCert,
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    "",
+			caCert:    caTestingCert,
 		},
 	}
 
@@ -220,7 +220,7 @@ func TestVfsMinio_Proxy(t *testing.T) {
 			accessKey: testSecureAccessKey,
 			secretKey: testSecureSecretKey,
 			useSSL:    testSecureUseSSL,
-			caCert:    "",
+			caCert:    caTestingCert,
 		},
 	}
 
@@ -273,6 +273,186 @@ func TestVfsMinio_Proxy(t *testing.T) {
 			assert.NoError(t, err)
 
 			// сравниваем с ожидаемым содержимым
+			assert.Equal(t, expectedContent, body)
+		})
+	}
+}
+
+func TestVfsMinio_RuKeys(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		endpoint  string
+		accessKey string
+		secretKey string
+		useSSL    bool
+		caCert    string
+		minioPath string
+	}{
+		{
+			name:      "insecure-without-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент2025.txt",
+		},
+		{
+			name:      "insecure-with-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент 2025.txt",
+		},
+		{
+			name:      "secure-without-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент2025.txt",
+		},
+		{
+			name:      "secure-with-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент 2025.txt",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // захват переменной
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &lib.VfsConfig{
+				Endpoint:    tt.endpoint,
+				AccessKeyID: tt.accessKey,
+				SecretKey:   tt.secretKey,
+				Region:      "",
+				Bucket:      "ru-keys-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				UseSSL:      tt.useSSL,
+				CACert:      tt.caCert,
+			}
+
+			vfsOrigin, err := lib.NewVfs(cfg)
+			assert.NoError(t, err)
+			defer vfsOrigin.Close()
+
+			content := []byte("hello from integration test!")
+			err = vfsOrigin.Write(ctx, tt.minioPath, content)
+			assert.NoError(t, err)
+
+			readData, mimeType, err := vfsOrigin.Read(ctx, tt.minioPath, false)
+			assert.NoError(t, err)
+			assert.Equal(t, content, readData)
+			assert.Contains(t, mimeType, "text/")
+		})
+	}
+}
+
+func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		endpoint  string
+		accessKey string
+		secretKey string
+		useSSL    bool
+		caCert    string
+		minioPath string
+	}{
+		{
+			name:      "insecure-without-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент2025.txt",
+		},
+		{
+			name:      "insecure-with-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент 2025.txt",
+		},
+		{
+			name:      "secure-without-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент2025.txt",
+		},
+		{
+			name:      "secure-with-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент 2025.txt",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &lib.VfsConfig{
+				Endpoint:    tt.endpoint,
+				AccessKeyID: tt.accessKey,
+				SecretKey:   tt.secretKey,
+				Region:      "",
+				Bucket:      "proxy-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				UseSSL:      tt.useSSL,
+				CACert:      tt.caCert,
+			}
+
+			vfsOrigin, err := lib.NewVfs(cfg)
+			assert.NoError(t, err)
+			defer vfsOrigin.Close()
+
+			err = vfsOrigin.Connect(ctx)
+			assert.NoError(t, err)
+
+			expectedContent := []byte("proxy content")
+			err = vfsOrigin.Write(ctx, tt.minioPath, expectedContent)
+			assert.NoError(t, err)
+
+			// создаём прокси
+			proxyHandler, err := vfsOrigin.Proxy("/public/", "/")
+			assert.NoError(t, err)
+
+			testServer := httptest.NewServer(http.StripPrefix("/public", proxyHandler))
+			defer testServer.Close()
+
+			// Кодирует путь, чтобы корректно обрабатывать кириллические символы и пробелы
+			//escapedPath := url.PathEscape(tt.minioPath)
+			escapedPath := utils.EscapePathPreservingSlashes(tt.minioPath)
+			proxyURL := fmt.Sprintf("%s/public/%s/%s", testServer.URL, cfg.Bucket, escapedPath)
+
+			resp, err := http.Get(proxyURL)
+			assert.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err)
 			assert.Equal(t, expectedContent, body)
 		})
 	}
