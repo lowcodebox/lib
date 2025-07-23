@@ -7,16 +7,17 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_wrappers"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_wrappers"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 const (
@@ -329,6 +330,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 			http.Error(w, fmt.Sprintf("error fetching object: %v", err), http.StatusBadGateway)
 			return
 		}
+		defer obj.Close()
 
 		// Получаем метаданные
 		stat, err := obj.Stat()
