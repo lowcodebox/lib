@@ -282,6 +282,7 @@ func (v *vfsMinio) Connect(ctx context.Context) error {
 	// Проверяем, существует ли контейнер
 	container, err := loc.Container(ctx, v.config.Bucket)
 	if err != nil {
+		fmt.Printf("not found %s v.config.Bucket. err: %s", v.config.Bucket, err.Error())
 		// Если бакет не найден — пробуем создать
 		container, err = loc.CreateContainer(ctx, v.config.Bucket)
 		if err != nil {
