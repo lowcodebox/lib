@@ -458,6 +458,62 @@ func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
 	}
 }
 
+func TestVfsMinio_ProxyHtmlInline(t *testing.T) {
+	ctx := context.Background()
+
+	htmlContent := []byte(`<html><body><h1>Hello, Proxy!</h1></body></html>`)
+	htmlFilenames := []string{"page.html", "page.htm"}
+
+	for _, filename := range htmlFilenames {
+		t.Run("html-proxy-"+filename, func(t *testing.T) {
+			cfg := &lib.VfsConfig{
+				Endpoint:    testEndpoint,
+				AccessKeyID: testAccessKey,
+				SecretKey:   testSecretKey,
+				Region:      "",
+				Bucket:      "html-inline-test-" + time.Now().Format("20060102150405"),
+				UseSSL:      testUseSSL,
+				CACert:      "",
+			}
+
+			vfs, err := lib.NewVfs(cfg)
+			assert.NoError(t, err)
+			defer vfs.Close()
+
+			err = vfs.Connect(ctx)
+			assert.NoError(t, err)
+
+			objectPath := "html/" + filename
+			err = vfs.Write(ctx, objectPath, htmlContent)
+			assert.NoError(t, err)
+
+			proxyHandler, err := vfs.Proxy("/public/", "/")
+			assert.NoError(t, err)
+
+			server := httptest.NewServer(http.StripPrefix("/public", proxyHandler))
+			defer server.Close()
+
+			url := fmt.Sprintf("%s/public/%s/%s", server.URL, cfg.Bucket, objectPath)
+			resp, err := http.Get(url)
+			assert.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, htmlContent, body)
+
+			contentType := resp.Header.Get("Content-Type")
+			assert.Contains(t, contentType, "text/html")
+
+			// Проверяем что файл не отдаётся как attachment
+			disposition := resp.Header.Get("Content-Disposition")
+			assert.NotContains(t, disposition, "attachment", "HTML should not be forced as attachment")
+		})
+	}
+}
+
 const (
 	caTestingCert = `
 -----BEGIN CERTIFICATE-----

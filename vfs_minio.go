@@ -340,6 +340,26 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 			return
 		}
 
+		filename := filepath.Base(objectKey)
+		ext := strings.ToLower(filepath.Ext(filename))
+
+		if ct := stat.ContentType; ct != "" {
+			w.Header().Set("Content-Type", ct)
+		} else if ext == ".html" || ext == ".htm" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		}
+
+		// Исключение для HTML/HTM
+		if ext == ".html" || ext == ".htm" {
+			// Можно вообще не ставить Content-Disposition,
+			// либо поставить inline
+			w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", filename))
+		} else {
+			// Остальные — как файл на скачивание
+			disposition := fmt.Sprintf("attachment; filename=%q", url.PathEscape(filename))
+			w.Header().Set("Content-Disposition", disposition)
+		}
+
 		// Создаём виртуальный io.ReadSeeker (требуется ServeContent)
 		reader := &utils.ReadSeekWrapper{
 			ReadSeeker: obj,
