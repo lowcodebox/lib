@@ -343,12 +343,6 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		filename := filepath.Base(objectKey)
 		ext := strings.ToLower(filepath.Ext(filename))
 
-		if ct := stat.ContentType; ct != "" {
-			w.Header().Set("Content-Type", ct)
-		} else if ext == ".html" || ext == ".htm" {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		}
-
 		// Исключение для HTML/HTM
 		if ext == ".html" || ext == ".htm" {
 			// Можно вообще не ставить Content-Disposition,
@@ -367,8 +361,6 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		}
 
 		// Установка заголовков
-		disposition := fmt.Sprintf("attachment; filename=\"%s\"", url.PathEscape(filepath.Base(objectKey)))
-		w.Header().Set("Content-Disposition", disposition)
 		w.Header().Set("ETag", stat.ETag)
 
 		// ServeContent — сам обработает Range, HEAD, If-Modified-Since и т.п.
