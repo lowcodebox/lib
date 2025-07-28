@@ -29,11 +29,12 @@ const (
 )
 
 type vfsMinio struct {
-	validate  *validator.Validate
-	client    *minio.Client
-	location  s3_wrappers.Location
-	container s3_wrappers.Container
-	config    *models.VFSConfig
+	validate   *validator.Validate
+	baseClient *minio.Client
+	cdnClient  *minio.Client
+	location   s3_wrappers.Location
+	container  s3_wrappers.Container
+	config     *models.VFSConfig
 }
 
 //// VfsConfig — конфиг для MinIO/S3
@@ -112,7 +113,7 @@ func NewVfs(cfg *models.VFSConfig) (Vfs, error) {
 	}
 
 	// создаём minio.Client
-	minioClient, err := minio.New(parsedUrl.Host, &minio.Options{
+	baseMinioClient, err := minio.New(parsedUrl.Host, &minio.Options{
 		Creds:     credentials.NewStaticV4(cfg.VfsAccessKeyID, cfg.VfsSecretKey, ""),
 		Secure:    parsedUrl.Scheme == "https",
 		Region:    cfg.VfsRegion,
@@ -122,16 +123,34 @@ func NewVfs(cfg *models.VFSConfig) (Vfs, error) {
 		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
 	}
 
-	location := s3_minio.NewLocation(minioClient)
+	var cdnMinioClient *minio.Client
+	if isVfsCDNUserAvailable(cfg) {
+		cdnMinioClient, err = minio.New(parsedUrl.Host, &minio.Options{
+			Creds:     credentials.NewStaticV4(cfg.VfsCDNAccessKeyID, cfg.VfsSecretKey, ""),
+			Secure:    parsedUrl.Scheme == "https",
+			Region:    cfg.VfsRegion,
+			Transport: transport,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	location := s3_minio.NewLocation(baseMinioClient)
 
 	v := &vfsMinio{
-		client:   minioClient,
-		location: location,
-		config:   cfg,
-		validate: validator.New(),
+		baseClient: baseMinioClient,
+		cdnClient:  cdnMinioClient,
+		location:   location,
+		config:     cfg,
+		validate:   validator.New(),
 	}
 
 	return v, nil
+}
+
+func isVfsCDNUserAvailable(cfg *models.VFSConfig) bool {
+	return cfg.VfsCDNAccessKeyID != "" && cfg.VfsCDNSecretKey != ""
 }
 
 func (v *vfsMinio) Item(ctx context.Context, path string) (file s3_wrappers.Item, err error) {
@@ -290,7 +309,7 @@ func (v *vfsMinio) Connect(ctx context.Context) error {
 	}
 
 	// Подключаемся к MinIO
-	loc := s3_minio.NewLocation(v.client)
+	loc := s3_minio.NewLocation(v.baseClient)
 	v.location = loc
 
 	// Проверяем, существует ли контейнер
@@ -340,7 +359,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 		objectKey := parts[1]
 
 		// Получаем объект
-		obj, err := v.client.GetObject(r.Context(), bucket, objectKey, minio.GetObjectOptions{})
+		obj, err := v.baseClient.GetObject(r.Context(), bucket, objectKey, minio.GetObjectOptions{})
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error fetching object: %v", err), http.StatusBadGateway)
 			return
@@ -383,6 +402,9 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 }
 
 func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (url string, err error) {
+	if err := v.validateCDNClient(); err != nil {
+		return "", err
+	}
 	if err := v.validate.Struct(in); err != nil {
 		return "", err
 	}
@@ -397,12 +419,19 @@ func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (
 	object := strings.TrimPrefix(in.Path, "/")
 
 	// Генерация presigned URL
-	u, err := v.client.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	u, err := v.cdnClient.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to presign object: %w", err)
 	}
 
 	return u.String(), nil
+}
+
+func (v *vfsMinio) validateCDNClient() error {
+	if v.cdnClient == nil {
+		return errors.New("CDN client is not available. CDN keys is not defined in config")
+	}
+	return nil
 }
 
 func (v *vfsMinio) getItem(file, bucket string) (item s3_wrappers.Item, err error) {

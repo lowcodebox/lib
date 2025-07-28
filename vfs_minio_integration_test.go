@@ -532,86 +532,102 @@ func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		endpoint    string
-		accessKey   string
-		secretKey   string
-		useSSL      bool
-		caCert      string
-		minioPath   string
-		duration    time.Duration
-		isInvalid   bool
-		expectError bool
+		name         string
+		endpoint     string
+		accessKey    string
+		secretKey    string
+		cdnAccessKey string
+		cdnSecretKey string
+		useSSL       bool
+		caCert       string
+		minioPath    string
+		duration     time.Duration
+		isInvalid    bool
+		expectError  bool
 	}{
 		{
-			name:      "insecure-combined-name",
-			endpoint:  testEndpoint,
-			accessKey: testAccessKey,
-			secretKey: testSecretKey,
-			useSSL:    testUseSSL,
-			caCert:    "",
-			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
-			duration:  10 * time.Minute,
+			name:         "insecure-combined-name",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+			duration:     10 * time.Minute,
 		},
 		{
-			name:      "insecure-without-spaces",
-			endpoint:  testEndpoint,
-			accessKey: testAccessKey,
-			secretKey: testSecretKey,
-			useSSL:    testUseSSL,
-			caCert:    "",
-			minioPath: "test-folder/Инвент2025.txt",
-			duration:  10 * time.Minute,
+			name:         "insecure-without-spaces",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/Инвент2025.txt",
+			duration:     10 * time.Minute,
 		},
 		{
-			name:      "insecure-with-spaces",
-			endpoint:  testEndpoint,
-			accessKey: testAccessKey,
-			secretKey: testSecretKey,
-			useSSL:    testUseSSL,
-			caCert:    "",
-			minioPath: "test-folder/Инвент 2025.txt",
-			duration:  15 * time.Minute,
+			name:         "insecure-with-spaces",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/Инвент 2025.txt",
+			duration:     15 * time.Minute,
 		},
 		{
-			name:      "secure-combined-name",
-			endpoint:  testEndpoint,
-			accessKey: testAccessKey,
-			secretKey: testSecretKey,
-			useSSL:    testUseSSL,
-			caCert:    "",
-			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
-			duration:  10 * time.Minute,
+			name:         "secure-combined-name",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+			duration:     10 * time.Minute,
 		},
 		{
-			name:      "secure-without-spaces",
-			endpoint:  testSecureEndpoint,
-			accessKey: testSecureAccessKey,
-			secretKey: testSecureSecretKey,
-			useSSL:    testSecureUseSSL,
-			caCert:    caTestingCert,
-			minioPath: "test-folder/Инвент2025.txt",
-			duration:  5 * time.Minute,
+			name:         "secure-without-spaces",
+			endpoint:     testSecureEndpoint,
+			accessKey:    testSecureAccessKey,
+			secretKey:    testSecureSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testSecureUseSSL,
+			caCert:       caTestingCert,
+			minioPath:    "test-folder/Инвент2025.txt",
+			duration:     5 * time.Minute,
 		},
 		{
-			name:      "secure-with-spaces",
-			endpoint:  testSecureEndpoint,
-			accessKey: testSecureAccessKey,
-			secretKey: testSecureSecretKey,
-			useSSL:    testSecureUseSSL,
-			caCert:    caTestingCert,
-			minioPath: "test-folder/Инвент 2025.txt",
-			duration:  20 * time.Minute,
+			name:         "secure-with-spaces",
+			endpoint:     testSecureEndpoint,
+			accessKey:    testSecureAccessKey,
+			secretKey:    testSecureSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testSecureUseSSL,
+			caCert:       caTestingCert,
+			minioPath:    "test-folder/Инвент 2025.txt",
+			duration:     20 * time.Minute,
 		},
 		{
-			name:      "too-long-duration-clamped",
-			endpoint:  testEndpoint,
-			accessKey: testAccessKey,
-			secretKey: testSecretKey,
-			useSSL:    testUseSSL,
-			caCert:    "",
-			minioPath: "test-folder/Инвент2025-длинный-срок.txt",
-			duration:  10 * 24 * time.Hour,
+			name:         "too-long-duration-clamped",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/Инвент2025-длинный-срок.txt",
+			duration:     10 * 24 * time.Hour,
 		},
 		//// Невалидные кейсы:
 		//{
@@ -656,12 +672,14 @@ func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &models.VFSConfig{
-				VfsEndpoint:    tt.endpoint,
-				VfsAccessKeyID: tt.accessKey,
-				VfsSecretKey:   tt.secretKey,
-				VfsRegion:      "",
-				VfsBucket:      "presign-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				VfsCertCA:      tt.caCert,
+				VfsEndpoint:       tt.endpoint,
+				VfsAccessKeyID:    tt.accessKey,
+				VfsSecretKey:      tt.secretKey,
+				VfsRegion:         "",
+				VfsBucket:         "presign-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:         tt.caCert,
+				VfsCDNAccessKeyID: tt.cdnAccessKey,
+				VfsCDNSecretKey:   tt.cdnSecretKey,
 			}
 
 			vfs, err := lib.NewVfs(cfg)
