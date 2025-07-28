@@ -27,11 +27,11 @@ type Vfs interface {
 	Delete(ctx context.Context, file string) (err error)
 	Connect(ctx context.Context) (err error)
 	Close() (err error)
-	PreSignURL(ctx context.Context, in *PreSignURLIn) (url string, err error)
+	GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (url string, err error)
 	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
 
-type PreSignURLIn struct {
+type GetPresignedURLIn struct {
 	Bucket   string        `validate:"required"`
 	Path     string        `validate:"required"`
 	Duration time.Duration `validate:"required,gt=0"`

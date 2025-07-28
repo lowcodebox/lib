@@ -7,9 +7,11 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -31,63 +33,71 @@ type vfsMinio struct {
 	client    *minio.Client
 	location  s3_wrappers.Location
 	container s3_wrappers.Container
-	config    *VfsConfig
+	config    *models.VFSConfig
 }
 
-// VfsConfig — конфиг для MinIO/S3
-type VfsConfig struct {
-	Endpoint    string // host:port или полный URL
-	AccessKeyID string
-	SecretKey   string
-	Region      string
-	Bucket      string
-	UseSSL      bool   // https или http
-	Comma       string // заменитель для "/"
-	CACert      string // если нужен кастомный CA — можно передать, но в этом примере не используется
-}
+//// VfsConfig — конфиг для MinIO/S3
+//type VfsConfig struct {
+//	Endpoint    string // host:port или полный URL
+//	AccessKeyID string
+//	SecretKey   string
+//	Region      string
+//	Bucket      string
+//	UseSSL      bool   // https или http
+//	Comma       string // заменитель для "/"
+//	CACert      string // если нужен кастомный CA — можно передать, но в этом примере не используется
+//}
 
 // Validate проверяет, что все обязательные поля заданы
-func (cfg *VfsConfig) Validate() error {
-	if cfg.Endpoint == "" {
+func ValidateVFSConfig(cfg *models.VFSConfig) error {
+	if cfg.VfsEndpoint == "" {
 		return errors.New("missing field: Endpoint")
 	}
-	if cfg.AccessKeyID == "" {
+	if cfg.VfsAccessKeyID == "" {
 		return errors.New("missing field: AccessKeyID")
 	}
-	if cfg.SecretKey == "" {
+	if cfg.VfsSecretKey == "" {
 		return errors.New("missing field: SecretKey")
 	}
-	if cfg.Bucket == "" {
+	if cfg.VfsBucket == "" {
 		return errors.New("missing field: Bucket")
 	}
 	return nil
 }
 
-func NewVfs(cfg *VfsConfig) (Vfs, error) {
-	if err := cfg.Validate(); err != nil {
+func NewVfs(cfg *models.VFSConfig) (Vfs, error) {
+	if err := ValidateVFSConfig(cfg); err != nil {
 		return nil, err
 	}
 
 	// Добавляем схему, если отсутствует
-	if !strings.HasPrefix(cfg.Endpoint, "http://") && !strings.HasPrefix(cfg.Endpoint, "https://") {
+	if !strings.HasPrefix(cfg.VfsEndpoint, "http://") && !strings.HasPrefix(cfg.VfsEndpoint, "https://") {
 		scheme := "http://"
-		if cfg.UseSSL {
+		if cfg.VfsCertCA != "" || cfg.VfsCAFile != "" {
 			scheme = "https://"
 		}
-		cfg.Endpoint = scheme + cfg.Endpoint
+		cfg.VfsEndpoint = scheme + cfg.VfsEndpoint
 	}
 
-	parsedUrl, err := url.Parse(cfg.Endpoint)
+	parsedUrl, err := url.Parse(cfg.VfsEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid endpoint: %w", err)
 	}
 
 	var transport http.RoundTripper
-	if cfg.UseSSL && cfg.CACert != "" {
+	if cfg.VfsCertCA != "" || cfg.VfsCAFile != "" {
 		// Создаём пул и добавляем кастомный CA
 
+		if cfg.VfsCAFile != "" {
+			caFileContent, err := os.ReadFile(cfg.VfsCAFile)
+			if err != nil {
+				return nil, err
+			}
+			cfg.VfsCertCA = string(caFileContent)
+		}
+
 		rootCAs := x509.NewCertPool()
-		if ok := rootCAs.AppendCertsFromPEM([]byte(cfg.CACert)); !ok {
+		if ok := rootCAs.AppendCertsFromPEM([]byte(cfg.VfsCertCA)); !ok {
 			return nil, fmt.Errorf("failed to append CA cert")
 		}
 
@@ -103,9 +113,9 @@ func NewVfs(cfg *VfsConfig) (Vfs, error) {
 
 	// создаём minio.Client
 	minioClient, err := minio.New(parsedUrl.Host, &minio.Options{
-		Creds:     credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretKey, ""),
+		Creds:     credentials.NewStaticV4(cfg.VfsAccessKeyID, cfg.VfsSecretKey, ""),
 		Secure:    parsedUrl.Scheme == "https",
-		Region:    cfg.Region,
+		Region:    cfg.VfsRegion,
 		Transport: transport,
 	})
 	if err != nil {
@@ -125,14 +135,14 @@ func NewVfs(cfg *VfsConfig) (Vfs, error) {
 }
 
 func (v *vfsMinio) Item(ctx context.Context, path string) (file s3_wrappers.Item, err error) {
-	return v.getItem(path, v.config.Bucket)
+	return v.getItem(path, v.config.VfsBucket)
 }
 
 func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files []s3_wrappers.Item, err error) {
 	err = v.Connect(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s",
-			err, v.config.Comma, v.config.Endpoint, v.config.Bucket)
+			err, v.config.VfsComma, v.config.VfsEndpoint, v.config.VfsBucket)
 	}
 	defer v.Close()
 
@@ -155,7 +165,7 @@ func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files
 }
 
 func (v *vfsMinio) Read(ctx context.Context, file string, private_access bool) (data []byte, mimeType string, err error) {
-	data, mimeType, err = v.ReadFromBucket(ctx, file, v.config.Bucket, private_access)
+	data, mimeType, err = v.ReadFromBucket(ctx, file, v.config.VfsBucket, private_access)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, "", fmt.Errorf("read failed due to context: %w", ctx.Err())
@@ -167,7 +177,7 @@ func (v *vfsMinio) Read(ctx context.Context, file string, private_access bool) (
 
 func (v *vfsMinio) ReadFromBucket(ctx context.Context, file, bucket string, privateAccess bool) ([]byte, string, error) {
 	if err := v.Connect(ctx); err != nil {
-		return nil, "", fmt.Errorf("connect error: %w (endpoint: %s, bucket: %s)", err, v.config.Endpoint, v.config.Bucket)
+		return nil, "", fmt.Errorf("connect error: %w (endpoint: %s, bucket: %s)", err, v.config.VfsEndpoint, v.config.VfsBucket)
 	}
 	defer v.Close()
 
@@ -187,7 +197,7 @@ func (v *vfsMinio) ReadFromBucket(ctx context.Context, file, bucket string, priv
 }
 
 func (v *vfsMinio) ReadCloser(ctx context.Context, file string, private_access bool) (reader io.ReadCloser, err error) {
-	return v.ReadCloserFromBucket(ctx, file, v.config.Bucket, private_access)
+	return v.ReadCloserFromBucket(ctx, file, v.config.VfsBucket, private_access)
 }
 
 func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error) {
@@ -218,7 +228,7 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 
 	err = v.Connect(ctx)
 	if err != nil {
-		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.Endpoint, v.config.Bucket)
+		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.VfsEndpoint, v.config.VfsBucket)
 	}
 	defer v.Close()
 
@@ -227,8 +237,8 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 	size := int64(len(sdata))
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
-	if v.config.Comma != "" {
-		file = strings.Replace(file, sep, v.config.Comma, -1)
+	if v.config.VfsComma != "" {
+		file = strings.Replace(file, sep, v.config.VfsComma, -1)
 	}
 
 	if strings.Contains(file, "../") {
@@ -257,11 +267,11 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
 	err = v.Connect(ctx)
 	if err != nil {
-		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.Endpoint, v.config.Bucket)
+		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.VfsEndpoint, v.config.VfsBucket)
 	}
 	defer v.Close()
 
-	item, err := v.getItem(file, v.config.Bucket)
+	item, err := v.getItem(file, v.config.VfsBucket)
 	if err != nil {
 		return fmt.Errorf("error get Item for path: %s, err: %s", file, err)
 	}
@@ -284,13 +294,13 @@ func (v *vfsMinio) Connect(ctx context.Context) error {
 	v.location = loc
 
 	// Проверяем, существует ли контейнер
-	container, err := loc.Container(ctx, v.config.Bucket)
+	container, err := loc.Container(ctx, v.config.VfsBucket)
 	if err != nil {
 		//fmt.Printf("not found %s v.config.Bucket. err: %s", v.config.Bucket, err.Error())
 		// Если бакет не найден — пробуем создать
-		container, err = loc.CreateContainer(ctx, v.config.Bucket)
+		container, err = loc.CreateContainer(ctx, v.config.VfsBucket)
 		if err != nil {
-			return fmt.Errorf("failed to create container %q: %w", v.config.Bucket, err)
+			return fmt.Errorf("failed to create container %q: %w", v.config.VfsBucket, err)
 		}
 	}
 	v.container = container
@@ -372,7 +382,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
-func (v *vfsMinio) PreSignURL(ctx context.Context, in *PreSignURLIn) (url string, err error) {
+func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (url string, err error) {
 	if err := v.validate.Struct(in); err != nil {
 		return "", err
 	}
@@ -399,8 +409,8 @@ func (v *vfsMinio) getItem(file, bucket string) (item s3_wrappers.Item, err erro
 	var urlPath url.URL
 
 	// если передан разделитель, то заменяем / на него (возможно понадобится для совместимости плоских хранилищ)
-	if v.config.Comma != "" {
-		file = strings.Replace(file, v.config.Comma, sep, -1)
+	if v.config.VfsComma != "" {
+		file = strings.Replace(file, v.config.VfsComma, sep, -1)
 	}
 
 	//// если локально, то добавляем к endpoint бакет
@@ -421,7 +431,7 @@ func (v *vfsMinio) getItem(file, bucket string) (item s3_wrappers.Item, err erro
 	urlPath.Path = "/" + bucket + "/" + strings.TrimPrefix(file, "/")
 
 	if v.location == nil {
-		return nil, fmt.Errorf("error. location is empty. bucket: %s, file: %s, endpoint: %s", urlPath.Host, urlPath.Path, v.config.Endpoint)
+		return nil, fmt.Errorf("error. location is empty. bucket: %s, file: %s, endpoint: %s", urlPath.Host, urlPath.Path, v.config.VfsEndpoint)
 	}
 
 	item, err = v.location.ItemByURL(&urlPath)

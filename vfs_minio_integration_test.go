@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -63,14 +64,13 @@ func TestVfsMinio_WriteReadDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "vfs-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "vfs-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			vfs, err := lib.NewVfs(cfg)
@@ -136,14 +136,13 @@ func TestVfsMinio_ItemAndList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "item-list-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "item-list-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			vfs, err := lib.NewVfs(cfg)
@@ -227,14 +226,13 @@ func TestVfsMinio_Proxy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			originCfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "proxy-test-" + tt.name + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			originCfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "proxy-test-" + tt.name + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			// создаём основной VFS
@@ -260,7 +258,7 @@ func TestVfsMinio_Proxy(t *testing.T) {
 			defer testServer.Close()
 
 			// формируем URL, по которому будет доступен файл через прокси
-			proxyURL := fmt.Sprintf("%s/public/%s/%s", testServer.URL, originCfg.Bucket, objectPath)
+			proxyURL := fmt.Sprintf("%s/public/%s/%s", testServer.URL, originCfg.VfsBucket, objectPath)
 
 			// отправляем GET-запрос через прокси
 			resp, err := http.Get(proxyURL)
@@ -334,14 +332,13 @@ func TestVfsMinio_RuKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "ru-keys-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "ru-keys-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			vfsOrigin, err := lib.NewVfs(cfg)
@@ -431,14 +428,13 @@ func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "proxy-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "proxy-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			vfsOrigin, err := lib.NewVfs(cfg)
@@ -462,7 +458,7 @@ func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
 			// Кодирует путь, чтобы корректно обрабатывать кириллические символы и пробелы
 			//escapedPath := url.PathEscape(tt.minioPath)
 			escapedPath := utils.EscapePathPreservingSlashes(tt.minioPath)
-			proxyURL := fmt.Sprintf("%s/public/%s/%s", testServer.URL, cfg.Bucket, escapedPath)
+			proxyURL := fmt.Sprintf("%s/public/%s/%s", testServer.URL, cfg.VfsBucket, escapedPath)
 
 			resp, err := http.Get(proxyURL)
 			assert.NoError(t, err)
@@ -485,14 +481,13 @@ func TestVfsMinio_ProxyHtmlInline(t *testing.T) {
 
 	for _, filename := range htmlFilenames {
 		t.Run("html-proxy-"+filename, func(t *testing.T) {
-			cfg := &lib.VfsConfig{
-				Endpoint:    testEndpoint,
-				AccessKeyID: testAccessKey,
-				SecretKey:   testSecretKey,
-				Region:      "",
-				Bucket:      "html-inline-test-" + time.Now().Format("20060102150405"),
-				UseSSL:      testUseSSL,
-				CACert:      "",
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    testEndpoint,
+				VfsAccessKeyID: testAccessKey,
+				VfsSecretKey:   testSecretKey,
+				VfsRegion:      "",
+				VfsBucket:      "html-inline-test-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      "",
 			}
 
 			vfs, err := lib.NewVfs(cfg)
@@ -512,7 +507,7 @@ func TestVfsMinio_ProxyHtmlInline(t *testing.T) {
 			server := httptest.NewServer(http.StripPrefix("/public", proxyHandler))
 			defer server.Close()
 
-			url := fmt.Sprintf("%s/public/%s/%s", server.URL, cfg.Bucket, objectPath)
+			url := fmt.Sprintf("%s/public/%s/%s", server.URL, cfg.VfsBucket, objectPath)
 			resp, err := http.Get(url)
 			assert.NoError(t, err)
 			defer resp.Body.Close()
@@ -660,14 +655,13 @@ func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &lib.VfsConfig{
-				Endpoint:    tt.endpoint,
-				AccessKeyID: tt.accessKey,
-				SecretKey:   tt.secretKey,
-				Region:      "",
-				Bucket:      "presign-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
-				UseSSL:      tt.useSSL,
-				CACert:      tt.caCert,
+			cfg := &models.VFSConfig{
+				VfsEndpoint:    tt.endpoint,
+				VfsAccessKeyID: tt.accessKey,
+				VfsSecretKey:   tt.secretKey,
+				VfsRegion:      "",
+				VfsBucket:      "presign-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:      tt.caCert,
 			}
 
 			vfs, err := lib.NewVfs(cfg)
@@ -692,8 +686,8 @@ func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
 			err = vfs.Write(ctx, tt.minioPath, expectedContent)
 			assert.NoError(t, err)
 
-			url, err := vfs.PreSignURL(ctx, &lib.PreSignURLIn{
-				Bucket:   cfg.Bucket,
+			url, err := vfs.GetPresignedURL(ctx, &lib.GetPresignedURLIn{
+				Bucket:   cfg.VfsBucket,
 				Path:     tt.minioPath,
 				Duration: tt.duration,
 			})

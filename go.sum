@@ -1,5 +1,5 @@
-git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.55 h1:JVcNpnJLxFi0pWwgbdx7D+0Mx0dpinGv9q9l8qRE1VQ=
-git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.55/go.mod h1:DeoPSKfWIenRxXXVf01Cu70U1ej9zCpCma01aMNKaTA=
+git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.60-cdn-test h1:UoUG07ThJc27iHBGJmo+pdfTZq7fIftp3KzYOWtPgTg=
+git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.60-cdn-test/go.mod h1:8achfCwrjFnGBD/glDzo2U8O6KRFQlPhOUiKXTi9ggk=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=

@@ -69,13 +69,25 @@ func (c *Config) Domain() string {
 }
 
 type VFSConfig struct {
-	VfsBucket      string `envconfig:"VFS_BUCKET" default:""`
-	VfsKind        string `envconfig:"VFS_KIND" default:"s3"`
-	VfsEndpoint    string `envconfig:"VFS_ENDPOINT" default:"http://127.0.0.1:9000"`
-	VfsAccessKeyID string `envconfig:"VFS_ACCESS_KEY_ID" default:"minioadmin"`
-	VfsSecretKey   string `envconfig:"VFS_SECRET_KEY" default:"minioadmin"`
-	VfsRegion      string `envconfig:"VFS_REGION" default:""`
-	VfsComma       string `envconfig:"VFS_COMMA" default:""`
-	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:"" description:"CA-сертификат"`
-	VfsCAFile      string `envconfig:"VFS_CA_FILE" default:"" description:"Файл CA-сертификата"`
+	VfsBucket         string `envconfig:"VFS_BUCKET" default:""`
+	VfsKind           string `envconfig:"VFS_KIND" default:"s3"`
+	VfsEndpoint       string `envconfig:"VFS_ENDPOINT" default:"http://127.0.0.1:9000"`
+	VfsAccessKeyID    string `envconfig:"VFS_ACCESS_KEY_ID" default:"minioadmin"`
+	VfsSecretKey      string `envconfig:"VFS_SECRET_KEY" default:"minioadmin"`
+	VfsRegion         string `envconfig:"VFS_REGION" default:""`
+	VfsComma          string `envconfig:"VFS_COMMA" default:""`
+	VfsCertCA         string `envconfig:"VFS_CERT_CA" default:"" description:"CA-сертификат"`
+	VfsCAFile         string `envconfig:"VFS_CA_FILE" default:"" description:"Файл CA-сертификата"`
+	VfsCDNAccessKeyID string `envconfig:"VFS_CDN_ACCESS_KEY_ID" default:""`
+	VfsCDNSecretKey   string `envconfig:"VFS_CDN_SECRET_KEY" default:""`
+}
+
+type OrmTopicNames struct {
+	Create       string `envconfig:"KAFKA_TOPIC_CREATE" default:"orm-create" description:"Топик с запросами на создание объектов"`
+	Update       string `envconfig:"KAFKA_TOPIC_UPDATE" default:"orm-update" description:"Топик с запросами на обновление объектов"`
+	BlockUnblock string `envconfig:"KAFKA_TOPIC_BLOCKUNBLOCK" default:"orm-blockunblock" description:"Топик с запросами на \"блокировку-разблокировку\" объектов"`
+	LinkAdd      string `envconfig:"KAFKA_TOPIC_LINKADD" default:"orm-linkadd" description:"Топик с запросами на добавления ссылок в объекте"`
+	LinkDelete   string `envconfig:"KAFKA_TOPIC_LINKDELETE" default:"orm-linkdekete" description:"Топик с запросами на удаление ссылок в объекте"`
+	Commit       string `envconfig:"KAFKA_TOPIC_COMMIT" default:"orm-commit" description:"Топик с запросами на слитие веток"`
+	Revert       string `envconfig:"KAFKA_TOPIC_REVERT" default:"orm-revert" description:"Топик с запросами на отмену слияния"`
 }

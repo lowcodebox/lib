@@ -85,6 +85,8 @@ type ServiceMap interface {
 	// прогресс деплоя 0.0..1.0
 	Progress(target *DeploymentConfig) float32
 	// получить полную карту по всем ДЦ
+	Set(dcMap DCMap, gen uint64, lastUpdate time.Time)
+	// получить полную карту по всем ДЦ
 	Get() DCMap
 	// проверяет доступность сервиса по всем ДЦ
 	IsServiceAvailable(path string) bool
@@ -225,6 +227,48 @@ func (s *serviceMap) Upsert(replica *ServiceReplica, agentHost string) error {
 	s.rebuildPathIndex()
 
 	return nil
+}
+
+// Set заменяет текущую DCMap и перестраивает индексы
+func (s *serviceMap) Set(dcMap DCMap, gen uint64, lastUpdate time.Time) {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+
+	// Заменяем DCMap
+	s.DCMap = dcMap
+	s.LastUpdate = lastUpdate
+	s.Generation = gen
+
+	// Очищаем существующие индексы
+	s.pathIndex = make(map[string][]ServiceReplica)
+	s.replicaIndex = make(map[string]*ServiceReplica)
+
+	// Перестраиваем индексы из новой DCMap
+	for _, dcServices := range s.DCMap {
+		for _, agent := range dcServices.Agents {
+			// Добавляем все реплики из Dependencies в индексы
+			for replicaID, replica := range agent.Dependencies {
+				// Добавляем в индекс реплик
+				s.replicaIndex[replicaID] = replica
+
+				// Добавляем в индекс по путям
+				s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], *replica)
+			}
+
+			// Также добавляем реплики из Replicas slice (если они не дублируются)
+			for _, replica := range agent.Replicas {
+				// Проверяем, что реплика еще не добавлена через Dependencies
+				if _, exists := s.replicaIndex[replica.ReplicaID]; !exists {
+					// Добавляем в индекс реплик
+					replicaCopy := replica
+					s.replicaIndex[replica.ReplicaID] = &replicaCopy
+
+					// Добавляем в индекс по путям
+					s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], replica)
+				}
+			}
+		}
+	}
 }
 
 func (s *serviceMap) rebuildPathIndex() {
