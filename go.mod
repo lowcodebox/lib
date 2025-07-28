@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/gabriel-vasile/mimetype v1.4.9
 	github.com/go-kit/kit v0.13.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/gommon v0.4.2
 	github.com/minio/minio-go/v7 v7.0.94
@@ -32,12 +33,15 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/minio/crc64nvme v1.0.1 // indirect

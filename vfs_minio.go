@@ -12,10 +12,12 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_wrappers"
+	"github.com/go-playground/validator/v10"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -25,6 +27,7 @@ const (
 )
 
 type vfsMinio struct {
+	validate  *validator.Validate
 	client    *minio.Client
 	location  s3_wrappers.Location
 	container s3_wrappers.Container
@@ -115,6 +118,7 @@ func NewVfs(cfg *VfsConfig) (Vfs, error) {
 		client:   minioClient,
 		location: location,
 		config:   cfg,
+		validate: validator.New(),
 	}
 
 	return v, nil
@@ -282,7 +286,7 @@ func (v *vfsMinio) Connect(ctx context.Context) error {
 	// Проверяем, существует ли контейнер
 	container, err := loc.Container(ctx, v.config.Bucket)
 	if err != nil {
-		fmt.Printf("not found %s v.config.Bucket. err: %s", v.config.Bucket, err.Error())
+		//fmt.Printf("not found %s v.config.Bucket. err: %s", v.config.Bucket, err.Error())
 		// Если бакет не найден — пробуем создать
 		container, err = loc.CreateContainer(ctx, v.config.Bucket)
 		if err != nil {
@@ -368,73 +372,28 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
-//func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
-//	// 1. Собираем URL целевого S3-совместимого эндпоинта с учётом схемы
-//	scheme := "https"
-//	if !v.config.UseSSL {
-//		scheme = "http"
-//	}
-//
-//	// убедимся, что endpoint без схемы, иначе double-scheme
-//	endpoint := strings.TrimPrefix(v.config.Endpoint, "http://")
-//	endpoint = strings.TrimPrefix(endpoint, "https://")
-//
-//	parsedURL, err := url.Parse(fmt.Sprintf("%s://%s", scheme, endpoint))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	// 2. Создаём полноценный ReverseProxy с Rewrite
-//	proxy := &httputil.ReverseProxy{
-//		Rewrite: func(r *httputil.ProxyRequest) {
-//			r.SetXForwarded()
-//			r.SetURL(parsedURL)
-//
-//			// Удаляем trimPrefix и кодируем каждый сегмент
-//			trimmed := strings.TrimPrefix(r.Out.URL.Path, trimPrefix)
-//			encoded := utils.EscapePathPreservingSlashes(trimmed)
-//
-//			finalPath := utils.JoinURLPath(newPrefix, encoded)
-//			r.Out.URL.Path = finalPath
-//			r.Out.URL.RawPath = finalPath
-//		},
-//
-//		ModifyResponse: func(resp *http.Response) error {
-//			resp.Header.Del("Server")
-//			for k := range resp.Header {
-//				if strings.HasPrefix(k, "X-Amz-") {
-//					resp.Header.Del(k)
-//				}
-//			}
-//
-//			if resp.StatusCode == http.StatusNotFound {
-//				resp.Body = io.NopCloser(bytes.NewReader(nil))
-//				resp.Header.Del("Content-Type")
-//				resp.Header.Set("Content-Length", "0")
-//				resp.ContentLength = 0
-//			}
-//			return nil
-//		},
-//	}
-//
-//	// 3. Прокси будет использовать наш кастомный транспорт с SigV4
-//	t := &BasicAuthTransport{
-//		Kind:       minioVfsKind, // "s3"
-//		Username:   v.config.AccessKeyID,
-//		Password:   v.config.SecretKey,
-//		Region:     v.config.Region,
-//		DisableSSL: !v.config.UseSSL,
-//	}
-//
-//	if v.config.CACert != "" {
-//		pool := x509.NewCertPool()
-//		pool.AppendCertsFromPEM([]byte(v.config.CACert))
-//		t.TLSClientConfig = &tls.Config{RootCAs: pool, InsecureSkipVerify: true}
-//	}
-//	proxy.Transport = t
-//
-//	return proxy, nil
-//}
+func (v *vfsMinio) PreSignURL(ctx context.Context, in *PreSignURLIn) (url string, err error) {
+	if err := v.validate.Struct(in); err != nil {
+		return "", err
+	}
+
+	// Ограничение максимального срока действия (совместимо с S3)
+	const maxExpiry = 7 * 24 * time.Hour
+	expiry := in.Duration
+	if expiry > maxExpiry {
+		expiry = maxExpiry
+	}
+
+	object := strings.TrimPrefix(in.Path, "/")
+
+	// Генерация presigned URL
+	u, err := v.client.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to presign object: %w", err)
+	}
+
+	return u.String(), nil
+}
 
 func (v *vfsMinio) getItem(file, bucket string) (item s3_wrappers.Item, err error) {
 	var urlPath url.URL

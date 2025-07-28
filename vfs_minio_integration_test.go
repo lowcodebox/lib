@@ -5,6 +5,7 @@ package lib_test
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
 	"io"
@@ -372,6 +373,15 @@ func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
 		minioPath string
 	}{
 		{
+			name:      "insecure-combined-name",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+		},
+		{
 			name:      "insecure-without-spaces",
 			endpoint:  testEndpoint,
 			accessKey: testAccessKey,
@@ -388,6 +398,15 @@ func TestVfsMinio_ProxyWithRuKeys(t *testing.T) {
 			useSSL:    testUseSSL,
 			caCert:    "",
 			minioPath: "test-folder/Инвент 2025.txt",
+		},
+		{
+			name:      "secure-combined-name",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
 		},
 		{
 			name:      "secure-without-spaces",
@@ -510,6 +529,192 @@ func TestVfsMinio_ProxyHtmlInline(t *testing.T) {
 			// Проверяем что файл не отдаётся как attachment
 			disposition := resp.Header.Get("Content-Disposition")
 			assert.NotContains(t, disposition, "attachment", "HTML should not be forced as attachment")
+		})
+	}
+}
+
+func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		endpoint    string
+		accessKey   string
+		secretKey   string
+		useSSL      bool
+		caCert      string
+		minioPath   string
+		duration    time.Duration
+		isInvalid   bool
+		expectError bool
+	}{
+		{
+			name:      "insecure-combined-name",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+			duration:  10 * time.Minute,
+		},
+		{
+			name:      "insecure-without-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент2025.txt",
+			duration:  10 * time.Minute,
+		},
+		{
+			name:      "insecure-with-spaces",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент 2025.txt",
+			duration:  15 * time.Minute,
+		},
+		{
+			name:      "secure-combined-name",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+			duration:  10 * time.Minute,
+		},
+		{
+			name:      "secure-without-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент2025.txt",
+			duration:  5 * time.Minute,
+		},
+		{
+			name:      "secure-with-spaces",
+			endpoint:  testSecureEndpoint,
+			accessKey: testSecureAccessKey,
+			secretKey: testSecureSecretKey,
+			useSSL:    testSecureUseSSL,
+			caCert:    caTestingCert,
+			minioPath: "test-folder/Инвент 2025.txt",
+			duration:  20 * time.Minute,
+		},
+		{
+			name:      "too-long-duration-clamped",
+			endpoint:  testEndpoint,
+			accessKey: testAccessKey,
+			secretKey: testSecretKey,
+			useSSL:    testUseSSL,
+			caCert:    "",
+			minioPath: "test-folder/Инвент2025-длинный-срок.txt",
+			duration:  10 * 24 * time.Hour,
+		},
+		//// Невалидные кейсы:
+		//{
+		//	name:        "invalid-duration-zero",
+		//	endpoint:    testEndpoint,
+		//	accessKey:   testAccessKey,
+		//	secretKey:   testSecretKey,
+		//	useSSL:      testUseSSL,
+		//	caCert:      "",
+		//	minioPath:   "obj.txt",
+		//	duration:    0,
+		//	isInvalid:   true,
+		//	expectError: true,
+		//},
+		//{
+		//	name:        "invalid-empty-bucket",
+		//	endpoint:    testEndpoint,
+		//	accessKey:   testAccessKey,
+		//	secretKey:   testSecretKey,
+		//	useSSL:      testUseSSL,
+		//	caCert:      "",
+		//	minioPath:   "obj.txt",
+		//	duration:    time.Minute,
+		//	isInvalid:   true,
+		//	expectError: true,
+		//},
+		//{
+		//	name:        "invalid-empty-path",
+		//	endpoint:    testEndpoint,
+		//	accessKey:   testAccessKey,
+		//	secretKey:   testSecretKey,
+		//	useSSL:      testUseSSL,
+		//	caCert:      "",
+		//	minioPath:   "",
+		//	duration:    time.Minute,
+		//	isInvalid:   true,
+		//	expectError: true,
+		//},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &lib.VfsConfig{
+				Endpoint:    tt.endpoint,
+				AccessKeyID: tt.accessKey,
+				SecretKey:   tt.secretKey,
+				Region:      "",
+				Bucket:      "presign-ru-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				UseSSL:      tt.useSSL,
+				CACert:      tt.caCert,
+			}
+
+			vfs, err := lib.NewVfs(cfg)
+			assert.NoError(t, err)
+			defer vfs.Close()
+
+			err = vfs.Connect(ctx)
+			assert.NoError(t, err)
+
+			// Валидация: ожидаем ошибку до write
+			//if tt.expectError {
+			//	_, err = vfs.PreSignURL(ctx, &lib.PreSignURLIn{
+			//		Bucket:   cfg.Bucket,
+			//		Path:     tt.minioPath,
+			//		Duration: tt.duration,
+			//	})
+			//	assert.Error(t, err)
+			//	return
+			//}
+
+			expectedContent := []byte("presigned content")
+			err = vfs.Write(ctx, tt.minioPath, expectedContent)
+			assert.NoError(t, err)
+
+			url, err := vfs.PreSignURL(ctx, &lib.PreSignURLIn{
+				Bucket:   cfg.Bucket,
+				Path:     tt.minioPath,
+				Duration: tt.duration,
+			})
+			assert.NoError(t, err)
+			assert.NotEmpty(t, url)
+
+			insecureClient := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				},
+			}
+
+			resp, err := insecureClient.Get(url)
+			assert.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, expectedContent, body)
 		})
 	}
 }
