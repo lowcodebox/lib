@@ -126,22 +126,28 @@ func GenXServiceKey(domain string, projectKey []byte, tokenInterval time.Duratio
 // и валидируем содержимое
 // client - возвращает имя клиента, которому был выдан токен (опционально)
 func CheckXServiceKey(domain string, projectKey []byte, xServiceKey string) (valid bool, client string) {
-	var xsKeyValid bool
 	xsKey, err := decodeServiceKey(projectKey, xServiceKey)
 	if err != nil {
 		return false, ""
 	}
 
-	if xsKey.Domain == domain && xsKey.Expired > time.Now().Unix() {
-		xsKeyValid = true
-	}
-	if !xsKeyValid {
-		if xsKey.Domain == string(projectKey) && xsKey.Expired > time.Now().Unix() {
-			xsKeyValid = true
-		}
+	if xsKey.Expired < time.Now().Unix() {
+		return false, xsKey.Client
 	}
 
-	return xsKeyValid, xsKey.Client
+	if xsKey.Domain == domain {
+		return true, xsKey.Client
+	}
+
+	if strings.Contains(xsKey.Domain, ",") && ArrayContains(strings.Split(xsKey.Domain, ","), domain) {
+		return true, xsKey.Client
+	}
+
+	if xsKey.Domain == string(projectKey) {
+		return true, xsKey.Client
+	}
+
+	return false, xsKey.Client
 }
 
 // SetCheckCert устанавливает поле CheckCert в токене
