@@ -3,7 +3,7 @@ module git.edtech.vm.prod-6.cloud.el/fabric/lib
 go 1.24.4
 
 require (
-	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.60-cdn-test
+	git.edtech.vm.prod-6.cloud.el/fabric/models v0.2.62
 	github.com/BurntSushi/toml v1.5.0
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/aws/aws-sdk-go-v2 v1.36.5

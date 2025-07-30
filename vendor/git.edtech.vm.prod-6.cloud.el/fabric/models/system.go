@@ -91,3 +91,8 @@ type OrmTopicNames struct {
 	Commit       string `envconfig:"KAFKA_TOPIC_COMMIT" default:"orm-commit" description:"Топик с запросами на слитие веток"`
 	Revert       string `envconfig:"KAFKA_TOPIC_REVERT" default:"orm-revert" description:"Топик с запросами на отмену слияния"`
 }
+
+type AnalyticsTopicNames struct {
+	Set        string `envconfig:"KAFKA_TOPIC_SET" default:"analytics-set"`
+	QueryAsync string `envconfig:"KAFKA_TOPIC_QUERY_ASYNC" default:"analytics-query-async"`
+}

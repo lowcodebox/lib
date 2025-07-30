@@ -126,7 +126,7 @@ func NewVfs(cfg *models.VFSConfig) (Vfs, error) {
 	var cdnMinioClient *minio.Client
 	if isVfsCDNUserAvailable(cfg) {
 		cdnMinioClient, err = minio.New(parsedUrl.Host, &minio.Options{
-			Creds:     credentials.NewStaticV4(cfg.VfsCDNAccessKeyID, cfg.VfsSecretKey, ""),
+			Creds:     credentials.NewStaticV4(cfg.VfsCDNAccessKeyID, cfg.VfsCDNSecretKey, ""),
 			Secure:    parsedUrl.Scheme == "https",
 			Region:    cfg.VfsRegion,
 			Transport: transport,
