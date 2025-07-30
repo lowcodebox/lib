@@ -72,3 +72,13 @@ func ParseFloat(s string) (i float64, ok bool) {
 func ArrayDelete[T any](slice []T, i int) []T {
 	return append(slice[:i], slice[i+1:]...)
 }
+
+func ArrayContains[T comparable](array []T, val T) bool {
+	for _, item := range array {
+		if val == item {
+			return true
+		}
+	}
+
+	return false
+}
