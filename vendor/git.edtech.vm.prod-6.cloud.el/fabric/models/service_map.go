@@ -3,39 +3,13 @@ package models
 import (
 	"fmt"
 	"log/slog"
+	"math/rand"
+	"sort"
 	"sync"
 	"time"
 )
 
-////////////////////////////////////////
-// Service Map
-////////////////////////////////////////
-
-// уникальный ключ по которому храним реплику в карте
-func makeReplicaKey(uid string, pid int64) string {
-	return fmt.Sprintf("%s:%d", uid, pid)
-}
-
-type ServiceMap interface {
-	Progress(target *DeploymentConfig) float32
-	// добавить с заменой
-	Upsert(service *Service, agentHost string) error
-	// убрать сервис
-	Remove(service *Service, agentHost string) error
-	// обновляет карту по данным от агента
-	Update(host string, agentMap map[string][]Service) error
-	// сброс карты
-	Clean()
-	Get() DCMap
-}
 type DCMap map[string]*DCServices
-
-type serviceMap struct {
-	mut        sync.RWMutex
-	DCMap      DCMap     `json:"dc_map"`      // карта сервисов по дата-центрам
-	Generation uint64    `json:"generation"`  // поколение карты сервисов
-	LastUpdate time.Time `json:"last_update"` // время последнего обновления
-}
 
 type DCServices struct {
 	Agents          []*Agent `json:"agents"`           // список агентов
@@ -44,52 +18,328 @@ type DCServices struct {
 
 type Agent struct {
 	Host         string                     `json:"host"`         // хост агента
-	Replicas     []ServiceReplica           `json:"replicas"`     // список реплик
-	Dependencies map[string]*ServiceReplica `json:"dependencies"` // зависимости сервиса, ключ "uid:pid"
-	LastBleep    time.Time                  `json:"last_bleep"`   // время последнего сигнала
+	Replicas     []ServiceReplica           `json:"replicas"`     // реплики агента (на будущее)
+	Dependencies map[string]*ServiceReplica `json:"dependencies"` // зависимости сервиса, ключ ReplicaID
 	Healthy      bool                       `json:"healthy"`      // состояние здоровья
+}
+
+type ServiceReplica struct {
+	Uid          string         `json:"service_uid"`
+	ReplicaID    string         `json:"replica_id"`
+	Pid          int64          `json:"pid"`
+	AgentHost    string         `json:"agent_host"`
+	Project      string         `json:"project"`
+	Service      string         `json:"service"`
+	Path         string         `json:"path"`
+	Name         string         `json:"name"`
+	Version      string         `json:"version"`
+	Status       string         `json:"status"`
+	PortHTTP     int            `json:"portHTTP"`
+	PortGrpc     int            `json:"portGrpc"`
+	LastPinged   time.Time      `json:"last_pinged"`
+	PortHTTPS    int            `json:"portHTTPS"`
+	EnableHTTPS  bool           `json:"enable_https"`
+	Enviroment   string         `json:"environment"`
+	AccessPublic bool           `json:"access_public"`
+	DC           string         `json:"dc"`
+	Healthy      bool           `json:"healthy"`
+	Uptime       string         `json:"uptime"`
+	Mask         string         `json:"mask"`
+	StartedAt    int64          `json:"started_at"`
+	Error        string         `json:"error"`
+	Metrics      ServiceMetrics `json:"metrics"`
+
+	OS   string `json:"os"`
+	Arch string `json:"arch"`
+}
+
+func (sr ServiceReplica) Domain() string {
+	return fmt.Sprintf("%s/%s", sr.Project, sr.Name)
+}
+
+func (r *ServiceReplica) GetUrl() string {
+	return fmt.Sprintf("%s:%d", r.AgentHost, r.PortHTTP)
 }
 
 var serviceMapInstance *serviceMap
 var once sync.Once
 
+////////////////////////////////////////
+// Service Map
+////////////////////////////////////////
+
+type ServiceMap interface {
+	// добавить с заменой
+	Upsert(replica *ServiceReplica, agentHost string) error
+	// убрать сервис
+	Remove(service *ServiceReplica, agentHost string) error
+	// строит общую карту на основе списка реплик
+	Rebuild(repls []ServiceReplica)
+	// возвращает хосты учитывая фильтрацию
+	Endpoints(path string, filter EndpointOpts) []string
+	// чистит текущую карту от сервисов более не присутствующих в свежей карте
+	// agentMap - карта всех агентов с их сервис-репликами
+	Clean(host string, agentMap map[string][]ServiceReplica) error
+	// сброс карты
+	Reset()
+	// прогресс деплоя 0.0..1.0
+	Progress(target *DeploymentConfig) float32
+	// получить полную карту по всем ДЦ
+	Set(dcMap DCMap, gen uint64, lastUpdate time.Time)
+	// получить полную карту по всем ДЦ
+	Get() DCMap
+	// проверяет доступность сервиса по всем ДЦ
+	IsServiceAvailable(path string) bool
+}
+
+// Update the serviceMap struct to include the indexes
+type serviceMap struct {
+	mut          sync.RWMutex
+	DCMap        DCMap                       `json:"dc_map"`      // карта сервисов по дата-центрам
+	Generation   uint64                      `json:"generation"`  // поколение карты сервисов
+	LastUpdate   time.Time                   `json:"last_update"` // время последнего обновления
+	pathIndex    map[string][]ServiceReplica // Index of replicas by path
+	replicaIndex map[string]*ServiceReplica  // Index of replicas by ReplicaID
+}
+
+// Update the NewServiceMap function to initialize the indexes
 func NewServiceMap() ServiceMap {
 	once.Do(func() {
-		serviceMapInstance = &serviceMap{}
+		serviceMapInstance = &serviceMap{
+			DCMap:        make(DCMap),
+			pathIndex:    make(map[string][]ServiceReplica),
+			replicaIndex: make(map[string]*ServiceReplica),
+		}
 	})
 	return serviceMapInstance
 }
 
-func (s *serviceMap) Get() DCMap {
+// строит общую карту на основе списка реплик
+func (s *serviceMap) Rebuild(repls []ServiceReplica) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
-	return s.DCMap
+
+	// Reset all maps
+	s.DCMap = make(DCMap)
+	s.pathIndex = make(map[string][]ServiceReplica)
+	s.replicaIndex = make(map[string]*ServiceReplica)
+	s.LastUpdate = time.Now()
+
+	// Rebuild maps from replicas list
+	for _, replica := range repls {
+		// Add to replica index
+		replicaCopy := replica
+		s.replicaIndex[replica.ReplicaID] = &replicaCopy
+
+		// Add to path index
+		s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], replica)
+
+		// Add to DC map
+		dcServices, ok := s.DCMap[replica.DC]
+		if !ok {
+			dcServices = &DCServices{
+				Agents:          make([]*Agent, 0),
+				LocalGeneration: 0,
+			}
+			s.DCMap[replica.DC] = dcServices
+		}
+
+		// Find or create agent
+		var agent *Agent
+		for _, a := range dcServices.Agents {
+			if a.Host == replica.AgentHost {
+				agent = a
+				break
+			}
+		}
+
+		if agent == nil {
+			agent = &Agent{
+				Host:         replica.AgentHost,
+				Dependencies: make(map[string]*ServiceReplica),
+				Replicas:     make([]ServiceReplica, 0),
+				Healthy:      true,
+			}
+			dcServices.Agents = append(dcServices.Agents, agent)
+		}
+
+		// Add replica to agent - ИСПРАВЛЕНИЕ
+		agent.Dependencies[replica.ReplicaID] = &replicaCopy
+		agent.Replicas = append(agent.Replicas, replica) // Добавляем в Replicas
+	}
 }
 
-func (s *serviceMap) Clean() {
+func (s *serviceMap) Reset() {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	s.LastUpdate = time.Now()
-	s.DCMap = DCMap{}
+	s.DCMap = make(DCMap)
+	s.pathIndex = make(map[string][]ServiceReplica)
+	s.replicaIndex = make(map[string]*ServiceReplica)
 }
 
-func (s *serviceMap) Remove(service *Service, agentHost string) error {
+// Fix the Upsert method to properly update the indexes
+func (s *serviceMap) Upsert(replica *ServiceReplica, agentHost string) error {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 
-	dcServices, ok := s.DCMap[service.DC]
-	if !ok {
-		return fmt.Errorf("datacenter %s not found", service.DC)
+	// Initialize DCMap if needed
+	if s.DCMap == nil {
+		s.DCMap = make(DCMap)
 	}
 
-	key := makeReplicaKey(service.Uid, service.Pid)
+	// Continue with the existing DC and agent management logic
+	dcServices, ok := s.DCMap[replica.DC]
+	if !ok {
+		slog.Info("создаем новую карту для датацентра", "dc", replica.DC)
+		dcServices = new(DCServices)
+		dcServices.Agents = make([]*Agent, 0)
+		dcServices.Agents = append(dcServices.Agents, &Agent{
+			Host:         agentHost,
+			Dependencies: map[string]*ServiceReplica{},
+			Replicas:     []ServiceReplica{},
+		})
+	}
+
+	agentFound := false
+	for i, agent := range dcServices.Agents {
+		if agent.Host != agentHost {
+			continue
+		}
+		agentFound = true
+		agent.Dependencies[replica.ReplicaID] = replica
+		dcServices.Agents[i] = agent
+	}
+
+	if !agentFound {
+		newAgent := &Agent{
+			Host:         agentHost,
+			Dependencies: map[string]*ServiceReplica{},
+			Replicas:     []ServiceReplica{*replica},
+		}
+		newAgent.Dependencies[replica.ReplicaID] = replica
+		dcServices.Agents = append(dcServices.Agents, newAgent)
+	}
+
+	s.DCMap[replica.DC] = dcServices
+	s.LastUpdate = time.Now()
+
+	s.rebuildPathIndex()
+
+	return nil
+}
+
+// Set заменяет текущую DCMap и перестраивает индексы
+func (s *serviceMap) Set(dcMap DCMap, gen uint64, lastUpdate time.Time) {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+
+	// Заменяем DCMap
+	s.DCMap = dcMap
+	s.LastUpdate = lastUpdate
+	s.Generation = gen
+
+	// Очищаем существующие индексы
+	s.pathIndex = make(map[string][]ServiceReplica)
+	s.replicaIndex = make(map[string]*ServiceReplica)
+
+	// Перестраиваем индексы из новой DCMap
+	for _, dcServices := range s.DCMap {
+		for _, agent := range dcServices.Agents {
+			// Добавляем все реплики из Dependencies в индексы
+			for replicaID, replica := range agent.Dependencies {
+				// Добавляем в индекс реплик
+				s.replicaIndex[replicaID] = replica
+
+				// Добавляем в индекс по путям
+				s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], *replica)
+			}
+
+			// Также добавляем реплики из Replicas slice (если они не дублируются)
+			for _, replica := range agent.Replicas {
+				// Проверяем, что реплика еще не добавлена через Dependencies
+				if _, exists := s.replicaIndex[replica.ReplicaID]; !exists {
+					// Добавляем в индекс реплик
+					replicaCopy := replica
+					s.replicaIndex[replica.ReplicaID] = &replicaCopy
+
+					// Добавляем в индекс по путям
+					s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], replica)
+				}
+			}
+		}
+	}
+}
+
+func (s *serviceMap) rebuildPathIndex() {
+	// Clear existing indexes
+	s.pathIndex = make(map[string][]ServiceReplica)
+	s.replicaIndex = make(map[string]*ServiceReplica)
+
+	// Iterate through all DCs and their agents
+	for _, dcServices := range s.DCMap {
+		for _, agent := range dcServices.Agents {
+			// Add all replicas to both indexes
+			for replicaID, replica := range agent.Dependencies {
+				// Add to replica index
+				s.replicaIndex[replicaID] = replica
+
+				// Add to path index
+				s.pathIndex[replica.Path] = append(s.pathIndex[replica.Path], *replica)
+			}
+		}
+	}
+}
+
+// Fix the Remove method to update the indexes
+func (s *serviceMap) Remove(replica *ServiceReplica, agentHost string) error {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+
+	// Remove from replica index
+	delete(s.replicaIndex, replica.ReplicaID)
+
+	// Remove from path index
+	if replicas, exists := s.pathIndex[replica.Path]; exists {
+		updatedReplicas := make([]ServiceReplica, 0, len(replicas))
+		for _, r := range replicas {
+			if r.ReplicaID != replica.ReplicaID {
+				updatedReplicas = append(updatedReplicas, r)
+			}
+		}
+		if len(updatedReplicas) > 0 {
+			s.pathIndex[replica.Path] = updatedReplicas
+		} else {
+			delete(s.pathIndex, replica.Path)
+		}
+	}
+
+	// Continue with existing removal logic
+	dcServices, ok := s.DCMap[replica.DC]
+	if !ok {
+		return fmt.Errorf("datacenter %s not found", replica.DC)
+	}
+
+	key := replica.ReplicaID
+	agentFound := false
 
 	for i, agent := range dcServices.Agents {
 		if agent.Host != agentHost {
 			continue
 		}
+		agentFound = true
 
+		// Remove from Dependencies
 		delete(agent.Dependencies, key)
+
+		// Remove from Replicas
+		updatedReplicas := make([]ServiceReplica, 0, len(agent.Replicas))
+		for _, r := range agent.Replicas {
+			if r.ReplicaID != replica.ReplicaID {
+				updatedReplicas = append(updatedReplicas, r)
+			}
+		}
+		agent.Replicas = updatedReplicas
 
 		// If agent has no more dependencies, remove it
 		if len(agent.Dependencies) == 0 {
@@ -98,204 +348,135 @@ func (s *serviceMap) Remove(service *Service, agentHost string) error {
 
 		// If no more agents in DC, remove DC
 		if len(dcServices.Agents) == 0 {
-			delete(s.DCMap, service.DC)
+			delete(s.DCMap, replica.DC)
 		}
 
 		return nil
 	}
 
-	return fmt.Errorf("agent %s not found in datacenter %s", agentHost, service.DC)
+	if !agentFound {
+		return fmt.Errorf("agent %s not found in datacenter %s", agentHost, replica.DC)
+	}
+
+	return nil
 }
 
-func (s *serviceMap) Update(host string, agentMap map[string][]Service) error {
+func (s *serviceMap) Clean(host string, agentMap map[string][]ServiceReplica) error {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 
-	// Track which DCs we've updated
-	updatedDCs := make(map[string]bool)
-
-	// Process each service in the agent map
+	// Create a map of current services from the agent for O(1) lookups
+	currentServices := make(map[string]bool)
 	for _, services := range agentMap {
 		for _, service := range services {
-			// Track this DC as updated
-			updatedDCs[service.DC] = true
-
-			// Get or create DC services
-			dcServices, ok := s.DCMap[service.DC]
-			if !ok {
-				if s.DCMap == nil {
-					s.DCMap = make(DCMap)
-				}
-				dcServices = &DCServices{
-					Agents: make([]*Agent, 0),
-				}
-				s.DCMap[service.DC] = dcServices
-			}
-
-			// Find or create agent
-			var agent *Agent
-			agentIndex := -1
-			for i, a := range dcServices.Agents {
-				if a.Host == host {
-					agent = a
-					agentIndex = i
-					break
-				}
-			}
-
-			if agent == nil {
-				agent = &Agent{
-					Host:         host,
-					Dependencies: make(map[string]*ServiceReplica),
-					LastBleep:    time.Now(),
-					Healthy:      true,
-				}
-				dcServices.Agents = append(dcServices.Agents, agent)
-			} else {
-				// Update agent health status
-				agent.LastBleep = time.Now()
-				agent.Healthy = true
-			}
-
-			// Create or update service replica
-			key := makeReplicaKey(service.Uid, service.Pid)
-			uptime := time.Since(time.Unix(service.StartedAt, 0)).String()
-
-			replica := &ServiceReplica{
-				ServiceUid:  service.Uid,
-				Pid:         service.Pid,
-				Name:        service.Name,
-				AgentHost:   host,
-				Project:     service.Project,
-				Service:     service.Name,
-				Version:     service.Version,
-				Uptime:      uptime,
-				Healthy:     true,
-				Status:      service.Status,
-				PortHTTP:    service.PortHTTP,
-				PortGrpc:    service.PortGrpc,
-				PortHTTPS:   service.PortHTTPS,
-				EnableHTTPS: service.EnableHTTPS,
-				Enviroment:  service.Enviroment,
-				DC:          service.DC,
-				Mask:        service.Mask,
-				StartedAt:   service.StartedAt,
-			}
-
-			agent.Dependencies[key] = replica
-
-			if agentIndex >= 0 {
-				dcServices.Agents[agentIndex] = agent
-			}
+			currentServices[service.ReplicaID] = true
 		}
 	}
 
+	if len(currentServices) == 0 {
+		return nil
+	}
+
+	// Track if any changes were made
+	changesMade := false
+
 	// Clean up services that no longer exist on this agent
 	for dcName, dcServices := range s.DCMap {
-		for i, agent := range dcServices.Agents {
-			if agent.Host != host {
-				continue
-			}
+		agentIndex := -1
+		var agent *Agent
 
-			// Create a map of current services from the agent
-			currentServices := make(map[string]bool)
-			for uid, services := range agentMap {
-				for _, service := range services {
-					key := makeReplicaKey(uid, service.Pid)
-					currentServices[key] = true
+		// Find the agent
+		for i, a := range dcServices.Agents {
+			if a.Host == host {
+				agentIndex = i
+				agent = a
+				break
+			}
+		}
+
+		// Skip if agent not found in this DC
+		if agentIndex == -1 || agent == nil {
+			continue
+		}
+
+		// Track replicas to remove
+		replicasToRemove := make([]string, 0)
+
+		// Find dependencies that are not in the current services
+		for replicaID, replica := range agent.Dependencies {
+			if !currentServices[replicaID] {
+				replicasToRemove = append(replicasToRemove, replicaID)
+				changesMade = true
+
+				// Remove from indexes
+				delete(s.replicaIndex, replicaID)
+
+				// Update path index
+				if replicas, exists := s.pathIndex[replica.Path]; exists {
+					if len(replicas) == 1 {
+						// If this is the only replica for this path, delete the path entry
+						delete(s.pathIndex, replica.Path)
+					} else {
+						// Otherwise, filter out this replica
+						updatedReplicas := make([]ServiceReplica, 0, len(replicas)-1)
+						for _, r := range replicas {
+							if r.ReplicaID != replicaID {
+								updatedReplicas = append(updatedReplicas, r)
+							}
+						}
+						s.pathIndex[replica.Path] = updatedReplicas
+					}
 				}
 			}
+		}
 
-			// Remove dependencies that are not in the current services
-			for key := range agent.Dependencies {
-				if !currentServices[key] {
-					delete(agent.Dependencies, key)
+		// If no replicas to remove, continue to next DC
+		if len(replicasToRemove) == 0 {
+			continue
+		}
+
+		// Remove the dependencies
+		for _, replicaID := range replicasToRemove {
+			delete(agent.Dependencies, replicaID)
+		}
+
+		// Update Replicas slice
+		if len(agent.Replicas) > 0 {
+			updatedReplicas := make([]ServiceReplica, 0, len(agent.Replicas))
+			for _, replica := range agent.Replicas {
+				if currentServices[replica.ReplicaID] {
+					updatedReplicas = append(updatedReplicas, replica)
 				}
 			}
+			agent.Replicas = updatedReplicas
+		}
 
-			// If agent has no more dependencies, remove it
-			if len(agent.Dependencies) == 0 {
-				dcServices.Agents = append(dcServices.Agents[:i], dcServices.Agents[i+1:]...)
-				i-- // Adjust index after removal
-			}
+		// If agent has no more dependencies, remove it
+		if len(agent.Dependencies) == 0 {
+			dcServices.Agents = append(dcServices.Agents[:agentIndex], dcServices.Agents[agentIndex+1:]...)
+			changesMade = true
 		}
 
 		// If no more agents in DC, remove DC
 		if len(dcServices.Agents) == 0 {
 			delete(s.DCMap, dcName)
+			changesMade = true
 		}
 	}
 
-	// Update generation and timestamp
-	s.Generation++
-	s.LastUpdate = time.Now()
+	// Update generation and timestamp only if changes were made
+	if changesMade {
+		s.Generation++
+		s.LastUpdate = time.Now()
+	}
 
 	return nil
 }
 
-func (s *serviceMap) Upsert(service *Service, agentHost string) error {
+func (s *serviceMap) Get() DCMap {
 	s.mut.Lock()
 	defer s.mut.Unlock()
-
-	dcServices, ok := s.DCMap[service.DC]
-	if !ok {
-		slog.Info("создаем новую карту для датацентра", "dc", service.DC)
-		s.DCMap = make(DCMap, 0)
-		dcServices = new(DCServices)
-		dcServices.Agents = make([]*Agent, 0)
-		dcServices.Agents = append(dcServices.Agents, &Agent{
-			Host:         agentHost,
-			Dependencies: map[string]*ServiceReplica{},
-		})
-	}
-
-	uptime := time.Since(time.Unix(service.StartedAt, 0)).String()
-
-	agents := dcServices.Agents
-	for n, agent := range agents {
-		if agent.Host != agentHost {
-			continue
-		}
-		key := makeReplicaKey(service.Uid, service.Pid)
-		svc, ok := agent.Dependencies[key]
-		if !ok {
-			slog.Info("обновляем реплику в зависимостях агента", "service", service)
-			replica := &ServiceReplica{
-				ServiceUid:  service.Uid,
-				Pid:         service.Pid,
-				Name:        service.Name,
-				AgentHost:   agentHost,
-				Project:     service.Project,
-				Service:     service.Name,
-				Version:     service.Version,
-				Uptime:      uptime,
-				Healthy:     true,
-				Status:      service.Status,
-				PortHTTP:    service.PortHTTP,
-				PortGrpc:    service.PortGrpc,
-				PortHTTPS:   service.PortHTTPS,
-				EnableHTTPS: service.EnableHTTPS,
-				Enviroment:  service.Enviroment,
-				DC:          service.DC,
-				Mask:        service.Mask,
-				StartedAt:   service.StartedAt,
-			}
-			agent.Dependencies[key] = replica
-		} else {
-			svc.Healthy = true
-			svc.Status = service.Status
-			svc.Uptime = uptime
-			agent.Dependencies[key] = svc
-		}
-
-		dcServices.Agents[n] = agent
-	}
-
-	s.DCMap[service.DC] = dcServices
-
-	s.LastUpdate = time.Now()
-
-	return nil
+	return s.DCMap
 }
 
 func (s *serviceMap) Progress(target *DeploymentConfig) float32 {
@@ -311,10 +492,8 @@ func (s *serviceMap) Progress(target *DeploymentConfig) float32 {
 	s.mut.Lock()
 	for _, dc := range s.DCMap {
 		for _, agent := range dc.Agents {
-			for _, replica := range agent.Dependencies {
-				if replica.Status == "running" {
-					runningReplicas++
-				}
+			for range agent.Dependencies {
+				runningReplicas++
 			}
 		}
 	}
@@ -325,4 +504,138 @@ func (s *serviceMap) Progress(target *DeploymentConfig) float32 {
 	}
 
 	return float32(runningReplicas) / float32(totalDesiredReplicas)
+}
+
+// Endpoints returns a list of endpoints for a given path with optional filtering
+func (s *serviceMap) Endpoints(path string, opts EndpointOpts) []string {
+	s.mut.RLock()
+	defer s.mut.RUnlock()
+
+	// If no path is specified, return empty list
+	if path == "" {
+		return []string{}
+	}
+
+	// Get replicas from the path index
+	replicas, exists := s.pathIndex[path]
+	if !exists || len(replicas) == 0 {
+		return []string{}
+	}
+
+	// Make a copy of the replicas to avoid modifying the original slice
+	replicasCopy := make([]ServiceReplica, len(replicas))
+	copy(replicasCopy, replicas)
+
+	// Sort replicas based on the strategy
+	switch opts.SortBy {
+	case SortRandom:
+		// Shuffle the replicas
+		rand.Shuffle(len(replicasCopy), func(i, j int) {
+			replicasCopy[i], replicasCopy[j] = replicasCopy[j], replicasCopy[i]
+		})
+	case SortMinLatency:
+		// Sort by minimum response time
+		sort.Slice(replicasCopy, func(i, j int) bool {
+			return replicasCopy[i].Metrics.MinResponseTime < replicasCopy[j].Metrics.MinResponseTime
+		})
+	case SortNewest:
+		// Sort by newest first (highest StartedAt timestamp)
+		sort.Slice(replicasCopy, func(i, j int) bool {
+			return replicasCopy[i].StartedAt > replicasCopy[j].StartedAt
+		})
+	}
+
+	// Apply limit if specified
+	if opts.Limit > 0 && opts.Limit < len(replicasCopy) {
+		replicasCopy = replicasCopy[:opts.Limit]
+	}
+
+	// Convert replicas to endpoint URLs
+	endpoints := make([]string, len(replicasCopy))
+	for i, replica := range replicasCopy {
+		endpoints[i] = replica.GetUrl()
+	}
+
+	return endpoints
+}
+
+func (s *serviceMap) IsServiceAvailable(path string) bool {
+	s.mut.RLock()
+	defer s.mut.RUnlock()
+
+	// If no path is specified, service is not available
+	if path == "" {
+		return false
+	}
+
+	// Get replicas from the path index
+	replicas, exists := s.pathIndex[path]
+	if !exists {
+		return false
+	}
+
+	// Check if there are any active replicas
+	return len(replicas) > 0
+}
+
+// ENDPOINTS OPTS
+type SortStrategy string
+
+const (
+	// SortRandom returns endpoints in random order
+	SortRandom SortStrategy = "random"
+	// SortMinLatency returns endpoints sorted by minimum response time
+	SortMinLatency SortStrategy = "min_latency"
+	// SortNewest returns endpoints sorted by newest first (based on StartedAt)
+	SortNewest SortStrategy = "newest"
+)
+
+// EndpointOpts defines options for filtering and sorting endpoints
+type EndpointOpts struct {
+	SortBy SortStrategy
+	Limit  int
+}
+
+// EndpointOptsBuilder is a builder for EndpointOpts
+type EndpointOptsBuilder struct {
+	opts EndpointOpts
+}
+
+// NewEndpointOptsBuilder creates a new builder for EndpointOpts
+func NewEndpointOptsBuilder() *EndpointOptsBuilder {
+	return &EndpointOptsBuilder{
+		opts: EndpointOpts{
+			SortBy: SortRandom, // Default to random sorting
+			Limit:  0,          // 0 means no limit
+		},
+	}
+}
+
+// WithSortRandom sets the sort strategy to random
+func (b *EndpointOptsBuilder) WithSortRandom() *EndpointOptsBuilder {
+	b.opts.SortBy = SortRandom
+	return b
+}
+
+// WithSortMinLatency sets the sort strategy to minimum latency
+func (b *EndpointOptsBuilder) WithSortMinLatency() *EndpointOptsBuilder {
+	b.opts.SortBy = SortMinLatency
+	return b
+}
+
+// WithSortNewest sets the sort strategy to newest first
+func (b *EndpointOptsBuilder) WithSortNewest() *EndpointOptsBuilder {
+	b.opts.SortBy = SortNewest
+	return b
+}
+
+// WithLimit sets the maximum number of endpoints to return
+func (b *EndpointOptsBuilder) WithLimit(limit int) *EndpointOptsBuilder {
+	b.opts.Limit = limit
+	return b
+}
+
+// Build returns the built EndpointOpts
+func (b *EndpointOptsBuilder) Build() EndpointOpts {
+	return b.opts
 }

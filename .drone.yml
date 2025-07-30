@@ -1,0 +1,45 @@
+kind: pipeline
+type: docker
+name: lib
+
+steps:
+  - name: unit tests
+    image: golang:1.24.4-alpine
+    environment:
+      TZ: Europe/Moscow
+    commands:
+      - apk add --no-cache tzdata
+      - cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+      - echo "Europe/Moscow" > /etc/timezone
+      - chmod +x scripts/run-unit-tests.sh
+      - ./scripts/run-unit-tests.sh
+    when:
+      event:
+        - push
+      branch:
+        - feature/wpr-*
+
+  - name: integration tests (remote minio)
+    image: golang:1.24.4-alpine
+    environment:
+      MINIO_ENDPOINT: "host.docker.internal:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MINIO_USE_SSL: "false"
+      MINIO_SECURE_ENDPOINT: "host.docker.internal:9443"
+      MINIO_SECURE_ACCESS_KEY: "minioadmin"
+      MINIO_SECURE_SECRET_KEY: "minioadmin"
+      MINIO_SECURE_USE_SSL: "true"
+      TZ: Europe/Moscow
+    commands:
+      - apk add --no-cache tzdata
+      - cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+      - echo "Europe/Moscow" > /etc/timezone
+      - apk add --no-cache curl bash
+      - chmod +x scripts/run-integration-tests.sh
+      - ./scripts/run-integration-tests.sh
+    when:
+      event:
+        - push
+      branch:
+        - feature/wpr-*

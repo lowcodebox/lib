@@ -18,25 +18,25 @@ type ProfileData struct {
 	Status         string `json:"status,omitempty"` // - src поля Status в профиле (иногда необходимо для доп.фильтрации)
 	Raw            []Data `json:"raw,omitempty"`    // объект пользователя (нужен при сборки проекта для данного юзера при добавлении прав на базу)
 	Tables         []Data `json:"tables,omitempty"`
-	Roles          []Data // разремить после запуска новой версии
+	Roles          []Data `json:"roles,omitempty"` // разремить после запуска новой версии
 	//Roles          map[string]string `json:"roles"` // deprecated
 	Homepage       string   `json:"homepage,omitempty"`
 	Maket          string   `json:"maket,omitempty"`
-	UpdateFlag     bool     `json:"update_flag"`
+	UpdateFlag     bool     `json:"update_flag,omitempty"`
 	UpdateData     []Data   `json:"update_data,omitempty"`
 	CurrentRole    Data     `json:"current_role,omitempty"`
 	Profiles       []Data   `json:"profiles,omitempty"`
 	CurrentProfile Data     `json:"current_profile,omitempty"`
 	Navigator      []*Items `json:"navigator,omitempty"`
 
-	Groups             string
-	GroupsValue        string
-	GroupsDefaultSrc   string
-	GroupsDefaultValue string
+	Groups             string `json:"groups,omitempty"`
+	GroupsValue        string `json:"groups_value,omitempty"`
+	GroupsDefaultSrc   string `json:"groups_default_src,omitempty"`
+	GroupsDefaultValue string `json:"groups_default_value,omitempty"`
 
-	ButtonsNavTop []Data
-	CountLicense  int
-	BaseMode      map[string]string
+	ButtonsNavTop []Data            `json:"buttons_nav_top,omitempty"`
+	CountLicense  int               `json:"count_license,omitempty"`
+	BaseMode      map[string]string `json:"base_mode,omitempty"`
 
 	// TODO проверить где используется и выпилить
 	RolesOld   map[string]string `json:"roles_old,omitempty"` //deplicated
@@ -53,10 +53,12 @@ type ProfileData struct {
 	ShardId    string `json:"shard_id,omitempty"`
 
 	// IAM будет искать по этим RoleIDs роли, у которых сходится атрибут role_id, и создавать профили с этими ролями
-	RoleIDs string `json:"role_ids"`
+	RoleIDs string `json:"role_ids,omitempty"`
 
-	BirthDate string `json:"birth_date"`
-	Login     string `json:"login"`
+	BirthDate string `json:"birth_date,omitempty"`
+	Login     string `json:"login,omitempty"`
+
+	Sex string `json:"sex,omitempty"`
 }
 
 type Items struct {

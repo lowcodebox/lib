@@ -78,7 +78,7 @@ func DecodeConfig(configfile string, cfg interface{}) (err error) {
 }
 
 // searchConfigDir — получаем путь до искомой конфигурации от переданной директории
-func searchConfigDir(startDir, configuration string) (configPath string, err error) {
+func SearchConfigDir(startDir, configuration string) (configPath string, err error) {
 	var nextPath string
 	directory, err := os.Open(startDir)
 	if err != nil {
@@ -99,7 +99,7 @@ func searchConfigDir(startDir, configuration string) (configPath string, err err
 
 			// не входим в скрытые папки
 			if dirName[:1] != "." {
-				configPath, err = searchConfigDir(nextPath, configuration)
+				configPath, err = SearchConfigDir(nextPath, configuration)
 				if configPath != "" {
 					return configPath, err // поднимает результат наверх
 				}
