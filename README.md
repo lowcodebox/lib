@@ -1,3 +1,3 @@
 # lib
 
-Библиотека общих компонентов для сервисов Buildbox Fabric
+Библиотека общих компонентов для сервисов LowCode Platform (RedRockets©)

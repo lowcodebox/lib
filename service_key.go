@@ -3,7 +3,7 @@ package lib
 import (
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.lowcodeplatform.net/packages/models"
 )
 
 const (

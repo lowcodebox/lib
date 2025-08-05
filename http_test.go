@@ -3,12 +3,13 @@ package lib_test
 import (
 	"context"
 	"encoding/json"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib"
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"git.lowcodeplatform.net/packages/lib"
+	"git.lowcodeplatform.net/packages/models"
 )
 
 const (

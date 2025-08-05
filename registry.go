@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.lowcodeplatform.net/packages/models"
 )
 
 // OptimizePathMesh получает ссылки на сервисы по их экземплярам

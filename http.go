@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
+	"git.lowcodeplatform.net/packages/models"
 	"github.com/labstack/gommon/color"
 )
 
