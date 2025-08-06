@@ -5,10 +5,11 @@ package lib
 
 import (
 	"context"
-	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_wrappers"
 	"io"
 	"net/http"
 	"time"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_wrappers"
 )
 
 const (
@@ -27,11 +28,12 @@ type Vfs interface {
 	Delete(ctx context.Context, file string) (err error)
 	Connect(ctx context.Context) (err error)
 	Close() (err error)
-	GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (url string, err error)
+	GetPresignedURL(ctx context.Context, in *PresignedURLIn) (url string, err error)
+	PutPresignedURL(ctx context.Context, in *PresignedURLIn) (url string, err error)
 	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
 
-type GetPresignedURLIn struct {
+type PresignedURLIn struct {
 	Bucket   string        `validate:"required"`
 	Path     string        `validate:"required"`
 	Duration time.Duration `validate:"required,gt=0"`
