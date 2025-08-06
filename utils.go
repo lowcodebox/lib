@@ -1,6 +1,9 @@
 package lib
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // HideExceptFirstAndLast экранирует в строке символы между указанным количеством
 // opt0 - сколько символов оставить сначала строки (по-умолчанию 3)
@@ -34,4 +37,48 @@ func HideExceptFirstAndLast(str string, opt ...int) string {
 		return builder.String()[:15]
 	}
 	return builder.String()
+}
+
+// FirstVal возвращает первое непустое значение
+func FirstVal[T comparable](vals ...T) T {
+	var null T
+	for _, val := range vals {
+		if val != null {
+			return val
+		}
+	}
+
+	return null
+}
+
+func ParseInt(s string) (i int, ok bool) {
+	n, err := strconv.Atoi(s)
+
+	return n, err == nil
+}
+
+func ParseInt64(s string) (i int64, ok bool) {
+	n, err := strconv.ParseInt(s, 10, 64)
+
+	return n, err == nil
+}
+
+func ParseFloat(s string) (i float64, ok bool) {
+	n, err := strconv.ParseFloat(strings.ReplaceAll(s, ",", "."), 64)
+
+	return n, err == nil
+}
+
+func ArrayDelete[T any](slice []T, i int) []T {
+	return append(slice[:i], slice[i+1:]...)
+}
+
+func ArrayContains[T comparable](array []T, val T) bool {
+	for _, item := range array {
+		if val == item {
+			return true
+		}
+	}
+
+	return false
 }
