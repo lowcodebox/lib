@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"git.edtech.vm.prod-6.cloud.el/fabric/models"
 
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/internal/utils"
 	"git.edtech.vm.prod-6.cloud.el/fabric/lib/pkg/s3_minio"
@@ -26,6 +27,7 @@ import (
 
 const (
 	minioVfsKind = "s3"
+	maxExpiry    = 7 * 24 * time.Hour
 )
 
 type vfsMinio struct {
@@ -401,7 +403,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
-func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (url string, err error) {
+func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *SignIn) (urll string, err error) {
 	if err := v.validateCDNClient(); err != nil {
 		return "", err
 	}
@@ -410,7 +412,6 @@ func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (
 	}
 
 	// Ограничение максимального срока действия (совместимо с S3)
-	const maxExpiry = 7 * 24 * time.Hour
 	expiry := in.Duration
 	if expiry > maxExpiry {
 		expiry = maxExpiry
@@ -418,13 +419,32 @@ func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *GetPresignedURLIn) (
 
 	object := strings.TrimPrefix(in.Path, "/")
 
+	var u *url.URL
 	// Генерация presigned URL
-	u, err := v.cdnClient.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	switch strings.ToUpper(in.Type) {
+	case "PUT":
+		u, err = v.cdnClient.PresignedPutObject(ctx, in.Bucket, object, expiry)
+	default:
+		u, err = v.cdnClient.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("failed to presign object: %w", err)
 	}
 
 	return u.String(), nil
+}
+
+func (v *vfsMinio) FileExists(ctx context.Context, in *SignIn) (exists bool, err error) {
+
+	_, err = v.baseClient.StatObject(ctx, in.Bucket, in.Path, minio.StatObjectOptions{})
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return false, nil // Объект не существует
+		}
+		return false, err // Другая ошибка
+	}
+	return true, nil // Объект существует
 }
 
 func (v *vfsMinio) validateCDNClient() error {
