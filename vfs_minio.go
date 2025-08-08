@@ -403,7 +403,7 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
-func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *PresignedURLIn) (url string, err error) {
+func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *SignIn) (urll string, err error) {
 	if err := v.validateCDNClient(); err != nil {
 		return "", err
 	}
@@ -419,8 +419,15 @@ func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *PresignedURLIn) (url
 
 	object := strings.TrimPrefix(in.Path, "/")
 
+	var u *url.URL
 	// Генерация presigned URL
-	u, err := v.cdnClient.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	switch strings.ToUpper(in.Type) {
+	case "PUT":
+		u, err = v.cdnClient.PresignedPutObject(ctx, in.Bucket, object, expiry)
+	default:
+		u, err = v.cdnClient.PresignedGetObject(ctx, in.Bucket, object, expiry, nil)
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("failed to presign object: %w", err)
 	}
@@ -428,32 +435,7 @@ func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *PresignedURLIn) (url
 	return u.String(), nil
 }
 
-func (v *vfsMinio) PutPresignedURL(ctx context.Context, in *PresignedURLIn) (url string, err error) {
-	if err := v.validateCDNClient(); err != nil {
-		return "", err
-	}
-	if err := v.validate.Struct(in); err != nil {
-		return "", err
-	}
-
-	// Ограничение максимального срока действия (совместимо с S3)
-	expiry := in.Duration
-	if expiry > maxExpiry {
-		expiry = maxExpiry
-	}
-
-	object := strings.TrimPrefix(in.Path, "/")
-
-	// Генерация presigned URL
-	u, err := v.cdnClient.PresignedPutObject(ctx, in.Bucket, object, expiry)
-	if err != nil {
-		return "", fmt.Errorf("failed to presign object: %w", err)
-	}
-
-	return u.String(), nil
-}
-
-func (v *vfsMinio) FileExists(ctx context.Context, in *PresignedURLIn) (exists bool, err error) {
+func (v *vfsMinio) FileExists(ctx context.Context, in *SignIn) (exists bool, err error) {
 
 	_, err = v.baseClient.StatObject(ctx, in.Bucket, in.Path, minio.StatObjectOptions{})
 	if err != nil {
