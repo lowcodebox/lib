@@ -79,3 +79,7 @@ func (b *XServiceKeyBuilder) Build(projectKey []byte) (token string, err error) 
 func DecodeServiceKey(xServiceKey string, projectKey []byte) (out models.XServiceKey, err error) {
 	return decodeServiceKey(projectKey, xServiceKey)
 }
+
+func EncodeServiceKey(in models.XServiceKey, projectKey []byte) (token string, err error) {
+	return encodeServiceKey(in, projectKey)
+}
