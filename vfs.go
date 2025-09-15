@@ -28,13 +28,21 @@ type Vfs interface {
 	Delete(ctx context.Context, file string) (err error)
 	Connect(ctx context.Context) (err error)
 	Close() (err error)
+	GetPresignedPostURL(ctx context.Context, in *SignIn) (string, map[string]string, error)
 	GetPresignedURL(ctx context.Context, in *SignIn) (url string, err error)
 	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }
 
 type SignIn struct {
-	Type     string
+	Type     string        // GET, PUT.
 	Bucket   string        `validate:"required"`
 	Path     string        `validate:"required"`
 	Duration time.Duration `validate:"required,gt=0"`
+	Policy   UploadPolicy
+}
+
+type UploadPolicy struct {
+	MaxSize           int64  `default:"524288000"` // Max file size in bytes.
+	MinSize           int64  `default:"0"`         // Min file size in bytes.
+	ContentTypePrefix string // e.g "image", "png"
 }
