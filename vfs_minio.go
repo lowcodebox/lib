@@ -403,6 +403,48 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
+func (v *vfsMinio) GetPresignedPostURL(ctx context.Context, in *SignIn) (string, map[string]string, error) {
+	if err := v.validateCDNClient(); err != nil {
+		return "", nil, err
+	}
+	if err := v.validate.Struct(in); err != nil {
+		return "", nil, err
+	}
+
+	in.Duration = min(in.Duration, maxExpiry)
+
+	policy := minio.NewPostPolicy()
+
+	if err := policy.SetBucket(in.Bucket); err != nil {
+		return "", nil, err
+	}
+
+	if err := policy.SetKey(in.Path); err != nil {
+		return "", nil, err
+	}
+
+	if err := policy.SetExpires(time.Now().UTC().Add(in.Duration)); err != nil {
+		return "", nil, err
+	}
+
+	if in.Policy.MaxSize == 0 {
+		in.Policy.MaxSize = 524288000
+	}
+	if err := policy.SetContentLengthRange(in.Policy.MinSize, in.Policy.MaxSize); err != nil {
+		return "", nil, err
+	}
+
+	if err := policy.SetContentTypeStartsWith(in.Policy.ContentTypePrefix); err != nil {
+		return "", nil, err
+	}
+
+	u, form, err := v.cdnClient.PresignedPostPolicy(ctx, policy)
+	if err != nil {
+		return "", nil, err
+	}
+	return u.String(), form, err
+}
+
 func (v *vfsMinio) GetPresignedURL(ctx context.Context, in *SignIn) (urll string, err error) {
 	if err := v.validateCDNClient(); err != nil {
 		return "", err
