@@ -2,9 +2,12 @@ package lib
 
 import (
 	"archive/zip"
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,6 +87,31 @@ func ReadFile(path string) (result string, err error) {
 	}
 
 	return result, err
+}
+
+// DeepCompare сравнивает два файла (true/false}
+func DeepCompare(file1, file2 string) bool {
+	sf, err := os.Open(file1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	df, err := os.Open(file2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sscan := bufio.NewScanner(sf)
+	dscan := bufio.NewScanner(df)
+
+	for sscan.Scan() {
+		dscan.Scan()
+		if !bytes.Equal(sscan.Bytes(), dscan.Bytes()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // CopyFolder копирование папки
