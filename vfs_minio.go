@@ -244,6 +244,8 @@ func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string
 }
 
 func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
+
 	type result struct {
 		I   s3_wrappers.Item
 		Err error
