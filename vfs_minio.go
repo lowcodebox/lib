@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -222,6 +223,7 @@ func (v *vfsMinio) ReadCloser(ctx context.Context, file string, private_access b
 }
 
 func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
 	user, _ := ctx.Value(userUid).(string)
 
 	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) && !private_access {

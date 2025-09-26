@@ -51,6 +51,8 @@ type ServiceReplica struct {
 
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
+
+	Strategy RollingStrategy `json:"straregy"`
 }
 
 func (sr ServiceReplica) Domain() string {

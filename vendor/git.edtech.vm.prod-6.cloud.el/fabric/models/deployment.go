@@ -84,3 +84,13 @@ type DeploymentState struct {
 	Progress     float32         `json:"progress"`      // прогресс развертывания 0.0-1.0
 	AgentsStates map[string]bool `json:"agents_states"` // готовность агентов
 }
+
+// ROLL
+
+type ServiceRoll struct {
+	Project       string
+	Name          string
+	TargetVersion string
+	OS            string
+	Arch          string
+}

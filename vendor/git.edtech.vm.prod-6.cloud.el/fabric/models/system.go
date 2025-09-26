@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+type RollingStrategy string
+
+const (
+	KILL_FIRST_ROLL = "kill_first"
+	KILL_LAST_ROLL  = "kill_last"
+)
+
 // системный конфиг с общей структурой для всех сервисов
 type Config struct {
 	Project    string `envconfig:"PROJECT" default:""`
@@ -28,6 +35,9 @@ type Config struct {
 
 	DC      string `envconfig:"DC" default:""`
 	Cluster string `envconfig:"CLUSTER" default:""`
+
+	// Infra settings
+	Strategy RollingStrategy `json:"straregy" default:"kill_last"`
 
 	// Logger
 	LogsLevel string `envconfig:"LOGS_LEVEL" default:"debug"`
@@ -80,6 +90,7 @@ type VFSConfig struct {
 	VfsCAFile         string `envconfig:"VFS_CA_FILE" default:"" description:"Файл CA-сертификата"`
 	VfsCDNAccessKeyID string `envconfig:"VFS_CDN_ACCESS_KEY_ID" default:""`
 	VfsCDNSecretKey   string `envconfig:"VFS_CDN_SECRET_KEY" default:""`
+	VfsUploadPath     string `envconfig:"VFS_UPLOAD_PATH" default:"" description:"Путь, который по умолчанию подставляется ко всем загружаемым/читаемым файлам"`
 }
 
 type OrmTopicNames struct {
