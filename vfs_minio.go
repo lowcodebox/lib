@@ -161,6 +161,8 @@ func (v *vfsMinio) Item(ctx context.Context, path string) (file s3_wrappers.Item
 }
 
 func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files []s3_wrappers.Item, err error) {
+	prefix = path.Join(v.config.VfsUploadPath, prefix)
+
 	err = v.Connect(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s",
@@ -290,6 +292,8 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 }
 
 func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
+
 	err = v.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.VfsEndpoint, v.config.VfsBucket)
