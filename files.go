@@ -35,8 +35,8 @@ func CreateFile(path string) (err error) {
 	return err
 }
 
-// CreateFileIsNotExist Создаем файл по указанному пути если его нет
-func CreateFileIsNotExist(path string) (err error) {
+// CreateFileIfNotExist Создаем файл по указанному пути если его нет
+func CreateFileIfNotExist(path string) (err error) {
 
 	// detect if file exists
 	_, err = os.Stat(path)
