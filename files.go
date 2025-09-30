@@ -51,7 +51,7 @@ func CreateFileIfNotExist(path string) (err error) {
 		defer file.Close()
 	}
 
-	return err
+	return nil
 }
 
 // WriteFile пишем в файл по указанному пути
