@@ -61,6 +61,7 @@ func Ping() models.PongObj {
 		DC:           pingConf.DC,
 		Mask:         pingConf.Mask,
 		AccessPublic: pingConf.AccessPublic.V(),
+		Strategy:     pingConf.Strategy,
 
 		OS:   runtime.GOOS,
 		Arch: runtime.GOARCH,
