@@ -35,6 +35,25 @@ func CreateFile(path string) (err error) {
 	return err
 }
 
+// CreateFileIsNotExist Создаем файл по указанному пути если его нет
+func CreateFileIsNotExist(path string) (err error) {
+
+	// detect if file exists
+	_, err = os.Stat(path)
+	var file *os.File
+
+	// delete old file if exists
+	if !os.IsNotExist(err) {
+		file, err = os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+	}
+
+	return err
+}
+
 // WriteFile пишем в файл по указанному пути
 func WriteFile(path string, data []byte) (err error) {
 
