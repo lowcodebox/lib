@@ -272,6 +272,15 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 	// Логируем начало запуска
 	monitor.WriteLog(fmt.Sprintf("[INIT] Starting process: %s %s", path, strings.Join(args, " ")))
 
+	// отделение от родительского процесса
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		// создать новую сессию
+		Setsid: true,
+		// поместить в новую группу процессов
+		Setpgid: true,
+		Pgid:    0,
+	}
+
 	// Запускаем процесс
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("unable to start process: config=%s, path=%s, command=%s, mode=%s, dc=%s, err=%w",
