@@ -253,11 +253,6 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 	// Создаем команду БЕЗ контекста для долгосрочного выполнения
 	cmd := exec.Command(path, args...)
 
-	// Настраиваем процесс
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-
 	// Создаем pipe для захвата вывода
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -274,8 +269,6 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 
 	// отделение от родительского процесса
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		// создать новую сессию
-		Setsid: true,
 		// поместить в новую группу процессов
 		Setpgid: true,
 		Pgid:    0,
