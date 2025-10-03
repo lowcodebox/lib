@@ -250,8 +250,18 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 		time.Now().Format("2006-01-02 15:04:05"), path, project, service, args)
 	auditLogger.Write([]byte(auditLog))
 
-	// Создаем команду БЕЗ контекста для долгосрочного выполнения
-	cmd := exec.Command(path, args...)
+	// Логируем начало запуска
+	monitor.WriteLog(fmt.Sprintf("[INIT] Starting process: %s %s", path, strings.Join(args, " ")))
+
+	systemdArgs := []string{
+		"--scope",
+		"--quiet",
+		"--unit=" + fmt.Sprintf("%s-%s", project, service), // Уникальное имя unit
+		path, // Путь к исполняемому файлу
+	}
+	systemdArgs = append(systemdArgs, args...) // Аргументы для вашего процесса
+
+	cmd := exec.Command("systemd-run", systemdArgs...)
 
 	// Создаем pipe для захвата вывода
 	stdout, err := cmd.StdoutPipe()
@@ -262,16 +272,6 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return 0, fmt.Errorf("failed to create stderr pipe: %w", err)
-	}
-
-	// Логируем начало запуска
-	monitor.WriteLog(fmt.Sprintf("[INIT] Starting process: %s %s", path, strings.Join(args, " ")))
-
-	// отделение от родительского процесса
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		// поместить в новую группу процессов
-		Setpgid: true,
-		Pgid:    0,
 	}
 
 	// Запускаем процесс
