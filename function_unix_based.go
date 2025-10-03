@@ -255,11 +255,14 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 
 	systemdArgs := []string{
 		"--scope",
+		"--slice=user.slice", // Поместить в отдельный slice
 		"--quiet",
-		"--unit=" + fmt.Sprintf("%s-%s", project, service), // Уникальное имя unit
-		path, // Путь к исполняемому файлу
+		"--collect", // Автоматически очищать scope после завершения
+		fmt.Sprintf("--unit=%s-%s-%s", project, service, time.Now().Format("150405")), // Уникальное имя
+		"--description=" + fmt.Sprintf("%s %s service", project, service),
+		path,
 	}
-	systemdArgs = append(systemdArgs, args...) // Аргументы для вашего процесса
+	systemdArgs = append(systemdArgs, args...)
 
 	cmd := exec.Command("systemd-run", systemdArgs...)
 
