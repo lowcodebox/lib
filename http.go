@@ -585,7 +585,7 @@ func MiddlewareValidateUri(projectKey string) func(next http.Handler) http.Handl
 }
 
 // XRealIp -
-func XRealIp(r http.Request) string {
+func XRealIp(r *http.Request) string {
 	ipAddress := r.Header.Get("X-Real-Ip")
 	if ipAddress == "" {
 		ipAddress = r.Header.Get("X-Forwarded-For")
