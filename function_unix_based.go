@@ -349,101 +349,65 @@ func captureOutput(reader io.Reader, monitor *ProcessMonitor, outputType string)
 	}
 }
 
-// Запуск процесса с двойным fork (полное отделение от родителя)
+// Запуск процесса с двойным fork через bash-скрипт (полное отделение от родителя)
 func startDetachedProcess(path string, args []string, logPath string, monitor *ProcessMonitor) (int, error) {
-	// Проверяем, запущены ли мы как detach helper
-	if len(os.Args) > 1 && os.Args[1] == "--detach-helper" {
-		// Это промежуточный процесс - создаем финальный и завершаемся
-		return runFinalProcess()
+	// Путь к скрипту отделения
+	detachScript := "/opt/lowcodebox/scripts/detach.sh"
+
+	// Проверяем наличие скрипта
+	if _, err := os.Stat(detachScript); err != nil {
+		return 0, fmt.Errorf("detach script not found at %s: %w", detachScript, err)
 	}
 
-	// Открываем лог файл для финального процесса
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open log file: %w", err)
-	}
-	logFile.Close()
+	// Формируем аргументы для скрипта: detach.sh <log_file> <executable> <args...>
+	scriptArgs := []string{logPath, path}
+	scriptArgs = append(scriptArgs, args...)
 
-	// Создаем промежуточный процесс (первый fork)
-	// Передаем через аргументы: --detach-helper <logPath> <path> <args...>
-	intermediateArgs := []string{"--detach-helper", logPath, path}
-	intermediateArgs = append(intermediateArgs, args...)
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Using script: %s", detachScript))
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Starting: %s %v", path, args))
 
-	cmd := exec.Command(os.Args[0], intermediateArgs...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-		Pgid:    0,
-	}
+	// Запускаем скрипт
+	cmd := exec.Command(detachScript, scriptArgs...)
 
-	// Промежуточный процесс не должен иметь связи с нами
+	// Скрипту не нужны pipes - он сам управляет потоками
 	cmd.Stdin = nil
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 
-	monitor.WriteLog("[DETACH] Starting intermediate process (first fork)")
-
+	// Запускаем
 	if err := cmd.Start(); err != nil {
-		return 0, fmt.Errorf("failed to start intermediate process: %w", err)
+		return 0, fmt.Errorf("failed to start detach script: %w", err)
 	}
 
-	// Ждем завершения промежуточного процесса
+	// Ждем завершения скрипта (он завершится быстро после двойного fork)
 	if err := cmd.Wait(); err != nil {
-		return 0, fmt.Errorf("intermediate process failed: %w", err)
+		return 0, fmt.Errorf("detach script failed: %w", err)
 	}
 
-	monitor.WriteLog("[DETACH] Intermediate process completed, searching for final process")
+	monitor.WriteLog("[DETACH] Script completed, searching for process")
 
-	// Даем время финальному процессу запуститься
-	time.Sleep(500 * time.Millisecond)
+	// Даем время процессу запуститься
+	time.Sleep(1 * time.Second)
 
-	// Ищем PID финального процесса по пути к исполняемому файлу
+	// Ищем PID запущенного процесса
 	pid, err := findProcessByPath(path)
 	if err != nil {
-		return 0, fmt.Errorf("failed to find detached process: %w", err)
+		// Пытаемся несколько раз с интервалом
+		for i := 0; i < 5; i++ {
+			monitor.WriteLog(fmt.Sprintf("[DETACH] Retry %d/5 finding process...", i+1))
+			time.Sleep(500 * time.Millisecond)
+			pid, err = findProcessByPath(path)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return 0, fmt.Errorf("failed to find detached process after retries: %w", err)
+		}
 	}
 
-	monitor.WriteLog(fmt.Sprintf("[DETACH] Found detached process with PID: %d", pid))
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Found process with PID: %d", pid))
 	return pid, nil
-}
-
-// Выполняется в промежуточном процессе - создает финальный и завершается
-func runFinalProcess() (int, error) {
-	if len(os.Args) < 4 {
-		return 0, fmt.Errorf("insufficient arguments for detach helper")
-	}
-
-	logPath := os.Args[2]
-	finalPath := os.Args[3]
-	finalArgs := os.Args[4:]
-
-	// Открываем лог файл
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return 0, err
-	}
-	defer logFile.Close()
-
-	// Создаем финальный процесс (второй fork)
-	cmd := exec.Command(finalPath, finalArgs...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-		Pgid:    0,
-	}
-
-	// Перенаправляем все в лог файл
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
-	cmd.Stdin = nil
-
-	// Запускаем финальный процесс
-	if err := cmd.Start(); err != nil {
-		return 0, err
-	}
-
-	// Промежуточный процесс завершается
-	// Финальный процесс будет "усыновлен" init/systemd (PPID = 1)
-	os.Exit(0)
-	return 0, nil // Не достигается
 }
 
 // Поиск процесса по пути к исполняемому файлу
@@ -451,28 +415,28 @@ func findProcessByPath(execPath string) (int, error) {
 	// Получаем базовое имя файла
 	execName := filepath.Base(execPath)
 
-	// Используем pgrep для поиска
-	cmd := exec.Command("pgrep", "-f", execPath)
+	// Используем pgrep для поиска самого свежего процесса (-n = newest)
+	cmd := exec.Command("pgrep", "-n", "-f", execPath)
 	output, err := cmd.Output()
 	if err != nil {
-		// Пробуем по имени
-		cmd = exec.Command("pgrep", execName)
+		// Пробуем по базовому имени
+		cmd = exec.Command("pgrep", "-n", execName)
 		output, err = cmd.Output()
 		if err != nil {
 			return 0, fmt.Errorf("process not found: %s", execName)
 		}
 	}
 
-	// Парсим первый PID
-	pids := strings.Split(strings.TrimSpace(string(output)), "\n")
-	if len(pids) == 0 {
-		return 0, fmt.Errorf("no PIDs found")
+	// Парсим PID
+	pidStr := strings.TrimSpace(string(output))
+	if pidStr == "" {
+		return 0, fmt.Errorf("no PID found")
 	}
 
 	var pid int
-	_, err = fmt.Sscanf(pids[0], "%d", &pid)
+	_, err = fmt.Sscanf(pidStr, "%d", &pid)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse PID: %w", err)
+		return 0, fmt.Errorf("failed to parse PID '%s': %w", pidStr, err)
 	}
 
 	return pid, nil
