@@ -595,3 +595,21 @@ func XRealIp(r *http.Request) string {
 	}
 	return ipAddress
 }
+
+// GetSessionID извлекает или создает ID сессии
+func GetSessionID(r *http.Request) string {
+	// Пробуем получить из cookie
+	cookie, err := r.Cookie("session_id")
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	// Пробуем получить из заголовка
+	sessionID := r.Header.Get("X-Session-ID")
+	if sessionID != "" {
+		return sessionID
+	}
+
+	// Создаем на основе IP и User-Agent
+	return fmt.Sprintf("%s-%s", ReadUserIP(r), r.UserAgent())
+}
