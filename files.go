@@ -133,6 +133,42 @@ func DeepCompare(file1, file2 string) bool {
 	return false
 }
 
+// ReadFilesToMap читаем все файлы из указанной директории рекурсивно
+// результат - мап с названиями файла и содержимом
+func ReadFilesToMap(dirPath string) (map[string]string, error) {
+	var body string
+	var err error
+	var files = map[string]string{}
+
+	_, err = os.Stat(dirPath)
+	if err != nil {
+		return files, err
+	}
+
+	directory, _ := os.Open(dirPath)
+	defer directory.Close()
+	objects, err := directory.Readdir(-1)
+
+	for _, obj := range objects {
+		filePointer := dirPath + "/" + obj.Name()
+
+		if obj.IsDir() {
+			files, err = ReadFilesToMap(filePointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			body, err = ReadFile(filePointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+			files[obj.Name()] = body
+		}
+	}
+
+	return files, err
+}
+
 // CopyFolder копирование папки
 func CopyFolder(source string, dest string) (err error) {
 
