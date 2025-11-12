@@ -427,7 +427,7 @@ func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries t
 		}
 
 		return "", fmt.Errorf("listen tcp :%s. address already in use", port)
-	})
+	}, nil)
 
 	return port, err
 }
