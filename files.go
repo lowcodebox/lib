@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -159,6 +160,34 @@ func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
 			}
 		} else {
 			body, err = ReadFile(filePointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+			files[obj.Name()] = body
+		}
+	}
+
+	return files, err
+}
+
+// ReadEmbedFilesToMap читаем все файлы из указанной директории рекурсивно
+// из встроенной директории
+// результат - мап с названиями файла и содержимом
+func ReadEmbedFilesToMap(dirPath string, vfs embed.FS) (map[string][]byte, error) {
+	var body []byte
+	var err error
+	var files = map[string][]byte{}
+
+	objects, _ := vfs.ReadDir(dirPath)
+	for _, obj := range objects {
+		filePointer := dirPath + "/" + obj.Name()
+		if obj.IsDir() {
+			files, err = ReadEmbedFilesToMap(filePointer, vfs)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			body, err = vfs.ReadFile(filePointer)
 			if err != nil {
 				fmt.Println(err)
 			}
