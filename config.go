@@ -42,7 +42,8 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 		}
 
 		// 4. читаем из файла
-		payload, err = ReadFile(config)
+		pbyte, err := ReadFile(config)
+		payload = string(pbyte)
 		if err != nil {
 			return "", fmt.Errorf("unable read configfile (%s): %w", config, err)
 		}

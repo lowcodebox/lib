@@ -86,7 +86,7 @@ func WriteFile(path string, data []byte) (err error) {
 }
 
 // ReadFile читаем файл. (отключил: всегда в рамках рабочей диретории)
-func ReadFile(path string) (result string, err error) {
+func ReadFile(path string) (result []byte, err error) {
 	// если не от корня, то подставляем текущую директорию
 	//if path[:1] != "/" {
 	//	path = CurrentDir() + "/" + path
@@ -96,13 +96,13 @@ func ReadFile(path string) (result string, err error) {
 
 	file, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err == nil {
-		result = string(b)
+		result = b
 	}
 
 	return result, err
@@ -135,10 +135,10 @@ func DeepCompare(file1, file2 string) bool {
 
 // ReadFilesToMap читаем все файлы из указанной директории рекурсивно
 // результат - мап с названиями файла и содержимом
-func ReadFilesToMap(dirPath string) (map[string]string, error) {
-	var body string
+func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
+	var body []byte
 	var err error
-	var files = map[string]string{}
+	var files = map[string][]byte{}
 
 	_, err = os.Stat(dirPath)
 	if err != nil {
