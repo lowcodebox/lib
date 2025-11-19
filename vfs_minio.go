@@ -403,6 +403,21 @@ func (v *vfsMinio) Proxy(trimPrefix, newPrefix string) (http.Handler, error) {
 	}), nil
 }
 
+func (v *vfsMinio) GetPresignedPutURL(ctx context.Context, in *SignIn) (string, error) {
+	if err := v.validateCDNClient(); err != nil {
+		return "", err
+	}
+
+	in.Duration = min(in.Duration, maxExpiry)
+
+	u, err := v.cdnClient.PresignedPutObject(ctx, in.Bucket, in.Path, in.Duration)
+	if err != nil {
+		return "", err
+	}
+	return u.String(), err
+}
+
+// GetPresignedPostURL Пока что deprecated, не получается использовать на вбшной хранилке
 func (v *vfsMinio) GetPresignedPostURL(ctx context.Context, in *SignIn) (string, map[string]string, error) {
 	if err := v.validateCDNClient(); err != nil {
 		return "", nil, err
