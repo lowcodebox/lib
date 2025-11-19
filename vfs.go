@@ -29,6 +29,7 @@ type Vfs interface {
 	Connect(ctx context.Context) (err error)
 	Close() (err error)
 	GetPresignedPostURL(ctx context.Context, in *SignIn) (string, map[string]string, error)
+	GetPresignedPutURL(ctx context.Context, in *SignIn) (string, error)
 	GetPresignedURL(ctx context.Context, in *SignIn) (url string, err error)
 	Proxy(trimPrefix, newPrefix string) (http.Handler, error)
 }

@@ -731,6 +731,60 @@ func TestVfsMinio_PreSignURLWithRuKeys(t *testing.T) {
 	}
 }
 
+func TestVfsMinio_PresignedPostURL(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name         string
+		endpoint     string
+		accessKey    string
+		secretKey    string
+		cdnAccessKey string
+		cdnSecretKey string
+		useSSL       bool
+		caCert       string
+		minioPath    string
+		duration     time.Duration
+		isInvalid    bool
+		expectError  bool
+	}{
+		{
+			name:         "insecure-combined-name",
+			endpoint:     testEndpoint,
+			accessKey:    testAccessKey,
+			secretKey:    testSecretKey,
+			cdnAccessKey: testAccessKey,
+			cdnSecretKey: testSecretKey,
+			useSSL:       testUseSSL,
+			caCert:       "",
+			minioPath:    "test-folder/30N6EBxiSqlynN9aRfyDiKDpe44_Технологии ИИ.mp4",
+			duration:     10 * time.Minute,
+		}}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &models.VFSConfig{
+				VfsEndpoint:       tt.endpoint,
+				VfsAccessKeyID:    tt.accessKey,
+				VfsSecretKey:      tt.secretKey,
+				VfsRegion:         "",
+				VfsBucket:         "presign-post-test-" + tt.name + "-" + time.Now().Format("20060102150405"),
+				VfsCertCA:         tt.caCert,
+				VfsCDNAccessKeyID: tt.cdnAccessKey,
+				VfsCDNSecretKey:   tt.cdnSecretKey,
+			}
+
+			vfs, err := lib.NewVfs(cfg)
+			assert.NoError(t, err)
+			defer vfs.Close()
+
+			err = vfs.Connect(ctx)
+			assert.NoError(t, err)
+		})
+	}
+}
+
 const (
 	caTestingCert = `
 -----BEGIN CERTIFICATE-----
