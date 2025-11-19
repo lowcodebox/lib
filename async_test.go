@@ -88,7 +88,7 @@ func TestRetrierDelayProgressionCases(t *testing.T) {
 			}
 
 			start := time.Now()
-			lib.Retrier(tc.retries, tc.baseDelay, tc.disableProg, f)
+			lib.Retrier(tc.retries, tc.baseDelay, tc.disableProg, f, nil)
 			elapsed := time.Since(start)
 
 			assert.Equal(t, tc.retries, attempts,

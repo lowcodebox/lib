@@ -65,9 +65,9 @@ func ResponseJSON(w http.ResponseWriter, objResponse interface{}, status string,
 		out = []byte(fmt.Sprintf("%s", err))
 	}
 
-	//WriteFile("./dump.json", out)
+	// WriteFile("./dump.json", out)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errMessage.Status)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(out)
 
 	return
@@ -112,7 +112,7 @@ func RemoveElementFromData(p *models.ResponseData, i int) bool {
 	if i < len(p.Data) {
 		p.Data = append(p.Data[:i], p.Data[i+1:]...)
 	} else {
-		//log.Warning("Error! Position invalid (", i, ")")
+		// log.Warning("Error! Position invalid (", i, ")")
 		return false
 	}
 

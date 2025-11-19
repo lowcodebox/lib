@@ -17,3 +17,19 @@ func (e ErrorClient) Error() string {
 func (e ErrorClient) Unwrap() error {
 	return e.Err
 }
+
+func GetErrorFromStatusFunc(service string) func(httpMethod, url, method string, status int, err error) error {
+	return func(httpMethod, urlc, method string, status int, err error) error {
+		if status >= 200 && status <= 299 {
+			return nil
+		}
+
+		return ErrorClient{
+			ServiceName: service,
+			Path:        method,
+			Url:         httpMethod + " " + urlc,
+			Err:         err,
+			Status:      status,
+		}
+	}
+}

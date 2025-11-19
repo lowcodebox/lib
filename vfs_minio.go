@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -160,6 +161,8 @@ func (v *vfsMinio) Item(ctx context.Context, path string) (file s3_wrappers.Item
 }
 
 func (v *vfsMinio) List(ctx context.Context, prefix string, pageSize int) (files []s3_wrappers.Item, err error) {
+	prefix = path.Join(v.config.VfsUploadPath, prefix)
+
 	err = v.Connect(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s",
@@ -222,6 +225,7 @@ func (v *vfsMinio) ReadCloser(ctx context.Context, file string, private_access b
 }
 
 func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
 	user, _ := ctx.Value(userUid).(string)
 
 	if strings.Contains(file, "users") && (user == "" || !strings.Contains(file, user)) && !private_access {
@@ -242,6 +246,8 @@ func (v *vfsMinio) ReadCloserFromBucket(ctx context.Context, file, bucket string
 }
 
 func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
+
 	type result struct {
 		I   s3_wrappers.Item
 		Err error
@@ -286,6 +292,8 @@ func (v *vfsMinio) Write(ctx context.Context, file string, data []byte) (err err
 }
 
 func (v *vfsMinio) Delete(ctx context.Context, file string) (err error) {
+	file = path.Join(v.config.VfsUploadPath, file)
+
 	err = v.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("error connect to filestorage. err: %s cfg: VfsKind: %s, VfsEndpoint: %s, VfsBucket: %s", err, minioVfsKind, v.config.VfsEndpoint, v.config.VfsBucket)

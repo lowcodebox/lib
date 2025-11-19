@@ -250,50 +250,24 @@ func RunProcess(path, project, service, config, command, mode, dc, port string) 
 		time.Now().Format("2006-01-02 15:04:05"), path, project, service, args)
 	auditLogger.Write([]byte(auditLog))
 
-	// Создаем команду БЕЗ контекста для долгосрочного выполнения
-	cmd := exec.Command(path, args...)
-
-	// Настраиваем процесс
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-
-	// Создаем pipe для захвата вывода
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return 0, fmt.Errorf("failed to create stdout pipe: %w", err)
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return 0, fmt.Errorf("failed to create stderr pipe: %w", err)
-	}
-
 	// Логируем начало запуска
-	monitor.WriteLog(fmt.Sprintf("[INIT] Starting process: %s %s", path, strings.Join(args, " ")))
+	monitor.WriteLog(fmt.Sprintf("[INIT] Starting detached process: %s %s", path, strings.Join(args, " ")))
 
-	// Запускаем процесс
-	if err := cmd.Start(); err != nil {
-		return 0, fmt.Errorf("unable to start process: config=%s, path=%s, command=%s, mode=%s, dc=%s, err=%w",
+	// Запускаем процесс с двойным fork (полное отделение от родителя)
+	pid, err = startDetachedProcess(path, args, logPath, monitor)
+	if err != nil {
+		return 0, fmt.Errorf("unable to start detached process: config=%s, path=%s, command=%s, mode=%s, dc=%s, err=%w",
 			config, path, command, mode, dc, err)
 	}
 
-	// Получаем PID реального процесса
-	pid = cmd.Process.Pid
-	monitor.SetProcess(cmd.Process)
-
 	// Логируем успешный запуск
-	monitor.WriteLog(fmt.Sprintf("[START] Process started with PID: %d", pid))
-	successLog := fmt.Sprintf("[%s] [AUDIT] Process started successfully: PID=%d\n",
+	monitor.WriteLog(fmt.Sprintf("[START] Detached process started with PID: %d", pid))
+	successLog := fmt.Sprintf("[%s] [AUDIT] Detached process started successfully: PID=%d\n",
 		time.Now().Format("2006-01-02 15:04:05"), pid)
 	auditLogger.Write([]byte(successLog))
 
-	// Запускаем горутины для чтения вывода
-	go captureOutput(stdout, monitor, "STDOUT")
-	go captureOutput(stderr, monitor, "STDERR")
-
-	// Запускаем мониторинг процесса в фоне (не блокирующий)
-	go monitorProcessBackground(cmd, monitor, auditLogger)
+	// Запускаем мониторинг логов в фоне (читаем из файла)
+	go monitorDetachedProcessLogs(logPath, monitor)
 
 	// Ждем только успешного запуска (не завершения процесса)
 	select {
@@ -331,28 +305,36 @@ func isProcessRunning(pid int) bool {
 	return err == nil
 }
 
-// Фоновый мониторинг процесса (не блокирует возврат из RunProcess)
-func monitorProcessBackground(cmd *exec.Cmd, monitor *ProcessMonitor, auditLogger *lumberjack.Logger) {
-	// Ждем завершения процесса
-	err := cmd.Wait()
-
-	// Получаем код выхода
-	exitCode := 0
+// Мониторинг логов отделенного процесса (читаем из файла)
+func monitorDetachedProcessLogs(logPath string, monitor *ProcessMonitor) {
+	// Открываем файл для чтения
+	file, err := os.Open(logPath)
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			exitCode = exitError.ExitCode()
+		monitor.WriteLog(fmt.Sprintf("[ERROR] Failed to open log file for monitoring: %v", err))
+		return
+	}
+	defer file.Close()
+
+	// Переходим в конец файла
+	file.Seek(0, io.SeekEnd)
+
+	// Читаем новые строки по мере их появления
+	scanner := bufio.NewScanner(file)
+	for {
+		if scanner.Scan() {
+			line := scanner.Text()
+			if strings.TrimSpace(line) != "" {
+				monitor.UpdateLastLogLine(line)
+			}
 		} else {
-			exitCode = -1
+			// Нет новых строк - ждем немного
+			time.Sleep(100 * time.Millisecond)
+			// Проверяем, не закрыт ли файл
+			if _, err := os.Stat(logPath); os.IsNotExist(err) {
+				break
+			}
 		}
 	}
-
-	monitor.SetExitCode(exitCode)
-	monitor.WriteLog(fmt.Sprintf("[END] Process finished with exit code: %d", exitCode))
-
-	// Логируем завершение в аудит
-	endLog := fmt.Sprintf("[%s] [AUDIT] Process finished: PID=%d, exit_code=%d\n",
-		time.Now().Format("2006-01-02 15:04:05"), cmd.Process.Pid, exitCode)
-	auditLogger.Write([]byte(endLog))
 }
 
 // Захват вывода процесса
@@ -365,4 +347,97 @@ func captureOutput(reader io.Reader, monitor *ProcessMonitor, outputType string)
 			monitor.UpdateLastLogLine(line)
 		}
 	}
+}
+
+// Запуск процесса с двойным fork через bash-скрипт (полное отделение от родителя)
+func startDetachedProcess(path string, args []string, logPath string, monitor *ProcessMonitor) (int, error) {
+	// Путь к скрипту отделения
+	detachScript := "/opt/lowcodebox/scripts/detach.sh"
+
+	// Проверяем наличие скрипта
+	if _, err := os.Stat(detachScript); err != nil {
+		return 0, fmt.Errorf("detach script not found at %s: %w", detachScript, err)
+	}
+
+	// Формируем аргументы для скрипта: detach.sh <log_file> <executable> <args...>
+	scriptArgs := []string{logPath, path}
+	scriptArgs = append(scriptArgs, args...)
+
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Using script: %s", detachScript))
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Starting: %s %v", path, args))
+
+	// Запускаем скрипт
+	cmd := exec.Command(detachScript, scriptArgs...)
+
+	// Скрипту не нужны pipes - он сам управляет потоками
+	cmd.Stdin = nil
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+
+	// Запускаем
+	if err := cmd.Start(); err != nil {
+		return 0, fmt.Errorf("failed to start detach script: %w", err)
+	}
+
+	// Ждем завершения скрипта (он завершится быстро после двойного fork)
+	if err := cmd.Wait(); err != nil {
+		return 0, fmt.Errorf("detach script failed: %w", err)
+	}
+
+	monitor.WriteLog("[DETACH] Script completed, searching for process")
+
+	// Даем время процессу запуститься
+	time.Sleep(1 * time.Second)
+
+	// Ищем PID запущенного процесса
+	pid, err := findProcessByPath(path)
+	if err != nil {
+		// Пытаемся несколько раз с интервалом
+		for i := 0; i < 5; i++ {
+			monitor.WriteLog(fmt.Sprintf("[DETACH] Retry %d/5 finding process...", i+1))
+			time.Sleep(500 * time.Millisecond)
+			pid, err = findProcessByPath(path)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return 0, fmt.Errorf("failed to find detached process after retries: %w", err)
+		}
+	}
+
+	monitor.WriteLog(fmt.Sprintf("[DETACH] Found process with PID: %d", pid))
+	return pid, nil
+}
+
+// Поиск процесса по пути к исполняемому файлу
+func findProcessByPath(execPath string) (int, error) {
+	// Получаем базовое имя файла
+	execName := filepath.Base(execPath)
+
+	// Используем pgrep для поиска самого свежего процесса (-n = newest)
+	cmd := exec.Command("pgrep", "-n", "-f", execPath)
+	output, err := cmd.Output()
+	if err != nil {
+		// Пробуем по базовому имени
+		cmd = exec.Command("pgrep", "-n", execName)
+		output, err = cmd.Output()
+		if err != nil {
+			return 0, fmt.Errorf("process not found: %s", execName)
+		}
+	}
+
+	// Парсим PID
+	pidStr := strings.TrimSpace(string(output))
+	if pidStr == "" {
+		return 0, fmt.Errorf("no PID found")
+	}
+
+	var pid int
+	_, err = fmt.Sscanf(pidStr, "%d", &pid)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse PID '%s': %w", pidStr, err)
+	}
+
+	return pid, nil
 }

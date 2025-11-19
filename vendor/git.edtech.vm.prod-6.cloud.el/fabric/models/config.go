@@ -43,6 +43,8 @@ type PingConfig struct {
 	Replicas            Int    `envconfig:"REPLICAS" default:"0"`
 	Follower            string `envconfig:"FOLLOWER" default:""`
 	Mask                string `envconfig:"MASK" default:""`
+	// Infra
+	Strategy RollingStrategy `json:"straregy" default:"kill_last"`
 }
 
 type PingConfigOld struct {

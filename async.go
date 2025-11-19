@@ -28,11 +28,21 @@ func Recover(ctx context.Context) (flag bool, msg string) {
 	return true, msg
 }
 
+// Retrier повторяет функцию f в случае наличия ошибки
+//
+// Параметры:
+//
+//	retriesMaxCount — максимальное число попыток
+//	retriesDelay — минимальная пауза между попытками
+//	disableDelayProgression — не увеличивать паузу между попытками
+//	f — выполняемая функция
+//	isFinalErr [опционально] — проверка на финальную ошибку, после которой нет смысла повторять
 func Retrier[T any](
 	retriesMaxCount int,
 	retriesDelay time.Duration,
 	disableDelayProgression bool,
 	f func() (T, error),
+	isFinalErr func(e error) bool,
 ) (res T, err error) {
 	for i := 0; i < retriesMaxCount; i++ {
 		if i > 0 {
@@ -45,6 +55,9 @@ func Retrier[T any](
 
 		res, err = f()
 		if err == nil {
+			return
+		}
+		if isFinalErr != nil && isFinalErr(err) {
 			return
 		}
 	}

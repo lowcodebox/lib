@@ -75,6 +75,9 @@ type PongObj struct {
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
 
+	// Deployment relates
+	Strategy RollingStrategy `json:"straregy"`
+
 	Code  int    `json:"code"`
 	Error string `json:"error"`
 
