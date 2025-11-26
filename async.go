@@ -38,6 +38,7 @@ func Recover(ctx context.Context) (flag bool, msg string) {
 //	f — выполняемая функция
 //	isFinalErr [опционально] — проверка на финальную ошибку, после которой нет смысла повторять
 func Retrier[T any](
+	ctx context.Context,
 	retriesMaxCount int,
 	retriesDelay time.Duration,
 	disableDelayProgression bool,
@@ -45,11 +46,25 @@ func Retrier[T any](
 	isFinalErr func(e error) bool,
 ) (res T, err error) {
 	for i := 0; i < retriesMaxCount; i++ {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		default:
+		}
+
 		if i > 0 {
 			if disableDelayProgression {
 				time.Sleep(retriesDelay)
 			} else {
 				time.Sleep(sleepCalc(i, retriesDelay))
+			}
+
+			select {
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			default:
 			}
 		}
 
