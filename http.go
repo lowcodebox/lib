@@ -353,7 +353,7 @@ func curlEngine(ctx context.Context, method, urlc, bodyJSON string, response int
 	return responseString, resp.Header, resp.Cookies(), status, err
 }
 
-func AddressProxy(addressProxy, interval string) (port string, err error) {
+func AddressProxy(ctx context.Context, addressProxy, interval string) (port string, err error) {
 	var res interface{}
 	fail := color.Red("[Fail]")
 	urlProxy := ""
@@ -368,7 +368,7 @@ func AddressProxy(addressProxy, interval string) (port string, err error) {
 		// запрашиваем порт у указанного прокси-сервера
 		urlProxy = addressProxy + "port?interval=" + interval
 
-		res, _, err = Curl(context.Background(), "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
+		res, _, err = Curl(ctx, "GET", urlProxy, "", &portDataAPI, map[string]string{}, nil)
 		if err != nil {
 			return "", err
 		}
@@ -414,9 +414,9 @@ func PortResolver(port string) (status bool) {
 
 // ProxyPort свободный порт от прокси с проверкой доступности на локальной машине
 // если занято - ретраим согласно заданным параметрам
-func ProxyPort(addressProxy, interval string, maxCountRetries int, timeRetries time.Duration) (port string, err error) {
-	port, err = Retrier(maxCountRetries, timeRetries, true, func() (string, error) {
-		port, err = AddressProxy(addressProxy, interval)
+func ProxyPort(ctx context.Context, addressProxy, interval string, maxCountRetries int, timeRetries time.Duration) (port string, err error) {
+	port, err = Retrier(ctx, maxCountRetries, timeRetries, true, func() (string, error) {
+		port, err = AddressProxy(ctx, addressProxy, interval)
 		if err != nil {
 			return "", err
 		}
