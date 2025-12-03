@@ -23,6 +23,12 @@ var (
 // 2. от нее ищем полный путь до конфига
 // 3. читаем по этому пути
 func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{}) (payload string, err error) {
+	var pbyte []byte
+	var configFile string
+
+	if len(config) == 0 {
+		return "", ErrConfig
+	}
 
 	if err := envconfig.Process("", cfgPointer); err != nil {
 		fmt.Println(warning, "Unable load default environment:", err)
@@ -30,41 +36,30 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 		return "", err
 	}
 
-	// проверка на длину конфигурационного файла
-	// если он больше 200, то скорее всего передали конфигурацию в base64
-	if len(config) < 200 {
-		// 3.
-		if len(config) == 0 {
-			return "", ErrConfig
-		}
-		if !strings.Contains(config, ".") {
-			config = config + ".cfg"
-		}
-
-		// 4. читаем из файла
-		pbyte, err := ReadFile(config)
-		payload = string(pbyte)
-		if err != nil {
-			return "", fmt.Errorf("unable read configfile (%s): %w", config, err)
-		}
-
-	} else {
-		// пробуем расшифровать из base64
-		debase, err := base64.StdEncoding.DecodeString(config)
-		if err != nil {
-			return "", fmt.Errorf("unable decode to string from base64 configfile: %w", err)
-		}
-		payload = string(debase)
+	// сначала предполагаем что это файл, если ошибка
+	// то скорее всего передали конфигурацию в base64
+	if !strings.Contains(config, ".") {
+		configFile = config + ".cfg"
 	}
+
+	// 4. читаем из файла
+	pbyte, err = ReadFile(configFile)
+	if err != nil {
+		// пробуем расшифровать из base64
+		pbyte, err = base64.StdEncoding.DecodeString(config)
+		if err != nil {
+			return "", fmt.Errorf("unable unable read configfile/decode to string from base64 configfile: %w", err)
+		}
+	}
+
+	payload = string(pbyte)
+
 	err = DecodeConfig(payload, cfgPointer)
 	_ = DecodeConfig(payload, &pingConf)
 	_ = DecodeConfig(payload, &pingConfOld)
 	pingConf.Version = serviceVersion
 	pingConf.HashCommit = hashCommit
 	configName = strings.Split(config, ".")[0]
-
-	// проведем инициализацию понга
-	Ping()
 
 	return payload, err
 }
