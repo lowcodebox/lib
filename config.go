@@ -24,11 +24,6 @@ var (
 // 3. читаем по этому пути
 func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{}) (payload string, err error) {
 	var pbyte []byte
-	var configFile string
-
-	if len(config) == 0 {
-		return "", ErrConfig
-	}
 
 	if err := envconfig.Process("", cfgPointer); err != nil {
 		fmt.Println(warning, "Unable load default environment:", err)
@@ -36,19 +31,20 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 		return "", err
 	}
 
-	// сначала предполагаем что это файл, если ошибка
-	// то скорее всего передали конфигурацию в base64
-	if !strings.Contains(config, ".") {
-		configFile = config + ".cfg"
+	if len(config) == 0 {
+		return "", ErrConfig
 	}
 
-	// 4. читаем из файла
-	pbyte, err = ReadFile(configFile)
+	// сначала предполагаем что это файл, если ошибка
+	// то скорее всего передали конфигурацию в base64
+
+	// пробуем читаем из файла
+	pbyte, err = ReadFile(config)
 	if err != nil {
 		// пробуем расшифровать из base64
 		pbyte, err = base64.StdEncoding.DecodeString(config)
 		if err != nil {
-			return "", fmt.Errorf("unable unable read configfile/decode to string from base64 configfile: %w", err)
+			return "", fmt.Errorf("unable unable read configfile/decode to string from base64 configfile (%s): %w", config, err)
 		}
 	}
 
