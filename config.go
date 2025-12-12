@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"embed"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -107,4 +108,30 @@ func searchConfigDir(startDir, configuration string) (configPath string, err err
 	}
 
 	return configPath, err
+}
+
+// IniLocalize - копируем конфиг по-умолчанию в директорию запуска сервера
+func IniLocalize(iniFS embed.FS, config string) (err error) {
+
+	// копируем установочные файлы в /ini
+	existDir := IsExist("./ini")
+	if !existDir {
+		err = CreateDir("./ini", 0766)
+		if err != nil {
+			return fmt.Errorf("create /ini directory failed. err: %w", err)
+		}
+
+		// копируем файлы
+		dataFile, err := iniFS.ReadFile("ini/config.toml")
+		if err != nil {
+			return fmt.Errorf("read config file (in iniFS) failed. err: %w", err)
+		}
+
+		err = WriteFile(config, dataFile)
+		if err != nil {
+			return fmt.Errorf("create config file failed. err: %w", err)
+		}
+	}
+
+	return err
 }
