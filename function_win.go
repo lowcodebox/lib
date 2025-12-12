@@ -14,7 +14,7 @@ import (
 )
 
 // RunProcess стартуем сервис из конфига
-func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
+func RunProcess(path, config, command, mode string, flags ...string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -26,9 +26,22 @@ func RunProcess(path, config, command, mode, dc string) (pid int, err error) {
 		command = "start"
 	}
 
+	if len(flags)%2 != 0 {
+		return 0, fmt.Errorf("the number of parameters is not equal to the number of values")
+	}
+
 	path = strings.Replace(path, "//", "/", -1)
 
-	cmd = exec.Command(path, command, "--config", config, "--mode", mode, "--dc", dc)
+	args := []string{command, "--config", config}
+	prevFlag := ""
+	for i, flag := range flags {
+		if i%2 != 0 {
+			args = append(args, "--"+prevFlag, flag)
+		}
+		prevFlag = flag
+	}
+
+	cmd = exec.Command(path, command, "--config", config, args)
 	if mode == "debug" {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]

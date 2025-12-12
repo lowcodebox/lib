@@ -14,7 +14,7 @@ import (
 )
 
 // RunProcess стартуем сервис из конфига
-func RunProcess(path, config, command, mode, dc, port string) (pid int, err error) {
+func RunProcess(path, config, command, mode string, flags ...string) (pid int, err error) {
 	var cmd *exec.Cmd
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -26,18 +26,19 @@ func RunProcess(path, config, command, mode, dc, port string) (pid int, err erro
 		command = "start"
 	}
 
+	if len(flags)%2 != 0 {
+		return 0, fmt.Errorf("the number of parameters is not equal to the number of values")
+	}
+
 	path = strings.Replace(path, "//", "/", -1)
 
 	args := []string{command, "--config", config}
-
-	if mode != "" {
-		args = append(args, "--mode", mode)
-	}
-	if dc != "" {
-		args = append(args, "--dc", dc)
-	}
-	if port != "" {
-		args = append(args, "--port", port)
+	prevFlag := ""
+	for i, flag := range flags {
+		if i%2 != 0 {
+			args = append(args, "--"+prevFlag, flag)
+		}
+		prevFlag = flag
 	}
 
 	cmd = exec.Command(path, args...)
@@ -64,8 +65,8 @@ func RunProcess(path, config, command, mode, dc, port string) (pid int, err erro
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err = cmd.Start()
 	if err != nil {
-		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, dc: %s, err: %w",
-			cmd.ProcessState.ExitCode(), config, path, command, mode, dc, err)
+		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, err: %w",
+			cmd.ProcessState.ExitCode(), config, path, command, mode, err)
 	}
 
 	go cmd.Process.Wait()
