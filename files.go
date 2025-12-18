@@ -182,9 +182,12 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS) (map[string][]byte, error
 	for _, obj := range objects {
 		filePointer := dirPath + "/" + obj.Name()
 		if obj.IsDir() {
-			files, err = ReadEmbedFilesToMap(filePointer, vfs)
+			inclFiles, err := ReadEmbedFilesToMap(filePointer, vfs)
 			if err != nil {
 				fmt.Println(err)
+			}
+			for k, v := range inclFiles {
+				files[k] = v
 			}
 		} else {
 			body, err = vfs.ReadFile(filePointer)
