@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/kelseyhightower/envconfig"
@@ -62,46 +60,6 @@ func DecodeConfig(configfile string, cfg interface{}) (err error) {
 	}
 
 	return err
-}
-
-// searchConfigDir — получаем путь до искомой конфигурации от переданной директории
-func searchConfigDir(startDir, configuration string) (configPath string, err error) {
-	var nextPath string
-	directory, err := os.Open(startDir)
-	if err != nil {
-		return "", err
-	}
-	defer directory.Close()
-
-	objects, err := directory.Readdir(-1)
-	if err != nil {
-		return "", err
-	}
-
-	// пробегаем текущую папку и считаем совпадание признаков
-	for _, obj := range objects {
-		nextPath = startDir + sep + obj.Name()
-		if obj.IsDir() {
-			dirName := obj.Name()
-
-			// не входим в скрытые папки
-			if dirName[:1] != "." {
-				configPath, err = searchConfigDir(nextPath, configuration)
-				if configPath != "" {
-					return configPath, err // поднимает результат наверх
-				}
-			}
-		} else {
-			if !strings.Contains(nextPath, "/.") {
-				// проверяем только файлы конфигурации (игнорируем .json)
-				if strings.Contains(obj.Name(), configuration+".cfg") {
-					return nextPath, err
-				}
-			}
-		}
-	}
-
-	return configPath, err
 }
 
 // IniLocalize - копируем конфиг по-умолчанию в директорию запуска сервера
