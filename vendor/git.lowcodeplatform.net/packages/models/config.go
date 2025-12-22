@@ -18,50 +18,6 @@ type Duration time.Duration
 // Int custom duration for toml configs
 type Int int
 
-type PingConfig struct {
-	Uid                 string `envconfig:"UID" default:""`
-	Service             string `envconfig:"SERVICE" default:""`
-	Projectuid          string `envconfig:"PROJECTUID" default:""`
-	Project             string `envconfig:"PROJECT" default:"" description:"имя проекта"`
-	ProjectPointsrc     string `envconfig:"PROJECT_POINTSRC" default:""`
-	Name                string `envconfig:"NAME" default:"" description:"имя сервиса"`
-	Version             string `envconfig:"VERSION" default:""`
-	VersionPointsrc     string `envconfig:"VERSION_POINTSRC" default:""`
-	HttpsOnly           Bool   `envconfig:"HTTPS_ONLY" default:"false"`
-	UidService          string `envconfig:"UID_SERVICE" default:""`
-	HashCommit          string `envconfig:"HASH_COMMIT" default:""`
-	Environment         string `envconfig:"ENVIRONMENT" default:"dev"`
-	EnvironmentPointsrc string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
-	Cluster             string `envconfig:"CLUSTER" default:"alpha"`
-	ClusterPointsrc     string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
-	DC                  string `envconfig:"DC" default:"el"`
-	AccessPublic        Bool   `envconfig:"ACCESS_PUBLIC" default:"false"`
-	Port                Int    `envconfig:"PORT" default:"0"`
-	PortHttp            Int    `envconfig:"PORT_HTTP" default:"0"`
-	PortHttps           Int    `envconfig:"PORT_HTTPS" default:"0"`
-	PortGrpc            Int    `envconfig:"PORT_GRPC" default:"0"`
-	Replicas            Int    `envconfig:"REPLICAS" default:"0"`
-	Follower            string `envconfig:"FOLLOWER" default:""`
-	Mask                string `envconfig:"MASK" default:""`
-}
-
-type PingConfigOld struct {
-	ServiceType            string `envconfig:"SERVICE_TYPE" default:"gui"`
-	UidService             string `envconfig:"UID_SERVICE" default:""`
-	ServiceVersion         string `envconfig:"SERVICE_VERSION" default:""`
-	EnvironmentPointsrc    string `envconfig:"ENVIRONMENT_POINTSRC" default:"dev"`
-	Cluster                string `envconfig:"CLUSTER" default:"alpha"`
-	ClusterPointsrc        string `envconfig:"CLUSTER_POINTSRC" default:"alpha"`
-	DataUid                string `envconfig:"DATA_UID" default:""`
-	Domain                 string `envconfig:"DOMAIN" default:""`
-	Port                   string `envconfig:"PORT" default:""`
-	Projectuid             string `envconfig:"PROJECTUID" default:""`
-	ProjectPointsrc        string `envconfig:"PROJECT_POINTSRC" default:""`
-	VersionPointsrc        string `envconfig:"VERSION_POINTSRC" default:""`
-	ReplicasService        Int    `envconfig:"REPLICAS_SERVICE" default:"0"`
-	ServicePreloadPointsrc string `envconfig:"SERVICE_PRELOAD_POINTSRC" default:""`
-}
-
 // UnmarshalText method satisfying toml unmarshal interface
 func (b *Bool) UnmarshalText(text []byte) error {
 	*b = strings.ToLower(string(text)) == "true"
@@ -124,4 +80,60 @@ func (i *Int) UnmarshalText(text []byte) error {
 
 func (i Int) V() int {
 	return int(i)
+}
+
+// Config системный конфиг с общей структурой для всех сервисов
+type Config struct {
+	HttpsOnly  Bool   `envconfig:"HTTPS_ONLY" default:""`
+	ProjectKey string `envconfig:"PROJECT_KEY" default:""`
+	SignUrlKey string `envconfig:"SIGNIN_URL_KEY" default:""`
+
+	Domain string `envconfig:"DOMAIN" default:""`
+	Type   string `envconfig:"TYPE" default:"sender"`
+
+	ServiceVersion string `envconfig:"SERVICE_VERSION" default:""`
+	HashCommit     string `envconfig:"HASH_COMMIT" default:""`
+
+	// Настройки размещение
+	DC          string `envconfig:"DC" default:"msk"`
+	Environment string `envconfig:"ENVIRONMENT" default:"dev"`
+	Cluster     string `envconfig:"CLUSTER" default:"alpha"`
+	ConfigID    string `envconfig:"CONFIG_ID" default:""`
+
+	RunTime time.Time `envconfig:"RUN_TIME" default:""`
+	UpTime  string    `envconfig:"UP_TIME" default:""`
+	HashRun string    `envconfig:"HASH_RUN" default:"is empty"`
+
+	// LOGBOX
+	LogboxEndpoint      string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`
+	CbMaxRequestsLogbox uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	CbTimeoutLogbox     Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	CbIntervalLogbox    Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
+
+	// Http
+	MaxRequestBodySize Int      `envconfig:"MAX_REQUEST_BODY_SIZE" default:"10485760"`
+	ReadTimeout        Duration `envconnfig:"READ_TIMEOUT" default:"10s"`
+	WriteTimeout       Duration `envconnfig:"WRITE_TIMEOUT" default:"10s"`
+	ReadBufferSize     Int      `envconfig:"READ_BUFFER_SIZE" default:"16384"`
+
+	Configuration string `envconfig:"CONFIGURATION" default:""`
+
+	GRPC   Int `envconfig:"GRPC" default:"8998"`
+	HTTP   Int `envconfig:"HTTP" default:"8080"`
+	HTTPS  Int `envconfig:"HTTPS" default:"443"`
+	MCP    Int `envconfig:"MCP" default:"8001"`
+	Bridge Int `envconfig:"BRIDGE" default:"9000"`
+}
+
+// VFSConfig системный конфиг для подключения к VFS
+type VFSConfig struct {
+	VfsBucket      string `envconfig:"VFS_BUCKET" default:""`
+	VfsKind        string `envconfig:"VFS_KIND" default:"s3"`
+	VfsEndpoint    string `envconfig:"VFS_ENDPOINT" default:"http://127.0.0.1:9000"`
+	VfsAccessKeyID string `envconfig:"VFS_ACCESS_KEY_ID" default:"minioadmin"`
+	VfsSecretKey   string `envconfig:"VFS_SECRET_KEY" default:"minioadmin"`
+	VfsRegion      string `envconfig:"VFS_REGION" default:""`
+	VfsComma       string `envconfig:"VFS_COMMA" default:""`
+	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:"" description:"CA-сертификат"`
+	VfsCAFile      string `envconfig:"VFS_CA_FILE" default:"" description:"Файл CA-сертификата"`
 }

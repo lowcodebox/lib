@@ -3,7 +3,7 @@ module git.lowcodeplatform.net/packages/lib
 go 1.24.0
 
 require (
-	git.lowcodeplatform.net/packages/models v0.3.1
+	git.lowcodeplatform.net/packages/models v0.5.9
 	github.com/BurntSushi/toml v1.5.0
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/aws/aws-sdk-go v1.55.8
