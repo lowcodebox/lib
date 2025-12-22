@@ -23,7 +23,7 @@ var (
 // 1. поднимаемся до корневой директории
 // 2. от нее ищем полный путь до конфига
 // 3. читаем по этому пути
-func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{}) (payload string, err error) {
+func ConfigLoad(config string, cfgPointer interface{}) (payload string, err error) {
 	var pbyte []byte
 
 	if err := envconfig.Process("", cfgPointer); err != nil {
@@ -50,13 +50,7 @@ func ConfigLoad(config, serviceVersion, hashCommit string, cfgPointer interface{
 	}
 
 	payload = string(pbyte)
-
 	err = DecodeConfig(payload, cfgPointer)
-	_ = DecodeConfig(payload, &pingConf)
-	_ = DecodeConfig(payload, &pingConfOld)
-	pingConf.Version = serviceVersion
-	pingConf.HashCommit = hashCommit
-	configName = strings.Split(config, ".")[0]
 
 	return payload, err
 }
