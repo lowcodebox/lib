@@ -27,6 +27,8 @@ git.lowcodeplatform.net/packages/models v0.3.1 h1:1Z6i5uHBixMHpZy0JuY2L1qRdXBPDI
 git.lowcodeplatform.net/packages/models v0.3.1/go.mod h1:5h6XgppPjjvjQbn2A8gXeQQaX/ODY8xJ8YrxGGDGY0c=
 git.lowcodeplatform.net/packages/models v0.5.9 h1:NW+VVPkt1YbTTxe/Deyt2M781QGWbjb/Xqf6NuaU4sc=
 git.lowcodeplatform.net/packages/models v0.5.9/go.mod h1:5h6XgppPjjvjQbn2A8gXeQQaX/ODY8xJ8YrxGGDGY0c=
+git.lowcodeplatform.net/packages/models v0.5.11 h1:YSC4OD4G9zoa4YxDI8Dx855pDwxDNhpUNqWkwbMOfg0=
+git.lowcodeplatform.net/packages/models v0.5.11/go.mod h1:5h6XgppPjjvjQbn2A8gXeQQaX/ODY8xJ8YrxGGDGY0c=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible h1:Hn/DsObfmw0M7dMGS/c0MlVrJuGFzHzOpBWL89acR68=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/go-autorest v14.2.0+incompatible h1:V5VMDjClD3GiElqLWO7mz2MxNAK/vTfRHdAubSIPRgs=

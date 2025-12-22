@@ -46,7 +46,7 @@ cloud.google.com/go/storage/experimental
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
-# git.lowcodeplatform.net/packages/models v0.5.9
+# git.lowcodeplatform.net/packages/models v0.5.11
 ## explicit; go 1.18
 git.lowcodeplatform.net/packages/models
 # github.com/Azure/azure-sdk-for-go v32.5.0+incompatible

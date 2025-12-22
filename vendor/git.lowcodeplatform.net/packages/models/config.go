@@ -1,49 +1,52 @@
 package models
 
 import (
+	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
-// Bool custom duration for toml configs
-type Bool bool
+const Sep = string(filepath.Separator)
 
 // Float custom duration for toml configs
-type Float float64
-
-// Duration custom duration for toml configs
-type Duration time.Duration
-
-// Int custom duration for toml configs
-type Int int
-
-// UnmarshalText method satisfying toml unmarshal interface
-func (b *Bool) UnmarshalText(text []byte) error {
-	*b = strings.ToLower(string(text)) == "true"
-
-	return nil
-}
-
-func (b Bool) V() bool {
-	return bool(b)
+type Float struct {
+	float64
+	Value float64
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
-func (f *Float) UnmarshalText(text []byte) error {
+func (d *Float) UnmarshalText(text []byte) error {
 	var err error
 	i, err := strconv.ParseFloat(string(text), 10)
-	*f = Float(i)
-
+	d.Value = i
 	return err
 }
 
-func (f Float) V() float64 {
-	return float64(f)
+// Bool custom duration for toml configs
+type Bool struct {
+	bool
+	Value bool
+}
+
+// UnmarshalText method satisfying toml unmarshal interface
+func (d *Bool) UnmarshalText(text []byte) error {
+	var err error
+	d.Value = false
+	if string(text) == "true" {
+		d.Value = true
+	}
+	return err
+}
+
+// Duration custom duration for toml configs
+type Duration struct {
+	time.Duration
+	Value time.Duration
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
 func (d *Duration) UnmarshalText(text []byte) error {
+	var err error
 	t := string(text)
 	// если получили только цифру - добавляем секунды (по-умолчанию)
 	if len(t) != 0 {
@@ -52,34 +55,27 @@ func (d *Duration) UnmarshalText(text []byte) error {
 			t = t + "m"
 		}
 	}
-
-	parsed, err := time.ParseDuration(t)
-	*d = Duration(parsed)
-
+	d.Value, err = time.ParseDuration(t)
 	return err
 }
 
-func (d Duration) V() time.Duration {
-	return time.Duration(d)
+// Int custom duration for toml configs
+type Int struct {
+	int
+	Value int
 }
 
 // UnmarshalText method satisfying toml unmarshal interface
-func (i *Int) UnmarshalText(text []byte) error {
+func (d *Int) UnmarshalText(text []byte) error {
+	var err error
 	tt := string(text)
 	if tt == "" {
-		*i = 0
-
+		d.Value = 0
 		return nil
 	}
-
-	v, err := strconv.Atoi(tt)
-	*i = Int(v)
-
+	i, err := strconv.Atoi(tt)
+	d.Value = i
 	return err
-}
-
-func (i Int) V() int {
-	return int(i)
 }
 
 // Config системный конфиг с общей структурой для всех сервисов
