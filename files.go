@@ -136,7 +136,7 @@ func DeepCompare(file1, file2 string) bool {
 
 // ReadFilesToMap читаем все файлы из указанной директории рекурсивно
 // результат - мап с названиями файла и содержимом
-func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
+func ReadFilesToMap(dirPath string, keyispath bool) (map[string][]byte, error) {
 	var body []byte
 	var err error
 	var files = map[string][]byte{}
@@ -152,9 +152,13 @@ func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
 
 	for _, obj := range objects {
 		filePointer := dirPath + "/" + obj.Name()
+		key := obj.Name()
+		if keyispath {
+			key = filePointer
+		}
 
 		if obj.IsDir() {
-			files, err = ReadFilesToMap(filePointer)
+			files, err = ReadFilesToMap(filePointer, keyispath)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -163,7 +167,7 @@ func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
 			if err != nil {
 				fmt.Println(err)
 			}
-			files[obj.Name()] = body
+			files[key] = body
 		}
 	}
 
@@ -173,7 +177,7 @@ func ReadFilesToMap(dirPath string) (map[string][]byte, error) {
 // ReadEmbedFilesToMap читаем все файлы из указанной директории рекурсивно
 // из встроенной директории
 // результат - мап с названиями файла и содержимом
-func ReadEmbedFilesToMap(dirPath string, vfs embed.FS) (map[string][]byte, error) {
+func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath bool) (map[string][]byte, error) {
 	var body []byte
 	var err error
 	var files = map[string][]byte{}
@@ -181,8 +185,13 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS) (map[string][]byte, error
 	objects, _ := vfs.ReadDir(dirPath)
 	for _, obj := range objects {
 		filePointer := dirPath + "/" + obj.Name()
+		key := obj.Name()
+		if keyispath {
+			key = filePointer
+		}
+
 		if obj.IsDir() {
-			filesIn, err := ReadEmbedFilesToMap(filePointer, vfs)
+			filesIn, err := ReadEmbedFilesToMap(filePointer, vfs, keyispath)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -194,7 +203,7 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS) (map[string][]byte, error
 			if err != nil {
 				fmt.Println(err)
 			}
-			files[obj.Name()] = body
+			files[key] = body
 		}
 	}
 
