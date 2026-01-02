@@ -158,9 +158,12 @@ func ReadFilesToMap(dirPath string, keyispath bool) (map[string][]byte, error) {
 		}
 
 		if obj.IsDir() {
-			files, err = ReadFilesToMap(filePointer, keyispath)
+			filesIn, err := ReadFilesToMap(filePointer, keyispath)
 			if err != nil {
 				fmt.Println(err)
+			}
+			for k, v := range filesIn {
+				files[k] = v
 			}
 		} else {
 			body, err = ReadFile(filePointer)
