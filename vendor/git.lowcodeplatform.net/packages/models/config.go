@@ -85,7 +85,7 @@ type Config struct {
 	SignUrlKey string `envconfig:"SIGNIN_URL_KEY" default:""`
 
 	Domain string `envconfig:"DOMAIN" default:""`
-	Type   string `envconfig:"TYPE" default:"sender"`
+	Type   string `envconfig:"TYPE" default:""`
 
 	ServiceVersion string `envconfig:"SERVICE_VERSION" default:""`
 	HashCommit     string `envconfig:"HASH_COMMIT" default:""`
@@ -100,12 +100,6 @@ type Config struct {
 	UpTime  string    `envconfig:"UP_TIME" default:""`
 	HashRun string    `envconfig:"HASH_RUN" default:"is empty"`
 
-	// LOGBOX
-	LogboxEndpoint      string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`
-	CbMaxRequestsLogbox uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
-	CbTimeoutLogbox     Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
-	CbIntervalLogbox    Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
-
 	// Http
 	MaxRequestBodySize Int      `envconfig:"MAX_REQUEST_BODY_SIZE" default:"10485760"`
 	ReadTimeout        Duration `envconnfig:"READ_TIMEOUT" default:"10s"`
@@ -114,11 +108,12 @@ type Config struct {
 
 	Configuration string `envconfig:"CONFIGURATION" default:""`
 
-	GRPC   Int `envconfig:"GRPC" default:"8998"`
-	HTTP   Int `envconfig:"HTTP" default:"8080"`
-	HTTPS  Int `envconfig:"HTTPS" default:"443"`
-	MCP    Int `envconfig:"MCP" default:"8001"`
-	Bridge Int `envconfig:"BRIDGE" default:"9000"`
+	GRPC    Int    `envconfig:"GRPC" default:"8998"`
+	HTTP    Int    `envconfig:"HTTP" default:"8080"`
+	HTTPS   Int    `envconfig:"HTTPS" default:"443"`
+	MCP     Int    `envconfig:"MCP" default:"8001"`
+	Bridge  Int    `envconfig:"BRIDGE" default:"9000"`
+	RunMode string `envconfig:"RUN_MODE" default:""`
 }
 
 // VFSConfig системный конфиг для подключения к VFS
@@ -132,4 +127,17 @@ type VFSConfig struct {
 	VfsComma       string `envconfig:"VFS_COMMA" default:""`
 	VfsCertCA      string `envconfig:"VFS_CERT_CA" default:"" description:"CA-сертификат"`
 	VfsCAFile      string `envconfig:"VFS_CA_FILE" default:"" description:"Файл CA-сертификата"`
+}
+
+type Logbox struct {
+	// LOGBOX
+	LogboxEndpoint       string   `envconfig:"LOGBOX_ENDPOINT" default:"127.0.0.1:8999"`
+	LogboxAccessKeyId    string   `envconfig:"LOGBOX_ACCESS_KEY_ID" default:""`
+	LogboxSecretKey      string   `envconfig:"LOGBOX_SECRET_KEY" default:""`
+	LogboxRequestTimeout Duration `envconnfig:"LOGBOX_REQUEST_TIMEOUT" default:"300ms"`
+
+	// LOGBOX-client with CircuitBreaker
+	LogboxCbMaxRequests uint32   `envconfig:"CB_MAX_REQUESTS_LOGBOX" default:"3" description:"максимальное количество запросов, которые могут пройти, когда автоматический выключатель находится в полуразомкнутом состоянии"`
+	LogboxCbTimeout     Duration `envconfig:"CB_TIMEOUT_LOGBOX" default:"5s" description:"период разомкнутого состояния, после которого выключатель переходит в полуразомкнутое состояние"`
+	LogboxCbInterval    Duration `envconfig:"CB_INTERVAL_LOGBOX" default:"5s" description:"циклический период замкнутого состояния автоматического выключателя для сброса внутренних счетчиков"`
 }

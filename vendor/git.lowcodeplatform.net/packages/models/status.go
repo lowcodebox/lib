@@ -1,6 +1,17 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/labstack/gommon/color"
+)
+
+var (
+	Done    = color.Green("[DONE]")
+	Process = color.Blue("[....]")
+	Fail    = color.Red("[FAIL]")
+	Warn    = color.Yellow("[WARN]")
+)
 
 type Alive struct {
 	Uid      string `json:"uid"`

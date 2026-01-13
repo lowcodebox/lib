@@ -46,13 +46,15 @@ cloud.google.com/go/storage/experimental
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
-# git.lowcodeplatform.net/packages/models v0.5.11
+# git.lowcodeplatform.net/packages/models v0.5.26
 ## explicit; go 1.18
 git.lowcodeplatform.net/packages/models
 # github.com/Azure/azure-sdk-for-go v32.5.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/storage
 github.com/Azure/azure-sdk-for-go/version
+# github.com/Azure/go-autorest v14.2.0+incompatible
+## explicit
 # github.com/Azure/go-autorest/autorest v0.9.0
 ## explicit; go 1.12
 github.com/Azure/go-autorest/autorest
@@ -69,7 +71,7 @@ github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.5.0
 ## explicit; go 1.12
 github.com/Azure/go-autorest/tracing
-# github.com/BurntSushi/toml v1.5.0
+# github.com/BurntSushi/toml v1.6.0
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal

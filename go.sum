@@ -29,6 +29,14 @@ git.lowcodeplatform.net/packages/models v0.5.9 h1:NW+VVPkt1YbTTxe/Deyt2M781QGWbj
 git.lowcodeplatform.net/packages/models v0.5.9/go.mod h1:5h6XgppPjjvjQbn2A8gXeQQaX/ODY8xJ8YrxGGDGY0c=
 git.lowcodeplatform.net/packages/models v0.5.11 h1:YSC4OD4G9zoa4YxDI8Dx855pDwxDNhpUNqWkwbMOfg0=
 git.lowcodeplatform.net/packages/models v0.5.11/go.mod h1:5h6XgppPjjvjQbn2A8gXeQQaX/ODY8xJ8YrxGGDGY0c=
+git.lowcodeplatform.net/packages/models v0.5.23 h1:5HTuv2lgWB1qEeENUvMxdUrTINW3aszs3m0VGt98S5Q=
+git.lowcodeplatform.net/packages/models v0.5.23/go.mod h1:tddBkR2fg61j772EaC9Oeh/mopbi7J5bF+swIzvh18o=
+git.lowcodeplatform.net/packages/models v0.5.24 h1:uSRFlZH/hykpmJRHAPDKS4VW/Mpc/RUw2y03ey4zUkw=
+git.lowcodeplatform.net/packages/models v0.5.24/go.mod h1:tddBkR2fg61j772EaC9Oeh/mopbi7J5bF+swIzvh18o=
+git.lowcodeplatform.net/packages/models v0.5.25 h1:XPzRd1kAM7jMnasz+iQs4BzLBZZLROn081wVBeuu1zg=
+git.lowcodeplatform.net/packages/models v0.5.25/go.mod h1:tddBkR2fg61j772EaC9Oeh/mopbi7J5bF+swIzvh18o=
+git.lowcodeplatform.net/packages/models v0.5.26 h1:HOsVUsvK7VQGYVpkk0BN77PB2vmLeFEG9QXRjI71Qh0=
+git.lowcodeplatform.net/packages/models v0.5.26/go.mod h1:tddBkR2fg61j772EaC9Oeh/mopbi7J5bF+swIzvh18o=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible h1:Hn/DsObfmw0M7dMGS/c0MlVrJuGFzHzOpBWL89acR68=
 github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/go-autorest v14.2.0+incompatible h1:V5VMDjClD3GiElqLWO7mz2MxNAK/vTfRHdAubSIPRgs=
@@ -51,6 +59,8 @@ github.com/Azure/go-autorest/tracing v0.5.0/go.mod h1:r/s2XiOKccPW3HrqB+W0TQzfbt
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
+github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 h1:ErKg/3iS1AKcTkf3yixlZ54f9U1rljCkQyEXWUnIUxc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0/go.mod h1:yAZHSGnqScoU556rBOVkwLze6WP5N+U11RHuWaGVxwY=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.50.0 h1:5IT7xOdq17MtcdtL/vtl6mGfzhaq4m4vpollPRmlsBQ=

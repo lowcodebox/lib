@@ -3,8 +3,8 @@ module git.lowcodeplatform.net/packages/lib
 go 1.24.0
 
 require (
-	git.lowcodeplatform.net/packages/models v0.5.11
-	github.com/BurntSushi/toml v1.5.0
+	git.lowcodeplatform.net/packages/models v0.5.26
+	github.com/BurntSushi/toml v1.6.0
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/gabriel-vasile/mimetype v1.4.9
@@ -32,6 +32,7 @@ require (
 	cloud.google.com/go/monitoring v1.24.2 // indirect
 	cloud.google.com/go/storage v1.50.0 // indirect
 	github.com/Azure/azure-sdk-for-go v32.5.0+incompatible // indirect
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.9.0 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.5.0 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.1.0 // indirect
