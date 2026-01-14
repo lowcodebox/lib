@@ -8,7 +8,7 @@ import (
 )
 
 func TestReadFilesToMap(t *testing.T) {
-	res, err := ReadFilesToMap("./pkg")
+	res, err := ReadFilesToMap("./pkg", true)
 	assert.NoError(t, err)
 
 	for k, v := range res {

@@ -1,3 +1,25 @@
+// TokenACL - токен для определения прав доступа к объекту
+// формат map[uid_субьекта_доступа]битовая маска
+// битовая маска состоит из 2 байт (16 бит)
+// субьекты доступа - сущности (объекты), от лица которых получается доступ к ресурсу (объекту)
+// существуют 4 вида субьектов - User/Role/Group/Others (URGO)
+// правила субьектов применяются исходя из приоритета
+// самый приоритетный User, далее по-нисходящей
+// право субьекта кодируется двумя битами
+// первый бит - статус Deny, второй - статус Access
+// бит запрета (Deny) приоритетнее
+// если для доступа к объекту мы получаем запрос от нескольких субьектов в рамках одного типа,
+// то при наличии Access=1 хоть у одного из них - Доступ разрешен
+// наличие Deny = 1, хоть у одного из них - Доступ запрещен
+// более приоритетные типы субьектов могут изменить доступ, если они заданы
+// 00 - состояние, при котором для данного типа субьекта нет запроса на права (учитываются другие состояния)
+// 01 - состояние = Доступ разрешен
+// 10 - состояние  = Доступ запрещен
+// 11 - конфликт (возможно если у одного субьекта доступ Разрешен, а для другого Запрещен) - исключительная ситуация = Доступ запрещен
+// После расчета назначенных прав в рамках всех типов субьектов, права применяются согласно приоритета и мы получаем суммарный статус
+// Если на объект нет запроса на доступ или суммарное состояние = 00 - это означает что никто явно СУММАРНО не запросил доступ = Доступ запрещен
+// Данные операции производятся для каждого из прав Read/Write/Execute/Admin
+
 package lib
 
 import (
@@ -27,7 +49,7 @@ var ErrInvalidACLKey = errors.New("acl token is invalid")
 var ErrExpiredACLKey = errors.New("acl token is expired")
 
 // CreateACLValue создаем список прав для заданного субъекта
-func CreateACLValue(uid string, priority string, read, write, execute, admin string) (code uint16, err error) {
+func CreateACLValue(priority string, read, write, execute, admin string) (code uint16, err error) {
 	bytePermission := EncodeToByte(read, write, execute, admin)
 	bytePriority := EncodePriority(priority)
 
@@ -38,12 +60,12 @@ func CreateACLValue(uid string, priority string, read, write, execute, admin str
 
 // GenTokenACL создаем токен
 // ACL - список субъектов с правами доступа (см. описание models.XACLKey)
-func GenTokenACL(aclList map[string]uint16, projectKey []byte, uid string, tokenInterval time.Duration) (token string, err error) {
+func GenTokenACL(acl map[string]uint16, projectKey []byte, uid string, tokenInterval time.Duration) (token string, err error) {
 	if tokenInterval == 0 {
 		tokenInterval = 100000 * time.Hour // 12 лет
 	}
 	t := models.TokenACL{
-		ACL:     aclList,
+		ACL:     acl,
 		Expired: time.Now().Add(tokenInterval).Unix(),
 		Uid:     uid,
 	}
@@ -104,14 +126,14 @@ func ParseTokenACL(token, uid, subjects string, projectKey []byte) (r, w, x, a b
 	finalPermission := [4]string{}
 	for _, pr := range []string{ACLPriorityOthers, ACLPriorityRole, ACLPriorityGroup, ACLPriorityUser} {
 		for i := 0; i < len(res); i++ {
-			if res[pr][i] != ACLPermissionNull {
+			if res[pr][i] != ACLPermissionNull && res[pr][i] != "" {
 				finalPermission[i] = res[pr][i]
 			}
 		}
 	}
 
 	// если права не заданы - то разрешаем false
-	return finalPermission[0] == "allow", finalPermission[1] == "allow", finalPermission[2] == "allow", finalPermission[3] == "allow", err
+	return finalPermission[0] == ACLPermissionAllow, finalPermission[1] == ACLPermissionAllow, finalPermission[2] == ACLPermissionAllow, finalPermission[3] == ACLPermissionAllow, err
 }
 
 // verifyTokenACL берем X-ACL-Key. если он есть, то он должен быть расшифровать и валидируем содержимое
