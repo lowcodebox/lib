@@ -125,7 +125,7 @@ func ParseTokenACL(token, uid, subjects string, projectKey []byte) (r, w, x, a b
 	// тут я могу заменять запрещающие права на более высоком приоритете
 	finalPermission := [4]string{}
 	for _, pr := range []string{ACLPriorityOthers, ACLPriorityRole, ACLPriorityGroup, ACLPriorityUser} {
-		for i := 0; i < len(res); i++ {
+		for i := 0; i < 4; i++ {
 			if res[pr][i] != ACLPermissionNull && res[pr][i] != "" {
 				finalPermission[i] = res[pr][i]
 			}
