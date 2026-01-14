@@ -73,7 +73,7 @@ func (v *vfs) Connect() (err error) {
 		v.region = "ru-central-1"
 	}
 
-	switch v.kind {
+	switch strings.ToLower(v.kind) {
 	case "s3":
 		config = stow.ConfigMap{
 			s3.ConfigEndpoint:    v.endpoint,
@@ -95,7 +95,7 @@ func (v *vfs) Connect() (err error) {
 	}
 
 	// подсключаемся к хранилищу
-	v.location, err = stow.Dial(v.kind, config)
+	v.location, err = stow.Dial(strings.ToLower(v.kind), config)
 	if err != nil {
 		return fmt.Errorf("error create container from config. err: %s", err)
 	}
@@ -385,7 +385,7 @@ func (v *vfs) getItem(file, bucket string) (item Item, err error) {
 	}
 
 	// если локально, то добавляем к endpoint бакет
-	if v.kind == "local" {
+	if strings.ToLower(v.kind) == "local" {
 		file = v.endpoint + sep + bucket + sep + file
 		// подчищаем //
 		file = strings.Replace(file, sep+sep, sep, -1)
