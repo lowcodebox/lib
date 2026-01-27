@@ -213,6 +213,39 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath bool) (map[stri
 	return files, err
 }
 
+// CopyEmbedFolder копирование папки из встроенного хранилища во внешнюю директорию (рекурсивно)
+func CopyEmbedFolder(vfs embed.FS, source string, dest string, mode os.FileMode) (err error) {
+	err = os.MkdirAll(dest, mode)
+	if err != nil {
+		return err
+	}
+
+	objects, _ := vfs.ReadDir(source)
+	for _, obj := range objects {
+		sourcefilepointer := source + "/" + obj.Name()
+		destinationfilepointer := dest + "/" + obj.Name()
+		if obj.IsDir() {
+			err = CopyEmbedFolder(vfs, sourcefilepointer, destinationfilepointer, mode)
+			if err != nil {
+				return err
+			}
+		} else {
+			body, err := vfs.ReadFile(sourcefilepointer)
+			if err != nil {
+				return err
+			}
+
+			err = WriteFile(destinationfilepointer, body)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return err
+}
+
 // CopyFolder копирование папки
 func CopyFolder(source string, dest string) (err error) {
 
