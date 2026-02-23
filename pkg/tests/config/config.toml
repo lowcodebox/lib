@@ -1,0 +1,5 @@
+Port = "8080"
+LogboxEndpoint = "127.0.0.1:8088"
+RegistryEndpoint = "http://127.0.0.1:8022"
+BinDir = "bin"
+HttpsOnly = "false"

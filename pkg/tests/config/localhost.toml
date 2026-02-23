@@ -1,0 +1,32 @@
+## Проекты
+[[Projects]]
+domain = "localhost"
+active = "true"
+
+# Будущие настройки рендеринга
+[Projects.render]
+
+[Projects.Repository.Local]
+Provider = "Local"
+Connect.Local.Endpoint = "./projects"
+Connect.Local.Bucket = "localhost"
+Connect.Local.CheckACL = "false"
+Connect.Local.RunAsyncPull = "false"
+
+[Projects.Codebase]
+Repository = "Local"
+
+[Projects.Cache]
+CacheGCInterval = "1h"
+CacheTTL = "30m"
+
+[[Projects]]
+domain = "stage.algiva.org"
+active = "false"
+
+[Projects.Codebase]
+Repository = "Local"
+
+[Projects.Cache]
+CacheGCInterval = "1h"
+CacheTTL = "30m"

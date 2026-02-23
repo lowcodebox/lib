@@ -37,6 +37,28 @@ func ConfigLoad(config string, cfgPointer interface{}) (payload string, err erro
 	// сначала предполагаем что это файл, если ошибка
 	// то скорее всего передали конфигурацию в base64
 
+	// возможно передана папка
+	// тогда читаем ее и собираем все файлы вместе в один конфиг
+	isDir, err := IsDir(config)
+	if err != nil {
+		return "", err
+	}
+
+	// директория - читаем данные рекурсивно из всех папок ниже и объединяем
+	if isDir {
+		var complexFile string
+		mapFiles, err := ReadFilesToMap(config, false)
+		if err != nil {
+			return "", err
+		}
+		for _, file := range mapFiles {
+			complexFile = complexFile + "\n" + string(file)
+		}
+
+		err = DecodeConfig(complexFile, cfgPointer)
+		return complexFile, err
+	}
+
 	// пробуем читаем из файла
 	pbyte, err = ReadFile(config)
 	if err != nil {

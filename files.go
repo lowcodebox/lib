@@ -464,3 +464,21 @@ func Chmod(path string, mode os.FileMode) (err error) {
 
 	return err
 }
+
+func IsDir(path string) (ok bool, err error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, fmt.Errorf("path %s is not found", path)
+		} else {
+			return false, fmt.Errorf("error access for %s", path)
+		}
+		return
+	}
+
+	if fileInfo.IsDir() {
+		return true, nil
+	}
+
+	return false, nil
+}
