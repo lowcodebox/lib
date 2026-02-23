@@ -39,10 +39,7 @@ func ConfigLoad(config string, cfgPointer interface{}) (payload string, err erro
 
 	// возможно передана папка
 	// тогда читаем ее и собираем все файлы вместе в один конфиг
-	isDir, err := IsDir(config)
-	if err != nil {
-		return "", err
-	}
+	isDir, _ := IsDir(config)
 
 	// директория - читаем данные рекурсивно из всех папок ниже и объединяем
 	if isDir {
