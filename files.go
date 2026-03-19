@@ -136,7 +136,7 @@ func DeepCompare(file1, file2 string) bool {
 
 // ReadFilesToMap читаем все файлы из указанной директории рекурсивно
 // результат - мап с названиями файла и содержимом
-func ReadFilesToMap(dirPath string, keyispath bool) (map[string][]byte, error) {
+func ReadFilesToMap(dirPath string, keyispath, recursion bool) (map[string][]byte, error) {
 	var body []byte
 	var err error
 	var files = map[string][]byte{}
@@ -157,8 +157,8 @@ func ReadFilesToMap(dirPath string, keyispath bool) (map[string][]byte, error) {
 			key = filePointer
 		}
 
-		if obj.IsDir() {
-			filesIn, err := ReadFilesToMap(filePointer, keyispath)
+		if obj.IsDir() && recursion {
+			filesIn, err := ReadFilesToMap(filePointer, keyispath, recursion)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -180,7 +180,7 @@ func ReadFilesToMap(dirPath string, keyispath bool) (map[string][]byte, error) {
 // ReadEmbedFilesToMap читаем все файлы из указанной директории рекурсивно
 // из встроенной директории
 // результат - мап с названиями файла и содержимом
-func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath bool) (map[string][]byte, error) {
+func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath, recursion bool) (map[string][]byte, error) {
 	var body []byte
 	var err error
 	var files = map[string][]byte{}
@@ -193,8 +193,8 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath bool) (map[stri
 			key = filePointer
 		}
 
-		if obj.IsDir() {
-			filesIn, err := ReadEmbedFilesToMap(filePointer, vfs, keyispath)
+		if obj.IsDir() && recursion {
+			filesIn, err := ReadEmbedFilesToMap(filePointer, vfs, keyispath, recursion)
 			if err != nil {
 				fmt.Println(err)
 			}
