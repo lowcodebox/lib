@@ -44,7 +44,7 @@ func ConfigLoad(config string, cfgPointer interface{}) (payload string, err erro
 	// директория - читаем данные рекурсивно из всех папок ниже и объединяем
 	if isDir {
 		var complexFile string
-		mapFiles, err := ReadFilesToMap(config, false)
+		mapFiles, err := ReadFilesToMap(config, false, true)
 		if err != nil {
 			return "", err
 		}
