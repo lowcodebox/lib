@@ -21,7 +21,7 @@ var (
 // 1. поднимаемся до корневой директории
 // 2. от нее ищем полный путь до конфига
 // 3. читаем по этому пути
-func ConfigLoad(config string, cfgPointer interface{}) (payload string, err error) {
+func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden bool, onlyTypes []string) (payload string, err error) {
 	var pbyte []byte
 
 	if err := envconfig.Process("", cfgPointer); err != nil {
@@ -34,6 +34,9 @@ func ConfigLoad(config string, cfgPointer interface{}) (payload string, err erro
 		return "", ErrConfig
 	}
 
+	if !readHidden && config[0:1] == "." {
+		return "", fmt.Errorf("skip hidden file %s", config)
+	}
 	// сначала предполагаем что это файл, если ошибка
 	// то скорее всего передали конфигурацию в base64
 
@@ -44,12 +47,16 @@ func ConfigLoad(config string, cfgPointer interface{}) (payload string, err erro
 	// директория - читаем данные рекурсивно из всех папок ниже и объединяем
 	if isDir {
 		var complexFile string
-		mapFiles, err := ReadFilesToMap(config, false, true)
+		mapFiles, err := ReadFilesToMap(config, false, readRecursion)
 		if err != nil {
 			return "", err
 		}
-		for _, file := range mapFiles {
-			complexFile = complexFile + "\n" + string(file)
+		for fileName, fileBody := range mapFiles {
+			// пропускаем скрытые файлы
+			if !readHidden && fileName[0:1] == "." {
+				continue
+			}
+			complexFile = complexFile + "\n" + string(fileBody)
 		}
 
 		err = DecodeConfig(complexFile, cfgPointer)
