@@ -30,11 +30,11 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 		return "", err
 	}
 
-	if len(config) == 0 {
+	if len(config) < 3 {
 		return "", ErrConfig
 	}
 
-	if !readHidden && config[0:1] == "." {
+	if !readHidden && config[0:1] == "." && config[0:2] == "./" {
 		return "", fmt.Errorf("skip hidden file %s", config)
 	}
 	// сначала предполагаем что это файл, если ошибка
