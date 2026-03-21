@@ -166,11 +166,13 @@ func ReadFilesToMap(dirPath string, keyispath, recursion bool) (map[string][]byt
 				files[k] = v
 			}
 		} else {
-			body, err = ReadFile(filePointer)
-			if err != nil {
-				fmt.Println(err)
+			if !obj.IsDir() {
+				body, err = ReadFile(filePointer)
+				if err != nil {
+					fmt.Println(err)
+				}
+				files[key] = body
 			}
-			files[key] = body
 		}
 	}
 
@@ -202,11 +204,13 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath, recursion bool
 				files[k] = f
 			}
 		} else {
-			body, err = vfs.ReadFile(filePointer)
-			if err != nil {
-				fmt.Println(err)
+			if !obj.IsDir() {
+				body, err = vfs.ReadFile(filePointer)
+				if err != nil {
+					fmt.Println(err)
+				}
+				files[key] = body
 			}
-			files[key] = body
 		}
 	}
 
