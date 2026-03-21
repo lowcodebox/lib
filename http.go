@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -619,17 +618,17 @@ func GetSessionID(r *http.Request) string {
 // publicPingHost - хост, через который делаем соединение
 // если подключаемся = получим наш IP
 // по-умолчанию DNS Google
-func GetOutboundIP(publicPingHost string) net.IP {
+func GetOutboundIP(publicPingHost string) (net.IP, error) {
 	if publicPingHost == "" {
 		publicPingHost = "8.8.8.8:80"
 	}
 	conn, err := net.Dial("udp", publicPingHost)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("connect to %s failed, err: %w", publicPingHost, err)
 	}
 	defer conn.Close()
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
-	return localAddr.IP
+	return localAddr.IP, nil
 }
