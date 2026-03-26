@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 
 	"github.com/graymeta/stow"
@@ -90,7 +89,7 @@ func (v *vfs) Connect() (err error) {
 		}
 	case "local":
 		if !IsExist(v.endpoint) {
-			err = CreateDir(filepath.Dir(v.endpoint), 0)
+			err = CreateDir(v.endpoint, 0)
 			if err != nil {
 				return fmt.Errorf("directory not exist. error create local directory. err: %w", err)
 			}
