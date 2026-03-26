@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/graymeta/stow"
@@ -88,6 +89,12 @@ func (v *vfs) Connect() (err error) {
 			azure.ConfigKey:     v.secretKey,
 		}
 	case "local":
+		if !IsExist(v.endpoint) {
+			err = CreateDir(filepath.Dir(v.endpoint), 0)
+			if err != nil {
+				return fmt.Errorf("directory not exist. error create local directory. err: %w", err)
+			}
+		}
 		config = stow.ConfigMap{
 			local.ConfigKeyPath: v.endpoint,
 			local.MetadataDir:   v.bucket,
