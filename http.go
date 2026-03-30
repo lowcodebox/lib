@@ -632,3 +632,38 @@ func GetOutboundIP(publicPingHost string) (net.IP, error) {
 
 	return localAddr.IP, nil
 }
+
+// CheckPort проверяет доступность UDP порта
+// network: TCP/UDP
+func CheckPort(network string, host string, port int, timeout time.Duration) bool {
+	address := fmt.Sprintf("%s:%d", host, port)
+
+	conn, err := net.DialTimeout(network, address, timeout)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+
+	// Для UDP отправляем тестовые данные
+	if network == "udp" {
+		_, err = conn.Write([]byte("ping"))
+		if err != nil {
+			return false
+		}
+
+		// Устанавливаем таймаут на чтение
+		err = conn.SetReadDeadline(time.Now().Add(timeout))
+		if err != nil {
+			return false
+		}
+
+		// Пытаемся прочитать ответ
+		buf := make([]byte, 1024)
+		_, err = conn.Read(buf)
+
+		// Для UDP отсутствие ответа не всегда означает недоступность
+		// Возвращаем true, если соединение установлено успешно
+	}
+
+	return true
+}
