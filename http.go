@@ -634,6 +634,8 @@ func GetOutboundIP(publicPingHost string) (net.IP, error) {
 }
 
 // CheckPort проверяет доступность UDP порта
+// true - порт занят
+// false - порт свободен (нет соединения)
 // network: tcp/udp
 func CheckPort(network string, host string, port int, timeout time.Duration) bool {
 	address := fmt.Sprintf("%s:%d", host, port)
