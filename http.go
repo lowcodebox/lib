@@ -634,10 +634,11 @@ func GetOutboundIP(publicPingHost string) (net.IP, error) {
 }
 
 // CheckPort проверяет доступность UDP порта
-// network: TCP/UDP
+// network: tcp/udp
 func CheckPort(network string, host string, port int, timeout time.Duration) bool {
 	address := fmt.Sprintf("%s:%d", host, port)
 
+	network = strings.ToLower(network)
 	conn, err := net.DialTimeout(network, address, timeout)
 	if err != nil {
 		return false
