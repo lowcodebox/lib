@@ -3,12 +3,11 @@ package lib
 import (
 	"fmt"
 	"net"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
-
-	gopsutil "github.com/shirou/gopsutil/v3/net"
-	gopsutilprocess "github.com/shirou/gopsutil/v3/process"
 )
 
 // GetOutboundIP получение текущего IP-адреса компьютера
@@ -68,85 +67,92 @@ func CheckPort(network string, host string, port int, timeout time.Duration) boo
 	return true
 }
 
-// GetPIDByPort возвращает PID процесса, слушающего указанный порт
+// GetPIDByPort возвращает PID процесса, слушающего указанный порт (кросс-платформенная версия)
 func GetPIDByPort(port int) (int, error) {
-	// Получаем все TCP соединения
-	connections, err := gopsutil.Connections("tcp")
+	switch runtime.GOOS {
+	case "linux":
+		return getPIDByPortLinux(port)
+	case "darwin":
+		return getPIDByPortDarwin(port)
+	case "windows":
+		return getPIDByPortWindows(port)
+	default:
+		return 0, fmt.Errorf("неподдерживаемая ОС: %s", runtime.GOOS)
+	}
+}
+
+// getPIDByPortLinux для Linux
+func getPIDByPortLinux(port int) (int, error) {
+	// Используем команду ss или netstat
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("ss -lpn | grep :%d", port))
+	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get connection list: %w", err)
+		return 0, fmt.Errorf("процесс не найден: %w", err)
 	}
 
-	portStr := strconv.Itoa(port)
+	return parsePIDFromOutput(string(output))
+}
 
-	for _, conn := range connections {
-		// Проверяем, что соединение в состоянии LISTEN
-		if conn.Status == "LISTEN" {
-			// Получаем порт из локального адреса
-			_, localPort, err := net.SplitHostPort(conn.Laddr.String())
-			if err != nil {
-				continue
-			}
+// getPIDByPortDarwin для macOS
+func getPIDByPortDarwin(port int) (int, error) {
+	// Используем команду lsof
+	cmd := exec.Command("lsof", "-i", fmt.Sprintf(":%d", port), "-t")
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("процесс не найден: %w", err)
+	}
 
-			if localPort == portStr {
-				// Если есть PID, возвращаем его
-				if conn.Pid > 0 {
-					return int(conn.Pid), nil
+	pidStr := strings.TrimSpace(string(output))
+	if pidStr == "" {
+		return 0, fmt.Errorf("процесс не найден")
+	}
+
+	return strconv.Atoi(pidStr)
+}
+
+// getPIDByPortWindows для Windows
+func getPIDByPortWindows(port int) (int, error) {
+	// Используем команду netstat
+	cmd := exec.Command("netstat", "-ano")
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, fmt.Errorf("не удалось выполнить netstat: %w", err)
+	}
+
+	lines := strings.Split(string(output), "\n")
+	portStr := fmt.Sprintf(":%d", port)
+
+	for _, line := range lines {
+		if strings.Contains(line, "LISTENING") && strings.Contains(line, portStr) {
+			fields := strings.Fields(line)
+			if len(fields) >= 5 {
+				pid, err := strconv.Atoi(fields[4])
+				if err == nil {
+					return pid, nil
 				}
 			}
 		}
 	}
 
-	return 0, fmt.Errorf("process listening on port %d was not found", port)
+	return 0, fmt.Errorf("процесс, слушающий порт %d, не найден", port)
 }
 
-type ProcessInfo struct {
-	PID     int32
-	Name    string
-	Port    int
-	Status  string
-	Exe     string
-	Cmdline string
-}
-
-// GetProcessByPort возвращает информацию о процессе по порту
-func GetProcessByPort(port int) (*ProcessInfo, error) {
-	// Получаем все TCP соединения
-	connections, err := gopsutil.Connections("tcp")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get connection list: %w", err)
-	}
-
-	portStr := strconv.Itoa(port)
-
-	for _, conn := range connections {
-		if conn.Status == "LISTEN" {
-			_, localPort, err := net.SplitHostPort(conn.Laddr.String())
-			if err != nil {
-				continue
-			}
-
-			if localPort == portStr && conn.Pid > 0 {
-				// Получаем информацию о процессе
-				proc, err := gopsutilprocess.NewProcess(conn.Pid)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get information about process: %w", err)
+// parsePIDFromOutput парсит PID из вывода ss
+func parsePIDFromOutput(output string) (int, error) {
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "pid=") {
+			// Ищем pid=12345
+			start := strings.Index(line, "pid=")
+			if start != -1 {
+				start += 4
+				end := strings.IndexAny(line[start:], ",)")
+				if end != -1 {
+					pidStr := line[start : start+end]
+					return strconv.Atoi(pidStr)
 				}
-
-				name, _ := proc.Name()
-				exe, _ := proc.Exe()
-				cmdline, _ := proc.Cmdline()
-
-				return &ProcessInfo{
-					PID:     conn.Pid,
-					Name:    name,
-					Port:    port,
-					Status:  conn.Status,
-					Exe:     exe,
-					Cmdline: cmdline,
-				}, nil
 			}
 		}
 	}
-
-	return nil, fmt.Errorf("process listening on port %d was not found", port)
+	return 0, fmt.Errorf("PID не найден")
 }

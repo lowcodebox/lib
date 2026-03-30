@@ -20,7 +20,7 @@ func TestConfigLoad(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := ConfigLoad(c.config, &cfg)
+		_, err := ConfigLoad(c.config, &cfg, false, false, make([]string, 0))
 		if err != nil {
 			t.Fatal(err)
 		}
