@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/kelseyhightower/envconfig"
@@ -34,7 +35,8 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 		return "", ErrConfig
 	}
 
-	if !readHidden && config[0:1] == "." && config[0:2] != "./" {
+	configCheckPath := strings.ReplaceAll(config, "../", "")
+	if !readHidden && configCheckPath[0:1] == "." && configCheckPath[0:2] != "./" {
 		return "", fmt.Errorf("skip hidden file %s", config)
 	}
 	// сначала предполагаем что это файл, если ошибка
