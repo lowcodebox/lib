@@ -115,3 +115,30 @@ func IniLocalize(iniFS embed.FS, config string) (err error) {
 
 	return err
 }
+
+// CleanBase64String очищает строку от недопустимых символов
+func CleanBase64String(s string) string {
+	// Удаляем пробелы и символы новой строки
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, "\t", "")
+
+	// Удаляем возможные кавычки
+	s = strings.Trim(s, "\"'")
+
+	return s
+}
+
+// IsValidBase64 проверяет, является ли строка валидной Base64
+func IsValidBase64(s string) bool {
+	// Base64 строка должна содержать только допустимые символы
+	validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+	for _, c := range s {
+		if !strings.ContainsRune(validChars, c) {
+			return false
+		}
+	}
+	return true
+}
