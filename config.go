@@ -48,7 +48,7 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 
 	// директория - читаем данные рекурсивно из всех папок ниже и объединяем
 	if isDir {
-		var complexFile string
+		var complexFile []string
 		mapFiles, err := ReadFilesToMap(config, false, readRecursion)
 		if err != nil {
 			return "", err
@@ -58,11 +58,12 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 			if !readHidden && fileName[0:1] == "." {
 				continue
 			}
-			complexFile = complexFile + "\n" + string(fileBody)
+			complexFile = append(complexFile, string(fileBody))
 		}
 
-		err = DecodeConfig(complexFile, cfgPointer)
-		return complexFile, err
+		sr := strings.Join(complexFile, "\n")
+		err = DecodeConfig(sr, cfgPointer)
+		return sr, err
 	}
 
 	// пробуем читаем из файла
