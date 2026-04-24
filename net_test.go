@@ -6,12 +6,12 @@ import (
 )
 
 func TestGetPIDByPort(t *testing.T) {
-	i := 8015
+	i := 80
 
 	pid, err := GetPIDByPort(i)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	println(pid)
+	fmt.Println(pid)
 }

@@ -68,7 +68,7 @@ func CheckPort(network string, host string, port int, timeout time.Duration) boo
 }
 
 // GetPIDByPort возвращает PID процесса, слушающего указанный порт (кросс-платформенная версия)
-func GetPIDByPort(port int) (int, error) {
+func GetPIDByPort(port int) ([]int, error) {
 	switch runtime.GOOS {
 	case "linux":
 		return getPIDByPortLinux(port)
@@ -77,46 +77,46 @@ func GetPIDByPort(port int) (int, error) {
 	case "windows":
 		return getPIDByPortWindows(port)
 	default:
-		return 0, fmt.Errorf("неподдерживаемая ОС: %s", runtime.GOOS)
+		return []int{0}, fmt.Errorf("unsupport OS: %s", runtime.GOOS)
 	}
 }
 
 // getPIDByPortLinux для Linux
-func getPIDByPortLinux(port int) (int, error) {
+func getPIDByPortLinux(port int) ([]int, error) {
 	// Используем команду ss или netstat
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("ss -lpn | grep :%d", port))
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("процесс не найден: %w", err)
+		return []int{0}, fmt.Errorf("process is not found: %w", err)
 	}
 
-	return parsePIDFromOutput(string(output))
+	return parsePIDFromOutputLinux(string(output))
 }
 
 // getPIDByPortDarwin для macOS
-func getPIDByPortDarwin(port int) (int, error) {
+func getPIDByPortDarwin(port int) (res []int, err error) {
 	// Используем команду lsof
 	cmd := exec.Command("lsof", "-i", fmt.Sprintf(":%d", port), "-t")
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("процесс не найден: %w", err)
+		return []int{0}, fmt.Errorf("process is not found: %w", err)
 	}
 
 	pidStr := strings.TrimSpace(string(output))
 	if pidStr == "" {
-		return 0, fmt.Errorf("процесс не найден")
+		return []int{0}, fmt.Errorf("process is not found")
 	}
 
-	return strconv.Atoi(pidStr)
+	return parsePIDFromOutputMac(pidStr)
 }
 
 // getPIDByPortWindows для Windows
-func getPIDByPortWindows(port int) (int, error) {
+func getPIDByPortWindows(port int) (res []int, err error) {
 	// Используем команду netstat
 	cmd := exec.Command("netstat", "-ano")
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("не удалось выполнить netstat: %w", err)
+		return res, fmt.Errorf("not exec netstat: %w", err)
 	}
 
 	lines := strings.Split(string(output), "\n")
@@ -127,18 +127,33 @@ func getPIDByPortWindows(port int) (int, error) {
 			fields := strings.Fields(line)
 			if len(fields) >= 5 {
 				pid, err := strconv.Atoi(fields[4])
-				if err == nil {
-					return pid, nil
+				if err != nil {
+					return res, fmt.Errorf("parse pid (%s) failed, err: %w", fields[4], err)
 				}
+				res = append(res, pid)
 			}
 		}
 	}
 
-	return 0, fmt.Errorf("процесс, слушающий порт %d, не найден", port)
+	return res, nil
 }
 
-// parsePIDFromOutput парсит PID из вывода ss
-func parsePIDFromOutput(output string) (int, error) {
+// parsePIDFromOutputMac парсит PID из вывода ss
+func parsePIDFromOutputMac(output string) (res []int, err error) {
+	lines := strings.Split(output, "\n")
+	for _, pidStr := range lines {
+		p, err := strconv.Atoi(pidStr)
+		if err != nil {
+			return res, fmt.Errorf("parse pid (%s) failed, err: %w", pidStr, err)
+		}
+		res = append(res, p)
+	}
+
+	return res, nil
+}
+
+// parsePIDFromOutputLinux парсит PID из вывода ss
+func parsePIDFromOutputLinux(output string) (res []int, err error) {
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		if strings.Contains(line, "pid=") {
@@ -149,10 +164,14 @@ func parsePIDFromOutput(output string) (int, error) {
 				end := strings.IndexAny(line[start:], ",)")
 				if end != -1 {
 					pidStr := line[start : start+end]
-					return strconv.Atoi(pidStr)
+					p, err := strconv.Atoi(pidStr)
+					if err != nil {
+						return res, fmt.Errorf("parse pid (%s) failed, err: %w", pidStr, err)
+					}
+					res = append(res, p)
 				}
 			}
 		}
 	}
-	return 0, fmt.Errorf("PID не найден")
+	return res, fmt.Errorf("PID not found")
 }
