@@ -173,5 +173,5 @@ func parsePIDFromOutputLinux(output string) (res []int, err error) {
 			}
 		}
 	}
-	return res, fmt.Errorf("PID not found")
+	return res, nil
 }
