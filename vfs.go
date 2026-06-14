@@ -356,11 +356,13 @@ func (v *vfs) List(ctx context.Context, prefix string, pageSize int) (files []It
 	return files, err
 }
 
+// ReadCloser
 // private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
 func (v *vfs) ReadCloser(ctx context.Context, file string, private_access bool) (reader io.ReadCloser, err error) {
 	return v.ReadCloserFromBucket(ctx, file, v.bucket, private_access)
 }
 
+// ReadCloserFromBucket
 // private_access - параметр, который позволяет читать из приватной директории другого пользователя (по умолчанию ставьте false)
 func (v *vfs) ReadCloserFromBucket(ctx context.Context, file, bucket string, private_access bool) (reader io.ReadCloser, err error) {
 	user, _ := ctx.Value(userUid).(string)
