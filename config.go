@@ -55,14 +55,17 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 			return "", err
 		}
 		for fileName, fileBody := range mapFiles {
-			// только заданные явно расширения
+			// если только заданные явно расширения
 			skipExt := false
-			for _, v := range onlyTypes {
-				if v == path.Ext(fileName) {
-					skipExt = true
+			if len(onlyTypes) != 0 {
+				skipExt = true
+				for _, v := range onlyTypes {
+					if v == path.Ext(fileName) {
+						skipExt = false
+					}
 				}
 			}
-			if !skipExt {
+			if skipExt {
 				continue
 			}
 
