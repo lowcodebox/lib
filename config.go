@@ -62,7 +62,7 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 					skipExt = true
 				}
 			}
-			if skipExt {
+			if !skipExt {
 				continue
 			}
 
