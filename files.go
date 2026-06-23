@@ -10,9 +10,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
+
+const skipExts = "md"
 
 // CreateFile Создаем файл по указанному пути если его нет
 func CreateFile(path string) (err error) {
@@ -167,6 +170,10 @@ func ReadFilesToMap(dirPath string, keyispath, recursion bool) (map[string][]byt
 			}
 		} else {
 			if !obj.IsDir() {
+				// пропускаем файлы которые не читаем
+				if strings.Contains(skipExts, path.Ext(filePointer)) {
+					continue
+				}
 				body, err = ReadFile(filePointer)
 				if err != nil {
 					fmt.Println(err)
@@ -205,6 +212,10 @@ func ReadEmbedFilesToMap(dirPath string, vfs embed.FS, keyispath, recursion bool
 			}
 		} else {
 			if !obj.IsDir() {
+				// пропускаем файлы которые не читаем
+				if strings.Contains(skipExts, path.Ext(filePointer)) {
+					continue
+				}
 				body, err = vfs.ReadFile(filePointer)
 				if err != nil {
 					fmt.Println(err)
