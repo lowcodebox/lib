@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -54,6 +55,17 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 			return "", err
 		}
 		for fileName, fileBody := range mapFiles {
+			// только заданные явно расширения
+			skipExt := false
+			for _, v := range onlyTypes {
+				if v == path.Ext(fileName) {
+					skipExt = true
+				}
+			}
+			if skipExt {
+				continue
+			}
+
 			// пропускаем скрытые файлы
 			if !readHidden && fileName[0:1] == "." {
 				continue
