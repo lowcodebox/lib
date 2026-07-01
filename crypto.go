@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hkdf"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -352,4 +354,19 @@ func encodeServiceKey(xsKey models.XServiceKey, projectKey []byte) (token string
 		return "", fmt.Errorf("error Encrypt XServiceKey, err: %s", err)
 	}
 	return token, nil
+}
+
+// StrongKeyHKDF безопасно преобразует исходный ключ и соль в новый ключ заданной длины.
+// Это строгое криптографическое преобразование через HMAC.
+// Результат детерминирован: одинаковые входные данные дают одинаковый выход.
+func StrongKeyHKDF(secret, salt []byte, length int) ([]byte, error) {
+	// Шаг 1: Extract - получаем псевдослучайный ключ (PRK)
+	prk, err := hkdf.Extract(sha256.New, secret, salt)
+	if err != nil {
+		return nil, fmt.Errorf("error Extract HKDF secret, err: %s", err)
+	}
+
+	// Шаг 2: Expand - расширяем PRK до нужной длины
+	// Новый API: Expand принимает info как string и keyLength
+	return hkdf.Expand(sha256.New, prk, "", length)
 }

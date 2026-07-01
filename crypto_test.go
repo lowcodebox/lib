@@ -124,3 +124,11 @@ func TestDecode(t *testing.T) {
 		}
 	}
 }
+
+func TestStrongKeyHKDF(t *testing.T) {
+	secret := []byte("1234567890")
+	salt := []byte("1234567890")
+	res, err := StrongKeyHKDF(secret, salt, 32)
+
+	fmt.Println(string(res), err)
+}
