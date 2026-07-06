@@ -41,7 +41,7 @@ func RunProcess(path, config, command, mode string, flags ...string) (pid int, e
 		prevFlag = flag
 	}
 
-	cmd = exec.Command(path, command, "--config", config, args)
+	cmd = exec.Command(path, command, "--config", config, args...)
 	if mode == "debug" {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]
@@ -64,8 +64,8 @@ func RunProcess(path, config, command, mode string, flags ...string) (pid int, e
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP}
 	err = cmd.Start()
 	if err != nil {
-		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, dc: %s, err: %w",
-			cmd.ProcessState.ExitCode(), config, path, command, mode, dc, err)
+		return 0, fmt.Errorf("unable start process, status: %d, config: %s, path: %s, command: %s, mode: %s, err: %w",
+			cmd.ProcessState.ExitCode(), config, path, command, mode, err)
 	}
 
 	go cmd.Process.Wait()
