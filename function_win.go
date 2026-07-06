@@ -41,7 +41,7 @@ func RunProcess(path, config, command, mode string, flags ...string) (pid int, e
 		prevFlag = flag
 	}
 
-	cmd = exec.Command(path, command, "--config", config, args...)
+	cmd = exec.Command(path, args...)
 	if mode == "debug" {
 		s := strings.Split(path, sep)
 		srv := s[len(s)-1]
