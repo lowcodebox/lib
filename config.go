@@ -70,7 +70,7 @@ func ConfigLoad(config string, cfgPointer interface{}, readRecursion, readHidden
 			}
 
 			// пропускаем скрытые файлы
-			if !readHidden && fileName[0:1] == "." {
+			if !readHidden && fileName[0:1] == "." && fileName[0:2] != "./" {
 				continue
 			}
 			complexFile = append(complexFile, string(fileBody))
