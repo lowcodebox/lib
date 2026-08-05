@@ -16,7 +16,7 @@ import (
 
 	"git.lowcodeplatform.net/packages/models"
 	"github.com/araddon/dateparse"
-	"github.com/segmentio/ksuid"
+	"github.com/google/uuid"
 	duration "github.com/xhit/go-str2duration"
 )
 
@@ -103,7 +103,8 @@ func PanicOnErr(err error) {
 }
 
 func UUID() (result string) {
-	return ksuid.New().String()
+	id, _ := uuid.NewV7()
+	return id.String()
 }
 
 // RemoveElementFromData удаляем элемент из слайса
