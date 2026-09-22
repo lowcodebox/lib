@@ -72,3 +72,17 @@ func ParseFloat(s string) (i float64, ok bool) {
 func ArrayDelete[T any](slice []T, i int) []T {
 	return append(slice[:i], slice[i+1:]...)
 }
+
+// StringToSlice парсим поля в слайс для дальнейшей проверки
+// не через contains чтобы избежать вхождения одного поля в название другого
+// пробегаем по разным типам сепаратора (, ; пробел)
+func StringToSlice(fs string) []string {
+	if fs == "" {
+		return []string{}
+	}
+	fs = strings.ReplaceAll(fs, ",", "|")
+	fs = strings.ReplaceAll(fs, ";", "|")
+	fs = strings.ReplaceAll(fs, " ", "|")
+
+	return strings.Split(fs, "|")
+}
