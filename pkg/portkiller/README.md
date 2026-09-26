@@ -96,3 +96,48 @@ SIGTERM ──────────────► процесс завер�
 5. **Гонка при чтении `/proc/<pid>/fd`.** Процесс может умереть между `ReadDir` и `Readlink` — это безопасно, ошибка просто пропускается.
 6. **Только TCP LISTEN.** UDP-порты не покрыты. Если нужно — добавьте `/proc/net/udp` (Linux) и `netstat -anu` (macOS / Windows).
 7. **Межплатформенная сигнатура.** На Windows `SIGTERM` не существует; `taskkill` без `/F` не всегда даёт процессу шанс корректно завершиться. Если нужен настоящий graceful shutdown на Windows — потребуется отдельный механизм (например, именованные события или `WM_CLOSE` для GUI-приложений).
+
+
+# Тесты
+
+### Все тесты (интеграционные требуют возможности fork'ать процессы)
+go test ./... -v -count=1
+
+### Только быстрые юнит-тесты
+go test ./... -short -count=1
+
+### С детектором гонок
+go test ./... -race -count=1
+
+## Что покрыто, а что нет
+
+### Покрыто
+
+| Область | Тесты |
+|---------|-------|
+| Парсеры hex-адресов, портов, дедупликация | `TestParseHexAddr`, `TestExtractPortFromLocal`, `TestExtractPortWin`, `TestDedupe` |
+| Валидация входных параметров | `TestKillProcessesInPortRange_InvalidRange` |
+| Поиск слушающих процессов | `TestFindListeningProcesses_FindsCurrentProcess`, `TestFindListeningProcesses_EmptyRange` |
+| TOCTOU-проверка | `TestStillSameListener_True`, `TestStillSameListener_WrongPID`, `TestStillSameListener_WrongPort` |
+| Живость процесса | `TestProcessAlive_Self`, `TestProcessAlive_Dead` |
+| Время старта процесса | `TestProcessStartTime_Self`, `TestProcessStartTime_Stable`, `TestProcessStartTime_Dead` |
+| Согласованность `runtimeGOOS` | `TestRuntimeGOOS` |
+| Graceful shutdown по SIGTERM | `TestKill_GracefulShutdown` |
+| Форс по таймауту | `TestKill_ForceKillByTimeout` |
+| `timeout <= 0` — только SIGTERM | `TestKill_TimeoutZero` |
+
+### Сознательно не покрыто
+
+1. **Убийство чужих процессов без прав** — тест потребовал бы root, но результат всё равно зависит от системы. Проверяется вручную.
+2. **Windows-специфичные тесты** (`taskkill`, `OpenProcess`) — требуют реальной Windows-машины. В CI обычно используют `GOOS=windows go vet ./...` для компиляции, но не запуск.
+3. **`/proc` в контейнерах с `--pid=host`** — выходит за рамки unit-тестов.
+4. **Фолбэк на `lsof`** — тестируется неявно: если `findListeningProcesses` вернул результат, значит один из путей сработал. Форсировать отказ `/proc` в тесте сложно и нестабильно.
+5. **UDP** — не поддерживается функцией, тесты не нужны.
+
+### ⚠️ Особенности интеграционных тестов
+
+- **Не запускайте их параллельно с другими тяжёлыми тестами.** Каждый тест компилирует дочерний Go-бинарник — это занимает время и CPU.
+- **`t.TempDir()`** автоматически чистит бинарники после теста.
+- **`t.Cleanup`** убивает дочерние процессы, даже если тест упал — не останется висящих listener'ов.
+- **`testing.Short()`** позволяет пропустить интеграционные тесты в CI без прав на fork: `go test -short ./...`.
+- **Порт может быть занят** другим процессом между `pickFreePort` и `listen` в дочернем процессе — это классическая гонка. Вероятность мала, но если тест флапает — замените на передачу готового listener'а через `ExtraFiles` или используйте другой порт.
