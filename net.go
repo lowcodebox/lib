@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"git.lowcodeplatform.net/packages/lib/pkg/portkiller"
 )
 
 // GetOutboundIP получение текущего IP-адреса компьютера
@@ -65,6 +67,13 @@ func CheckPort(network string, host string, port int, timeout time.Duration) boo
 	}
 
 	return true
+}
+
+// KillProcessesInPortRange завершает все процессы, слушающие TCP-порты
+// в диапазоне [from, to] включительно.
+// gracefullTimeout - время ожидания мягкого завершения, далее жестко прибьем
+func KillProcessesInPortRange(from, to uint16, gracefullTimeout time.Duration) (portkiller.KillReport, error) {
+	return portkiller.KillProcessesInPortRange(from, to, gracefullTimeout)
 }
 
 // GetPIDByPort возвращает PID процесса, слушающего указанный порт (кросс-платформенная версия)
