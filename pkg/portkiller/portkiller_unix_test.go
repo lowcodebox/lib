@@ -3,8 +3,11 @@
 package portkiller
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -203,29 +206,59 @@ func runGoChild(t *testing.T, src string) *exec.Cmd {
 	t.Helper()
 
 	dir := t.TempDir()
-	srcPath := dir + "/main.go"
+	srcPath := filepath.Join(dir, "main.go")
 	if err := os.WriteFile(srcPath, []byte(src), 0o600); err != nil {
 		t.Fatalf("write child source: %v", err)
 	}
 
-	binPath := dir + "/child"
+	binPath := filepath.Join(dir, "child")
 	build := exec.Command("go", "build", "-o", binPath, srcPath)
-	build.Stderr = os.Stderr
+	build.Env = filterEnv(os.Environ(), "GOROOT")
+	var buildErr bytes.Buffer
+	build.Stderr = &buildErr
 	if err := build.Run(); err != nil {
-		t.Fatalf("build child: %v", err)
+		t.Fatalf("build child: %v\nstderr:\n%s", err, buildErr.String())
 	}
+	t.Logf("built child: %s", binPath)
 
 	cmd := exec.Command(binPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	var childOut bytes.Buffer
+	cmd.Stdout = &childOut
+	cmd.Stderr = &childOut
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start child: %v", err)
 	}
+	t.Logf("child started: pid=%d", cmd.Process.Pid)
+
+	// Логируем смерть ребёнка, если она случится до конца теста.
+	exitCh := make(chan error, 1)
+	go func() {
+		exitCh <- cmd.Wait()
+	}()
+	go func() {
+		err := <-exitCh
+		t.Logf("child %d exited: %v\nchild output:\n%s",
+			cmd.Process.Pid, err, childOut.String())
+	}()
+
 	t.Cleanup(func() {
 		_ = cmd.Process.Kill()
-		_ = cmd.Wait()
+		select {
+		case <-exitCh:
+		case <-time.After(2 * time.Second):
+		}
 	})
 	return cmd
+}
+
+func filterEnv(env []string, key string) []string {
+	out := env[:0]
+	for _, e := range env {
+		if !strings.HasPrefix(e, key+"=") {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // waitForListener ждёт, пока порт начнёт принимать соединения.
